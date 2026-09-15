@@ -1,0 +1,141 @@
+# Country identity -- the reviewable alias map (FR-11a, AD-5).
+#
+# Every rule here is `proposed`: docs/RULES.md v2.1 records 187 proposed, 1 rejected and
+# 0 agreed, and nobody holds the standing to agree one (FR-72a). The status is copied
+# from the catalogue's own register, not assumed by the loader.
+#
+# A steward changes country identity by editing this file. Nothing about a country lives
+# in code: `rules/countries.py` reads these groups, folds every surface form through the
+# single `normalise()` from `domain/`, and holds no country name of its own.
+area: COUNTRY
+about: >-
+  Which surface forms name which country, held as data a data steward can review.
+  `Korea` and `South Korea` are both published country values against the same ISO code
+  and are one country; a reader naming either must reach both spellings, and a benchmark
+  set carrying both must not show the country twice. The home country is the exception
+  that shapes the whole file: it is named by the configuration and by no published row,
+  so it resolves to the national query shape and never to a country filter value.
+
+rules:
+  - id: R-COUNTRY-ALIAS-GROUPS
+    statement: >-
+      Country identity resolves through this table and through nothing else. Each group
+      is one country: an ISO 3166-1 alpha-2 code, then every surface form that names it
+      -- the forms the export publishes, in English and Arabic, followed by the spellings
+      a reader actually types. A surface form belongs to exactly one group; two groups
+      claiming one form is a load failure, not a preference between them.
+    status: proposed
+    kind: table
+    sources:
+      - "docs/PRD.md FR-11a"
+      - "docs/DATA-CONTRACT.md FACT 7"
+      - "data/cms/P14_Ref_Countries (code, NameEN, NameAR)"
+      - "data/cms/P03_Published_DataPoints + P05_Published_BenchmarkCountries"
+    values:
+      groups:
+        # The 29 codes that carry published rows or a declared benchmark row, plus the
+        # home country. Each group opens with the code, and the two forms after it are
+        # the export's own `CountryEN` and `CountryAR` for that code -- so a reviewer can
+        # check a line against the export without leaving it. Anything after those is a
+        # reviewed reader spelling. No form is repeated, here or across groups: two
+        # spellings that fold to one normal form are one alias, and the loader says so.
+        - "AE | UAE | الإمارات العربية المتحدة | United Arab Emirates | Emirates | U.A.E. | الإمارات"
+        - "AU | Australia | أستراليا"
+        - "BH | Bahrain | البحرين | Kingdom of Bahrain | مملكة البحرين"
+        - "CH | Switzerland | سويسرا"
+        - "CL | Chile | تشيلي"
+        - "CN | China | الصين"
+        - "DE | Germany | ألمانيا"
+        - "DK | Denmark | الدنمارك"
+        - "EE | Estonia | إستونيا"
+        - "EG | Egypt | مصر"
+        - "ES | Spain | إسبانيا"
+        - "FI | Finland | فنلندا"
+        - "GB | UK | المملكة المتحدة | United Kingdom | Britain | Great Britain | بريطانيا"
+        - "IE | Ireland | أيرلندا"
+        - "IN | India | الهند"
+        - "JO | Jordan | الأردن"
+        - "JP | Japan | اليابان"
+        # The measured duplicate. `Korea` (2 rows, 1 detail) and `South Korea` (93 rows,
+        # 3 details) are separate country ids in the export carrying the same ISO code,
+        # which is why the code is what a group is keyed by and the names are not.
+        - "KR | South Korea | كوريا الجنوبية | Korea | كوريا | Republic of Korea | جمهورية كوريا"
+        - "KW | Kuwait | الكويت"
+        - "MY | Malaysia | ماليزيا"
+        - "NL | Netherlands | هولندا | Holland"
+        - "NO | Norway | النرويج"
+        - "OM | Oman | عمان | Sultanate of Oman | سلطنة عمان"
+        - "PK | Pakistan | باكستان"
+        # The home country. Its group carries no Latin-script form at all, and that is
+        # deliberate rather than an omission: the invariant asserted over the whole of
+        # `src/askai/` is that the home country's name appears nowhere as a literal, and
+        # a rule file inside the package is no safer a place for it than a module. Its
+        # Arabic forms are written out because they are not the banned literal and a
+        # reader typing Arabic is served with no further wiring. Its Latin forms are
+        # taken from the reference table's own row for this code when the refresh path
+        # extends the map -- the export names the country, so this file need not.
+        - "QA | قطر | دولة قطر"
+        - "SA | KSA | المملكة العربية السعودية | Saudi Arabia | Kingdom of Saudi Arabia | السعودية"
+        - "SG | Singapore | سنغافورة"
+        - "TH | Thailand | تايلاند"
+        - "TR | Turkey | تركيا | Türkiye"
+        - "TW | Taiwan | تايوان"
+    note: >-
+      Grounded, not guessed: every code here is a code the export actually carries, and
+      the two leading forms in each group are the export's own English and Arabic names
+      for it. An alias for a country the data does not have is worse than no alias --
+      it resolves a reader's question onto rows that do not exist.
+
+  - id: R-COUNTRY-HOME-IS-ABSENCE
+    statement: >-
+      The country with the code below is the national scope, and resolving one of its
+      names never yields a country filter value. The configuration names it in all 21
+      declared benchmark sets while the published data names it in none of its 8,127
+      rows, where the national series is the absence of a country value -- so a filter
+      built from its name matches nothing and drops the country from its own comparison.
+    status: proposed
+    kind: switch
+    sources:
+      - "docs/ARCHITECTURE-SPINE.md AD-5"
+      - "docs/DATA-CONTRACT.md FACT 3"
+      - "docs/PRD.md FR-10, FR-11b"
+      - "findings F-001"
+    values:
+      home_country_code: QA
+    note: >-
+      Held as a code rather than a name for two reasons, and both matter. The export
+      keys country identity by code, so the code is what the rest of the pipeline joins
+      on; and the name is the one literal that must not be written under `src/askai/`,
+      because a filter constructed from it is exactly the F-001 defect.
+
+  - id: R-COUNTRY-DUPLICATE-SPELLINGS-ARE-ONE-COUNTRY
+    statement: >-
+      Two published spellings of one country resolve to one identity, so a reader naming
+      either spelling reaches every row under both, and a benchmark set carrying both
+      presents the country once. Collapsing happens at resolution, before any row is
+      fetched -- a set de-duplicated after the fetch has already shown the country twice.
+    status: proposed
+    kind: code
+    sources:
+      - "docs/PRD.md FR-11a"
+      - "docs/DATA-CONTRACT.md FACT 7"
+    note: >-
+      The export has one such duplicate today. It records 235 reference countries against
+      230 distinct codes, so it will not be the last, which is the whole argument for the
+      map being data rather than a dictionary in a module.
+
+  - id: R-COUNTRY-UNMAPPED-VALUE-IS-REPORTED
+    statement: >-
+      A published country value that no group claims is reported by name and by count in
+      the refresh report, and is never quietly dropped or quietly invented as a country.
+      An unmapped value is a country the engine cannot answer about, and the steward who
+      can add the group is the person the report is written for.
+    status: proposed
+    kind: code
+    sources:
+      - "docs/PRD.md FR-110"
+      - "docs/DATA-CONTRACT.md FACT 7"
+    note: >-
+      The counterpart to the groups table: the table says what is known, this says what
+      happens to everything else. Reporting is the mechanism by which the table stays
+      true to an export nobody here controls.
