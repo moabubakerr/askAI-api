@@ -47,8 +47,20 @@ line-length = 100
 target-version = "py313"
 
 [tool.ruff.lint]
-# ruff's own defaults, plus E501 so the declared line-length is actually enforced.
-extend-select = ["E501"]
+# ruff's own defaults, plus E501 so the declared line-length is actually enforced, plus
+# AD-15's rule as lint rather than as review comment: BLE001 catches `except Exception`
+# and `except BaseException`, E722 catches the bare `except:`. Together they are the
+# `except Exception` density that made a rule which stopped firing indistinguishable
+# from one never reached. Soft failures are typed `Degradation` values instead
+# (askai/observability/degradations.py).
+extend-select = ["E501", "BLE", "E722"]
+
+[tool.ruff.lint.per-file-ignores]
+# The one place AD-15 permits broad handling: an adapter boundary, whose job is to
+# convert a foreign failure — a driver error, a transport fault — into a typed value or
+# a typed exception before it reaches a pure layer. Scoped to adapters/ so the
+# permission is a property of the directory a reviewer can see, not of a comment.
+"src/askai/adapters/**/*.py" = ["BLE001"]
 
 [tool.ruff.lint.isort]
 # tests/ is not a package, so the corpus runner is imported by bare module name.

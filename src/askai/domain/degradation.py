@@ -15,9 +15,18 @@ defines a value and nothing else -- no registry, no counter, no ``report()``.
 ``tests/test_domain_invariants.py`` asserts no ``contextvars`` import and no
 module-level mutable collector exists anywhere under ``src/askai/``.
 
-``kind`` is a plain string for now. The closed taxonomy belongs to Story 1.17, which
-counts them and carries them into the answer record; inventing one here would be a
-guess at a set this story has no acceptance criterion for.
+``kind`` names a member of the **closed taxonomy** ``DegradationKind``, which Story 1.17
+drew and which lives in ``askai.observability.degradations``. The field's annotation is
+``str`` rather than the enum for one structural reason: this module imports nothing
+in-project (AD-2, enforced by the ``domain imports nothing in-project`` import-linter
+contract), so the enum cannot be named here, and ``domain/`` is the only package the
+enum could otherwise have lived in. Closure is therefore enforced at the two places that
+decide anything: ``classify`` rejects a non-member, so an unrecognised kind can be
+neither counted (``Tally.of``) nor carried on a result (``Carried``, ``Failed``); and
+``tests/test_degradations.py`` scans every ``Degradation(...)`` construction under
+``src/askai/`` and fails on a kind the enum does not declare. Producers should build
+through ``degrade(DegradationKind.X, where, detail)`` rather than calling this
+constructor with a bare string, so the compiler catches an invented kind first.
 """
 
 from __future__ import annotations
@@ -37,7 +46,11 @@ class Degradation:
     """
 
     kind: str
-    """What went wrong. Story 1.17 closes this into an enum and counts it."""
+    """A ``DegradationKind`` value -- the closed taxonomy, counted per kind.
+
+    Typed as ``str`` only because ``domain/`` may not import the package the enum lives
+    in; see the module docstring for how the set is closed regardless.
+    """
 
     where: str
     """The layer or component it happened in -- so a rising rate has an address."""
