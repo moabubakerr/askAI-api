@@ -1,0 +1,43 @@
+# Epic 9 — Sources: SCEAI, Oxford, Combined and the closed world.
+#
+# The source is a provenance contract the reader chooses, and closed-world compliance is
+# structural. `source` below records which contract the entry is written against.
+
+- id: e9-001
+  spec_version: 1
+  question:
+    en: What was inflation in Qatar in Q1 2026?
+    ar: كم بلغ معدل التضخم في قطر في الربع الأول من 2026؟
+  source: sceai
+  today: 2026-09-15
+  operation: value
+  measure: actual
+  why: >-
+    Epic 9 / Stories 9.2, 9.3 and 9.5 — the knowledge base and nothing else. `Inflation`
+    2026-Q1 national quarterly = 2.98461 %, published by the CMS, so under the SCEAI contract
+    the answer is fully supported from the published layer and declares its agent. This is
+    the baseline the Combined case in e9-002 is measured against: the same question, the same
+    bound spec, a different admission set.
+
+- id: e9-002
+  spec_version: 1
+  question:
+    en: What is the outlook for oil prices and what does that mean for Qatar?
+    ar: ما هي توقعات أسعار النفط وماذا تعني بالنسبة لقطر؟
+  source: sceai
+  today: 2026-09-15
+  operation: explanation
+  measure: null
+  expected: refusal
+  refusal_reason: >-
+    No published indicator measures oil prices, and P10_Published_Mappings is an empty file,
+    so no indicator-to-indicator relationship exists that could carry "what that means for
+    Qatar". Under the SCEAI contract the honest answer says what is missing rather than
+    reaching for something adjacent. The live article set does carry related commentary
+    ("Oil Price Volatility Now, Structural Tightness Ahead", "Shifting Oil Prices Reshape
+    Middle East Growth Outlook"), which may be offered as an article, labelled as one, and
+    never promoted to an approved figure.
+  why: >-
+    Epic 9 / Stories 9.3 and 9.4 — structural closed-world enforcement, and the specific case
+    where the causal half of the question has no substrate at all. `measure: null` because
+    nothing numeric is bound; the question asks for a relationship the data cannot express.

@@ -1,0 +1,149 @@
+# Epic 3 — Figures over time: series, change and targets.
+#
+# Published change columns are selected, never recomputed; percent never silently becomes
+# percentage points; a series is contiguous or its gaps are stated. Every period, value and
+# change column named below was read from data/cms/P03 and P06 on 2026-09-15.
+
+- id: e3-001
+  spec_version: 1
+  question:
+    en: Show me inflation in Qatar each year from 2019 to 2025.
+    ar: اعرض لي معدل التضخم في قطر لكل سنة من 2019 إلى 2025.
+  today: 2026-09-15
+  operation: series
+  measure: actual
+  why: >-
+    Epic 3 / Story 3.2 — a series over a named range at a named grain. `Inflation` has seven
+    contiguous national yearly actuals, 2019 through 2025 (2025 = 0.54316 %), so the
+    contiguous-series case is grounded before the gap case.
+
+- id: e3-002
+  spec_version: 1
+  question:
+    en: Show Qatar's Real GDP by quarter from 2024-Q1 to 2025-Q4.
+    ar: اعرض الناتج المحلي الإجمالي الحقيقي لدولة قطر ربع سنوياً من الربع الأول 2024 إلى الربع الرابع 2025.
+  today: 2026-09-15
+  operation: series
+  measure: actual
+  why: >-
+    Epic 3 / Stories 3.1 and 3.2 — Arabic period expressions ("الربع الأول 2024") resolved to
+    the same `Range`. `Real GDP` publishes quarterly from 2019-Q1 with no gap across the
+    requested span; 2025-Q4 = 185.17.
+
+- id: e3-003
+  spec_version: 1
+  question:
+    en: Show Qatar's public debt as a percentage of GDP by quarter from 2021 to 2025.
+    ar: اعرض الدين العام كنسبة من الناتج المحلي الإجمالي ربع سنوياً من 2021 إلى 2025.
+  today: 2026-09-15
+  operation: series
+  measure: actual
+  why: >-
+    Epic 3 / Story 3.3 — state the gaps rather than skipping them. P06 declares quarterly
+    actuals for `Public Debt as a Percentage of GDP (%)` starting 2021-Q1, but P03 carries
+    the first quarterly actual at 2023-Q1 (12 rows, to 2025-Q4). The declared contract and
+    the observed rows disagree, and the answer must say so rather than silently shortening
+    the range.
+
+- id: e3-004
+  spec_version: 1
+  question:
+    en: How much did inflation change month on month in April 2026?
+    ar: كم تغير معدل التضخم على أساس شهري في أبريل 2026؟
+  today: 2026-09-15
+  operation: change
+  measure: change
+  why: >-
+    Epic 3 / Stories 3.4 and 3.6 and recorded failures F-005 / F-029. On the Inflation
+    2026-04 row, `MonthlyMoMPercent` is empty and `MonthlyMoMpp` = -1.5528. Inflation is
+    measured in %, so its change is in percentage points; the published pp column is
+    selected, never a self-computed delta, and never labelled "%".
+
+- id: e3-005
+  spec_version: 1
+  question:
+    en: How much did Qatar's Real GDP grow in 2025 compared with 2024?
+    ar: كم نما الناتج المحلي الإجمالي الحقيقي لدولة قطر في 2025 مقارنة بعام 2024؟
+  today: 2026-09-15
+  operation: change
+  measure: change
+  why: >-
+    Epic 3 / Story 3.5 — always name the basis and the periods. `Real GDP` yearly actuals are
+    2024 = 715.866 and 2025 = 736.638; the published `YearlyYoY*` columns on the 2025 row are
+    what the answer must select, with "year on year, 2025 against 2024" stated explicitly.
+
+- id: e3-006
+  spec_version: 1
+  question:
+    en: Compare Qatar's inflation in 2022 with 2025.
+    ar: قارن معدل التضخم في قطر بين عامي 2022 و2025.
+  today: 2026-09-15
+  operation: change
+  measure: actual
+  why: >-
+    Epic 3 / Story 3.7 — the same indicator at two named periods, which is a change with an
+    explicit basis rather than a comparison across a scope. `Inflation` yearly: 2022 = 4.99528,
+    2025 = 0.54316. No published change column spans these two periods, so the delta is
+    computed and the answer must say that it was computed (FACT 2's second arm).
+
+- id: e3-007
+  spec_version: 1
+  question:
+    en: What is the 2030 target for Qatar's non-hydrocarbon real GDP?
+    ar: ما هو مستهدف الناتج المحلي الإجمالي غير الهيدروكربوني لعام 2030؟
+  today: 2026-09-15
+  operation: value
+  measure: target
+  why: >-
+    Epic 3 / Story 3.8 — answer from published targets. `Non-Hydrocarbon Real GDP` carries
+    TargetValue 581.2805 at TargetYear 2030 on P02, and nine yearly target rows in P03
+    running to 2030. The target series is separate and explicitly labelled (FACT 5).
+
+- id: e3-008
+  spec_version: 1
+  question:
+    en: What is the baseline for Qatar's total population, and against which year?
+    ar: ما هو خط الأساس لعدد سكان قطر، وفي أي سنة؟
+  today: 2026-09-15
+  operation: value
+  measure: baseline
+  why: >-
+    Epic 3 / Story 3.8 — the baseline arm. `Total Population` carries BaseLineValue 2.76 at
+    BaseLineYear 2019 and TargetValue 4 at 2030, unit m. Baselines reach 135 of 289 details,
+    so "no baseline published" is also a correct answer elsewhere.
+
+- id: e3-009
+  spec_version: 1
+  question:
+    en: What is the target for Qatar's inflation rate?
+    ar: ما هو المستهدف لمعدل التضخم في قطر؟
+  today: 2026-09-15
+  operation: value
+  measure: target
+  expected: refusal
+  refusal_reason: >-
+    No target is published for the `Inflation` detail — TargetValue and TargetYear are both
+    empty on P02, and P03 carries no Inflation target rows. "No target published for this
+    detail" is the answer, not a derived or inferred one.
+  why: >-
+    Epic 3 / Story 3.8 — targets reach only 98 of 289 details, so this refusal is the common
+    case and must be as well-formed as the answer. Grounded on the one detail the corpus
+    uses most, so the contrast with e3-007 is exact.
+
+- id: e3-010
+  spec_version: 1
+  question:
+    en: How many medical tourists came to Qatar in 2024?
+    ar: كم عدد زوار السياحة العلاجية إلى قطر في عام 2024؟
+  today: 2026-09-15
+  operation: value
+  measure: actual
+  expected: refusal
+  refusal_reason: >-
+    `Number of Medical Tourists` is published and has exactly one actual — 2025-Q1 = 2813 —
+    plus quarterly targets out to 2030-Q4. Nothing is published for 2024, so the answer says
+    which periods do carry a figure rather than reaching for the nearest one.
+  why: >-
+    Epic 3 — "no data for the period asked" as a distinct refusal from "no data at all"
+    (e1-005) and from "not published" (e2-004). Also guards F-015: a target row at a
+    different period must never be presented as the actual.

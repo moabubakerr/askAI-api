@@ -1,0 +1,33 @@
+# Epic 10 — Rules agreed and continuously proven.
+#
+# The gates are built in Epic 1; this epic completes the catalogue over them. These two
+# entries are a bilingual parity pair: the same bound question asked in each language, so
+# parity is asserted rather than assumed (Story 10.4) and the corpus itself is the evidence
+# a rule is traced to (Story 10.1).
+
+- id: e10-001
+  spec_version: 1
+  question:
+    en: What was Qatar's total population in 2025?
+  today: 2026-09-15
+  operation: value
+  measure: actual
+  why: >-
+    Epic 10 / Story 10.4 — the English half of a parity pair. `Total Population` yearly
+    national actual 2025 = 3.214609, unit m, format 0.00, source National Planning Council.
+    Deliberately English-only so that e10-002 is a separate entry rather than a second field
+    on this one: parity is measured by two answers agreeing, which needs two runs.
+
+- id: e10-002
+  spec_version: 1
+  question:
+    ar: كم بلغ عدد سكان قطر في عام 2025؟
+  today: 2026-09-15
+  operation: value
+  measure: actual
+  why: >-
+    Epic 10 / Story 10.4 — the Arabic half of the pair with e10-001. Same detail, same
+    period, same scope; the figure, the unit and the period must be identical and only the
+    language of the surrounding answer may differ. The published Arabic indicator name is
+    "عدد السكان" and the Arabic unit is "مليون". A divergence here is a bilingual-parity
+    failure, which is the number Story 10.5 reports continuously.

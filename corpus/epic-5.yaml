@@ -1,0 +1,142 @@
+# Epic 5 — Questions about the catalogue itself.
+#
+# Counts, lists, ownership, definitions, capability. Grouping is read from P01
+# (IndicatorEntityTypeId, 189/189 resolvable) through Sectors.csv and General Entities.csv;
+# ownership through their ChampionId into Champions.csv. All figures read on 2026-09-15.
+#
+# `measure: null` on these entries means no `Measure` member applies — nothing numeric is
+# being measured, the question is about the catalogue. It is not a new enum value.
+
+- id: e5-001
+  spec_version: 1
+  question:
+    en: How many indicators are there under economic diversification targets?
+    ar: كم عدد المؤشرات ضمن مؤشرات التنويع الاقتصادي؟
+  today: 2026-09-15
+  operation: count
+  measure: null
+  why: >-
+    Epic 5 / Story 5.1 and recorded failure F-032, where QC expected 12. P01's
+    `DiversificationTargets` classification holds exactly 12 indicators, all under the single
+    entity `Economic Diversification Targets` / "مؤشرات التنويع الاقتصادي". This was answerable
+    all along; the group layer was simply never queryable.
+
+- id: e5-002
+  spec_version: 1
+  question:
+    en: What indicators are in the education sector?
+    ar: ما هي مؤشرات قطاع التعليم؟
+  today: 2026-09-15
+  operation: list
+  measure: null
+  why: >-
+    Epic 5 / Story 5.1 and recorded failure F-033. `Education Sector` / "التعليم"
+    (Sectors.csv) carries 13 published indicators, including `Sector Contribution To GDP
+    (Education)`, `Graduates from STEM ( Share of All Graduates )` and
+    `Program for International Student Assessment (PISA) Rank`.
+
+- id: e5-003
+  spec_version: 1
+  question:
+    en: Which sector has the most indicators?
+    ar: أي قطاع يضم أكبر عدد من المؤشرات؟
+  today: 2026-09-15
+  operation: extremum
+  measure: null
+  why: >-
+    Epic 5 / Story 5.2 — distinguish a group from a classification. Within the `Sectors`
+    classification (105 indicators) the largest entity is `Transportation and Storage` with
+    23, ahead of `Agriculture, Livestock and Fisheries` (16). The answer must be about the
+    group, not the classification, which is finding 67's whole point.
+
+- id: e5-004
+  spec_version: 1
+  question:
+    en: Who owns the tourism sector indicators?
+    ar: من الجهة المسؤولة عن مؤشرات قطاع السياحة؟
+  today: 2026-09-15
+  operation: list
+  measure: null
+  why: >-
+    Epic 5 / Story 5.4 — ownership. `Tourism` / "السياحة" holds 7 indicators and its
+    ChampionId resolves to `Qatar Tourism` in Champions.csv. A champion owns a group and is
+    never itself a group, so the answer names the owner of a named group rather than
+    treating Champions as a grouping table. Recorded as `list` because the `Operation` enum
+    has no member for an ownership lookup; if 1.11 needs one this entry is where it shows up.
+
+- id: e5-005
+  spec_version: 1
+  question:
+    en: What does inflation mean?
+    ar: ماذا يعني معدل التضخم؟
+  today: 2026-09-15
+  operation: definition
+  measure: null
+  why: >-
+    Epic 5 / Story 5.7 — the published definition, quoted not generated. The `Inflation`
+    detail carries a substantive `DefinationEN` ("The increase in the general level of prices
+    of goods and services during a specific period…") and a matching `DefinationAR`.
+
+- id: e5-006
+  spec_version: 1
+  question:
+    en: What is real GDP?
+    ar: ما هو الناتج المحلي الإجمالي الحقيقي؟
+  today: 2026-09-15
+  operation: definition
+  measure: null
+  why: >-
+    Epic 5 / Story 5.7, Arabic path. `Real GDP` carries a published bilingual definition and
+    a named source (National Planning Council), so the definition answer carries provenance
+    like any other.
+
+- id: e5-007
+  spec_version: 1
+  question:
+    en: What's the latest in Qatar's economy?
+    ar: ما هي آخر مستجدات الاقتصاد القطري؟
+  today: 2026-09-15
+  operation: list
+  measure: actual
+  why: >-
+    Epic 5 / Story 5.5 — the executive overview, read from the catalogue's
+    `NationalIndicators` classification: exactly 8, all active — FDI Stock, Real GDP, Total
+    Exports (Goods and Services), Gross National Income, Inflation, Government Revenues,
+    Trade Balance (Goods & Services), Public Debt as a Percentage of GDP (%). Each at its own
+    latest period, no common period forced: Gross National Income stops at 2023 while
+    Government Revenues reaches 2026-Q1, so forcing one period would drop or misdate members.
+
+- id: e5-008
+  spec_version: 1
+  question:
+    en: What can you do?
+    ar: ماذا يمكنك أن تفعل؟
+  today: 2026-09-15
+  operation: explanation
+  measure: null
+  why: >-
+    Epic 5 / Story 5.6 and recorded failure F-007, which returned nothing. The answer is
+    grounded in the data held, not a feature list: value, series and change over 161
+    indicators / 261 details that carry data; cross-country comparison over 21 details;
+    ranking over the 12 indicators flagged IsRankingOrRatingIndicator; explanation over the
+    8% of datapoints with substantive analyst text; 67 live articles.
+
+- id: e5-009
+  spec_version: 1
+  question:
+    en: Which indicators are confidential?
+    ar: ما هي المؤشرات السرية؟
+  today: 2026-09-15
+  operation: list
+  measure: null
+  expected: refusal
+  refusal_reason: >-
+    The question is well formed and the data cannot answer it. `P13_Ref_IndicatorPriorityTypes`
+    defines three priority types including `Confidential`, but none of the 189 published
+    indicators carries it — 105 are `Priority` and 84 carry no priority type at all. The
+    answer says the classification exists and nothing published is marked with it; it does
+    not report an empty list as though it had searched and found none.
+  why: >-
+    Epic 5 / Story 5.9 — name the residual honestly. This is the one refusal in the corpus
+    that exists because a vocabulary was published without any data behind it, the same shape
+    as P10 and P11 being empty files. Measured on 2026-09-15 against P01 and P13.

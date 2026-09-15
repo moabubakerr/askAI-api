@@ -1,0 +1,32 @@
+# Which published unit spellings the display rules recognise.
+#
+# R-DISPLAY-RANK-IS-AN-INTEGER-ORDINAL states the policy and carries the decimals, and
+# R-DISPLAY-PLACEHOLDER-UNIT-IS-SILENT names the placeholder spellings. Neither says how
+# the formatter *recognises* a rank, so without this file that one step would be a
+# literal in `assemble/` -- the defect the whole of AD-11 exists to end, reintroduced in
+# the one module that reads the rounding rules.
+area: DISPLAY
+about: >-
+  The published unit spellings the single formatter matches on. Spellings, not policy:
+  the policy is in display-rounding.yaml and this file only says which unit strings it
+  applies to.
+
+rules:
+  - id: R-DISPLAY-RANK-UNIT-SPELLINGS
+    statement: >-
+      A figure whose published unit is one of these spellings is a rank, and takes the
+      rank display rule rather than the published Format field. Matching is on the
+      engine's single text fold, so casing and spacing in the published field do not
+      decide whether a rank is rounded.
+    status: proposed
+    kind: table
+    sources:
+      - "docs/RULES.md R-173"
+      - "finding 106, read at main.py:2878"
+    catalogue: ["R-173"]
+    values:
+      rank_units: ["Rank"]
+    note: >-
+      One spelling today, because one is what the published catalogue carries. It is a
+      table rather than a constant so a second spelling arriving in the export is a data
+      edit a reviewer makes, not a deploy.

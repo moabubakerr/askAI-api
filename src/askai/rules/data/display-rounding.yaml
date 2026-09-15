@@ -1,0 +1,60 @@
+# Display rounding -- how many decimals a figure is shown to, and by whose authority.
+#
+# Rounding is the constant most often written as a literal and the one a reader notices
+# first: 686.131074 reached a tooltip because the number was formatted where it was
+# found. These values are read by the single formatter and exist nowhere else.
+area: DISPLAY
+about: >-
+  How many decimals a published figure is shown to. The published catalogue's own
+  Format field is the authority; these rules say what to do with it and what happens
+  when it carries nothing.
+
+rules:
+  - id: R-DISPLAY-DECIMALS-FROM-PUBLISHED-FORMAT
+    statement: >-
+      A value is shown with the display decimals the published Format field carries,
+      alongside its unit -- never at the precision the row happens to be stored at. A
+      Format field carrying no decimal specification falls back to the value below.
+    status: proposed
+    kind: constant
+    sources:
+      - "docs/RULES.md R-101"
+      - "findings 1, 60, 147"
+    catalogue: ["R-101"]
+    values:
+      fallback_decimals: 1
+    note: >-
+      One decimal is the shape every published example in the catalogue takes -- the
+      money form "bn0.0", the percentage "2.6%". It is a fallback for a Format field
+      that says nothing, not a cap on one that does, and it is data here precisely
+      because it is a guess that a reviewer may want to change without a deploy.
+
+  - id: R-DISPLAY-RANK-IS-AN-INTEGER-ORDINAL
+    statement: >-
+      A rank is an integer ordinal. The display-decimal policy never applies to a rank,
+      whatever the published Format field says -- including an empty one. "11.00th" is
+      not a thing.
+    status: proposed
+    kind: constant
+    sources:
+      - "docs/RULES.md R-173"
+      - "finding 106, read at main.py:2878"
+    catalogue: ["R-173"]
+    values:
+      decimals: 0
+    note: >-
+      The defect was one CMS field wide: `11.00 Rank` occurred where an indicator
+      carried Format='' while another carried Format='00'.
+
+  - id: R-DISPLAY-PLACEHOLDER-UNIT-IS-SILENT
+    statement: >-
+      A unit of "NA" is a placeholder the catalogue publishes, not a unit a reader is
+      shown; a figure carrying it is rendered with no unit rather than with the word.
+    status: proposed
+    kind: constant
+    sources:
+      - "docs/RULES.md R-101"
+      - "finding 60"
+    catalogue: ["R-101"]
+    values:
+      silent_units: ["NA"]

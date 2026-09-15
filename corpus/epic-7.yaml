@@ -1,0 +1,82 @@
+# Epic 7 — Conversation: follow-ups and multi-part questions.
+#
+# A follow-up changes exactly one dimension; a multi-part question is split, each part bound
+# through the identical path, and anything unbound is named rather than dropped. `history`
+# below is written as the prior question in the same shape, because history is an input to
+# compile, never a store another layer reads.
+
+- id: e7-001
+  spec_version: 1
+  question:
+    en: And monthly?
+    ar: وشهرياً؟
+  history:
+    - en: What was inflation in Qatar in 2026-Q1?
+      ar: كم بلغ معدل التضخم في قطر في الربع الأول من 2026؟
+  today: 2026-09-15
+  operation: value
+  measure: actual
+  why: >-
+    Epic 7 / Stories 7.2 and 7.3 — a one-dimension follow-up changes only the grain. The
+    subject stays `Inflation`, the country scope stays national, the measure stays actual;
+    only the grain moves from quarterly to monthly, which for this detail means 2026-Q1
+    (2.98461) is replaced by the latest monthly actual 2026-04 (2.6162). Inflation is one of
+    the 41 details publishing at all three grains, so the follow-up is meaningful rather than
+    a no-op.
+
+- id: e7-002
+  spec_version: 1
+  question:
+    en: What about 2022?
+    ar: وماذا عن 2022؟
+  history:
+    - en: What was Qatar's Real GDP in 2025?
+      ar: كم بلغ الناتج المحلي الإجمالي الحقيقي لدولة قطر في عام 2025؟
+  today: 2026-09-15
+  operation: value
+  measure: actual
+  why: >-
+    Epic 7 / Story 7.4 — state the inherited subject. Only the period changes; `Real GDP`
+    yearly 2022 = 686.131074 sits in the same series as the 2025 figure the reader already
+    has. The answer must name the indicator it carried forward, so the reader can see that
+    the engine did not quietly change subject.
+
+- id: e7-003
+  spec_version: 1
+  question:
+    en: What was inflation in April 2026, and how does Qatar's real GDP compare with Japan's?
+    ar: كم بلغ معدل التضخم في أبريل 2026، وكيف يقارن الناتج المحلي الإجمالي الحقيقي لقطر مع اليابان؟
+  today: 2026-09-15
+  operation: comparison
+  measure: actual
+  why: >-
+    Epic 7 / Stories 7.6 and 7.8 and recorded failures F-029 / F-030 — a two-part question
+    whose parts bind to different subjects and resolve differently. Part one binds and
+    answers: `Inflation`, national, monthly, 2026-04 = 2.6162 %. Part two cannot be answered
+    at all — `Real GDP` is not one of the 21 details with a declared benchmark set and carries
+    no country rows — so it must be named as refused with its own cause, alongside the part
+    that did answer. Being partially silent is the failure this story forecloses.
+
+- id: e7-004
+  spec_version: 1
+  question:
+    en: And the UAE?
+    ar: وماذا عن الإمارات؟
+  history:
+    - en: What was inflation in Singapore in April 2026?
+      ar: كم بلغ معدل التضخم في سنغافورة في أبريل 2026؟
+  today: 2026-09-15
+  operation: value
+  measure: actual
+  expected: refusal
+  refusal_reason: >-
+    The UAE is a declared benchmark country for `Inflation` and carries 84 monthly rows, but
+    its series stops at 2025-12; there is no 2026-04 row. The answer names the country's
+    latest published monthly period rather than falling back to another period or another
+    country.
+  why: >-
+    Epic 7 / Story 7.3 crossed with Epic 4 / Story 4.3 — the follow-up changes exactly one
+    dimension (the country), everything else is inherited, and the inherited period is what
+    makes the answer a refusal. Singapore has 88 monthly rows through 2026-04 (1.76401) and
+    the UAE has 84 through 2025-12, measured on 2026-09-15; a follow-up must not quietly
+    shift the period to make the new country answerable.

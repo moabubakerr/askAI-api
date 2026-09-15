@@ -1,0 +1,127 @@
+# Epic 2 — Finding the indicator you meant.
+#
+# Disambiguation, paraphrase, and the distinct honest refusals. Every name below was read
+# from data/cms/ on 2026-09-15: published names from P01/P02, unpublished names from
+# Item_2_Indicators_Catalog (the 281 unpublished rows carrying a real EN name).
+#
+# `measure: null` means no `Measure` member applies; it is not a new enum value.
+
+- id: e2-001
+  spec_version: 1
+  question:
+    en: Give me a chart of Qatar's GDP from 2022 to 2025.
+    ar: أعطني رسماً بيانياً للناتج المحلي الإجمالي لقطر من 2022 إلى 2025.
+  today: 2026-09-15
+  operation: series
+  measure: actual
+  expected: refusal
+  refusal_reason: >-
+    "GDP" is ambiguous: 15 published details contain the substring, including `Real GDP`,
+    `Non-Hydrocarbon Real GDP`, `Public Debt as a Percentage of GDP (%)`, `FDI stock (share
+    of GDP)` and eight sector shares. The answer names the candidates and asks; it never
+    substitutes one.
+  why: >-
+    Epic 2 / recorded failure F-003 — a substring match on "GDP" resolved to
+    `Value of VC deals directed to Qatar-based start-ups (as a % of GDP)` and warned it was
+    inactive. That detail has zero datapoints, so the substitution was doubly wrong.
+
+- id: e2-002
+  spec_version: 1
+  question:
+    en: What is the sector contribution to GDP?
+    ar: ما هي مساهمة القطاع في الناتج المحلي الإجمالي؟
+  today: 2026-09-15
+  operation: value
+  measure: actual
+  expected: refusal
+  refusal_reason: >-
+    Eight published indicators carry a detail named `Sector Contribution To GDP` — Education,
+    Tourism, Manufacturing, Agriculture & Livestock, ICT, Transportation and storage,
+    Health & Social Services, Financial & Insurance. The question does not say which sector.
+  why: >-
+    Epic 2 / Stories 2.5 and 2.11 — group-scoped disambiguation. The candidates are only
+    distinguishable to a reader once the group is named, which is exactly what FACT 6 and
+    FACT 4 together require. Note Tourism's copy is in %, the other seven in QAR, so a
+    silent pick would also change the unit.
+
+- id: e2-003
+  spec_version: 1
+  question:
+    en: How many tourists visited Qatar last year?
+    ar: كم عدد السياح الذين زاروا قطر العام الماضي؟
+  today: 2026-09-15
+  operation: value
+  measure: actual
+  why: >-
+    Epic 2 / recorded failure F-014 — "tourists" found nothing because only the exact string
+    `Number of International Visitors` matched. That indicator is published, has yearly
+    actuals 2019–2026, and 2025 = 5.089808. Paraphrase must reach it without a model call
+    where the semantic index suffices.
+
+- id: e2-004
+  spec_version: 1
+  question:
+    en: What is Qatar's PISA test average score?
+    ar: ما هو متوسط درجات اختبار PISA في قطر؟
+  today: 2026-09-15
+  operation: value
+  measure: actual
+  expected: refusal
+  refusal_reason: >-
+    `International Programme for Student Assessment (PISA) Test Average Score` exists in the
+    CMS but was never approved for publication, so no figure can be given. The refusal says
+    the question was understood and the gap is editorial — it never surfaces a value, a
+    period or a definition from the unpublished row.
+  why: >-
+    Epic 2 / Story 2.8 — improve a refusal from the unpublished catalogue without leaking
+    it. One of the 342 unpublished indicators (281 with a real EN name). Note the published
+    catalogue does carry `Program for International Student Assessment (PISA) Rank`, a
+    different measurable, so the answer may point there without claiming it is the same.
+
+- id: e2-005
+  spec_version: 1
+  question:
+    en: What is the rate of volunteer work in Qatar?
+    ar: ما هو معدل العمل التطوعي في قطر؟
+  today: 2026-09-15
+  operation: value
+  measure: actual
+  expected: refusal
+  refusal_reason: >-
+    `The Rate of Volunteer Work` / "معدل العمل التطوعي" is in the CMS but unpublished. Not
+    approved for publication is a different answer from no such indicator and from no data.
+  why: >-
+    Epic 2 / Stories 2.7 and 2.8 — the unpublished refusal reached from Arabic, proving the
+    six distinct refusals are phrased distinctly in both languages.
+
+- id: e2-006
+  spec_version: 1
+  question:
+    en: How many visitors did the Museum of Islamic Art get last month?
+    ar: كم عدد زوار متحف الفن الإسلامي الشهر الماضي؟
+  today: 2026-09-15
+  operation: value
+  measure: actual
+  expected: refusal
+  refusal_reason: >-
+    Nothing in the published catalogue or in the CMS working set measures museum
+    attendance. The refusal is "this is not something the knowledge base holds", the
+    strongest of the six and the one that must not be softened into a near match.
+  why: >-
+    Epic 2 / Story 2.9 — never substitute, never invent. The nearest lexical neighbours are
+    `Number of International Visitors` and `Number of Medical Tourists`; both are wrong, and
+    offering either is the F-003 defect.
+
+- id: e2-007
+  spec_version: 1
+  question:
+    en: What is Qatar's obesity rate?
+    ar: ما هو معدل السمنة في قطر؟
+  today: 2026-09-15
+  operation: value
+  measure: actual
+  why: >-
+    Epic 2 / Story 2.12 `[DECISION GATED — R2]` — `Obesity Rate` is published, has data, and
+    is one of the 65 published indicators (34%) flagged IsActive=False with a blank
+    InactiveReason. An inactive indicator needs a designed, stated behaviour; the entry
+    exists so the decision is recorded against a real row rather than a hypothetical one.

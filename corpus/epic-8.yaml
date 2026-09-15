@@ -1,0 +1,37 @@
+# Epic 8 — The answer as a piece of writing.
+#
+# Prose is generated only from the composed answer and discarded whole if the guard fails.
+# Corpus entries assert on the QuerySpec and the typed elements, never on prose (the spine's
+# testing convention), so these entries pin the bound question that the guard runs against.
+
+- id: e8-001
+  spec_version: 1
+  question:
+    en: How has inflation in Qatar moved over the last three years?
+    ar: كيف تحرك معدل التضخم في قطر خلال السنوات الثلاث الماضية؟
+  today: 2026-09-15
+  operation: series
+  measure: actual
+  why: >-
+    Epic 8 / Stories 8.2 and 8.5 — the guard has something to bite on. `Inflation` yearly
+    2023 = 3.02765, 2024 = 1.22835, 2025 = 0.54316; "the last three years" is a `LastN`
+    request anchored on the latest published yearly actual, so it is `Deferred` until
+    execute. Any number in the prose must be one of those three post-normalisation, and the
+    prose may not widen the answer to a fourth year or to a different grain.
+
+- id: e8-002
+  spec_version: 1
+  question:
+    en: How is Qatar's economy doing?
+    ar: كيف يبلي الاقتصاد القطري؟
+  today: 2026-09-15
+  operation: list
+  measure: actual
+  why: >-
+    Epic 8 / Stories 8.6, 8.7 and 8.9 and recorded failure F-021, where a technically correct
+    answer was rejected as "I did not ask for all of this". The bound answer is the
+    `NationalIndicators` set of 8, each at its own latest period — which spans 2023 (Gross
+    National Income) to 2026-Q1 (Government Revenues). The prose must say that the answer is
+    narrower than the question, must not present one period as covering the set, and must
+    stay proportionate; both lenses over this one bound answer must agree on every figure,
+    period and scope.

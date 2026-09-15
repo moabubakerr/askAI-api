@@ -1,0 +1,91 @@
+# Epic 6 — Meaning: analyst commentary and articles.
+#
+# Explanation reaches 8.0% of datapoints, so `absent` is the common case. Analyst coverage
+# below was measured from P04 joined through P03 on 2026-09-15; article titles from
+# data/Articles.csv.
+#
+# `measure: null` means no `Measure` member applies; it is not a new enum value.
+
+- id: e6-001
+  spec_version: 1
+  question:
+    en: Why did inflation rise in Q4 2025?
+    ar: لماذا ارتفع معدل التضخم في الربع الرابع من 2025؟
+  today: 2026-09-15
+  operation: explanation
+  measure: actual
+  why: >-
+    Epic 6 / Stories 6.3 and 6.4 — answer "why" only from published analyst text, filtered by
+    scope before ranking. The `Inflation` 2025-Q4 national quarterly datapoint carries a
+    substantive bilingual summary ("Headline inflation rose to 1.5% YoY in Q4 2025 from 0.8%
+    in Q3…" / "ارتفع معدل التضخم العام إلى 1.5%…"), so both languages are answerable from
+    published text with attribution.
+
+- id: e6-002
+  spec_version: 1
+  question:
+    en: Why did inflation move in April 2026?
+    ar: لماذا تغير معدل التضخم في أبريل 2026؟
+  today: 2026-09-15
+  operation: explanation
+  measure: actual
+  why: >-
+    Epic 6 / Story 6.3 — the scope pre-filter is a mandatory argument. `Inflation` carries 23
+    analyses split 15 quarterly and 8 monthly, and 2026-04 is one of the monthly ones. The
+    guard here is that the quarterly passages must not be retrieved for a monthly question:
+    F-015 is exactly an analysis for one period retrieved for another.
+
+- id: e6-003
+  spec_version: 1
+  question:
+    en: Why was inflation negative in 2020?
+    ar: لماذا كان معدل التضخم سالباً في عام 2020؟
+  today: 2026-09-15
+  operation: explanation
+  measure: actual
+  expected: refusal
+  refusal_reason: >-
+    `Inflation` has seven yearly actuals (2020 = -2.58049 %) and zero analyses at yearly
+    grain — all 23 are monthly or quarterly, and the earliest is 2022-Q2. No published
+    analyst text covers the 2020 yearly datapoint, so the figure stands alone and the answer
+    says no explanation has been published for it.
+  why: >-
+    Epic 6 / Story 6.4 — `absent` is the common case and must appear plainly, not be filled
+    by the nearest passage. This is the strongest grounded case: the indicator is
+    well-covered overall, which is precisely when a similarity-ranked retriever invents a
+    match.
+
+- id: e6-004
+  spec_version: 1
+  question:
+    en: What has been written about the financial stability implications of tariffs and the trade war?
+    ar: ما الذي كُتب عن الآثار المترتبة على الاستقرار المالي نتيجة الرسوم الجمركية والحرب التجارية؟
+  today: 2026-09-15
+  operation: explanation
+  measure: null
+  why: >-
+    Epic 6 / Stories 6.6 and 6.7 — an article as a first-class source, always labelled as an
+    article. "Financial Stability Implications of Tariffs and the Trade War" is a real live
+    bilingual article in Articles.csv. Articles carry no foreign key to any indicator, so the
+    answer must not attach the article to `US Tariff` or any other indicator, and any figure
+    inside it stays an article figure, never an approved one (Story 6.8).
+
+- id: e6-005
+  spec_version: 1
+  question:
+    en: What do your articles say about Qatar's obesity rate?
+    ar: ماذا تقول مقالاتكم عن معدل السمنة في قطر؟
+  today: 2026-09-15
+  operation: explanation
+  measure: null
+  expected: refusal
+  refusal_reason: >-
+    None of the 67 live articles is about obesity or public health outcomes; the published
+    set is economic — knowledge transfer and in-country value, tariffs and financial
+    stability, globalisation, GCC fiscal sustainability, economic complexity and exports.
+    Retrieval returns nothing, and nothing is the answer.
+  why: >-
+    Epic 6 / Story 6.9 and AD-30 — the governing metric is precision on questions that should
+    return nothing. `Obesity Rate` is a real published indicator with data, so the question is
+    about something the engine knows, which is what makes the nearest-neighbour temptation
+    strong. A relevance floor, not a nearest neighbour.

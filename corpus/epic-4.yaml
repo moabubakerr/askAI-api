@@ -1,0 +1,127 @@
+# Epic 4 — Comparison across countries and across indicators.
+#
+# Cross-country comparison reaches 21 of 289 details (7.3%), so refusing a comparison is
+# the normal outcome. Every declared benchmark set below is from P05 and every country
+# figure from P03, read on 2026-09-15. Qatar is declared in all 21 sets and named in none
+# of the 8,127 data rows — the national series is the blank-country rows.
+
+- id: e4-001
+  spec_version: 1
+  question:
+    en: Compare Qatar's inflation with Singapore's in 2026-Q1.
+    ar: قارن معدل التضخم في قطر مع سنغافورة في الربع الأول من 2026.
+  today: 2026-09-15
+  operation: comparison
+  measure: actual
+  why: >-
+    Epic 4 / Story 4.2 and recorded failure F-001 — asked Qatar vs Singapore, the old system
+    showed six countries. At Inflation 2026-Q1 the rows are Qatar (blank country) 2.98461 and
+    Singapore 1.48481, alongside Bahrain, KSA, Oman and Kuwait. Named countries filter the
+    declared benchmark set; they never expand it, and Qatar is reached as the national query,
+    not as a country filter value.
+
+- id: e4-002
+  spec_version: 1
+  question:
+    en: How does Qatar's FDI stock compare with the UAE in 2024?
+    ar: كيف يقارن مخزون الاستثمار الأجنبي المباشر في قطر مع الإمارات في عام 2024؟
+  today: 2026-09-15
+  operation: comparison
+  measure: actual
+  why: >-
+    Epic 4 / Stories 4.1 and 4.4 — a stated common period, in Arabic. `FDI stock` at 2024:
+    Qatar (national) 27.596, UAE 270.619, unit USD. The declared set is Bahrain, KSA, Kuwait,
+    Norway, Oman, Qatar, Singapore, Switzerland, UAE; eight of the nine carry rows.
+
+- id: e4-003
+  spec_version: 1
+  question:
+    en: Which country had the lowest inflation in 2026-Q1?
+    ar: أي دولة سجلت أدنى معدل تضخم في الربع الأول من 2026؟
+  today: 2026-09-15
+  operation: extremum
+  measure: actual
+  why: >-
+    Epic 4 / Story 4.6 and recorded failure F-027 — the old system answered with one
+    country's historical low, engaging no country dimension at all. Over Inflation's 2026-Q1
+    rows the scope is Bahrain 0.95395, KSA 1.78409, Kuwait 1.98919, Oman 2.35183, Singapore
+    1.48481 and Qatar 2.98461; the extremum must name what carries it and over which scope.
+
+- id: e4-004
+  spec_version: 1
+  question:
+    en: Where does Qatar rank among its benchmark countries on the Global Innovation Index in 2025?
+    ar: ما ترتيب قطر بين الدول المرجعية في مؤشر الابتكار العالمي لعام 2025؟
+  today: 2026-09-15
+  operation: rank
+  measure: actual
+  why: >-
+    Epic 4 / Story 4.7 — ranks are ordinals over a bound scope, and must not be confused with
+    the indicator's own value. At 2025 `Global Innovation Index Rank` reads Qatar 48, UAE 30,
+    KSA 46, Bahrain 62, Oman 69, Kuwait 73; the polarity is Decrease, so a lower published
+    rank is better and the ordinal must respect that.
+
+- id: e4-005
+  spec_version: 1
+  question:
+    en: What is the spread between the highest and lowest inflation among Qatar's benchmark countries in 2026-Q1?
+    ar: ما الفارق بين أعلى وأدنى معدل تضخم بين الدول المرجعية لقطر في الربع الأول من 2026؟
+  today: 2026-09-15
+  operation: spread
+  measure: actual
+  why: >-
+    Epic 4 / Story 4.8 — spread between extrema within one bound scope. Same 2026-Q1 rows as
+    e4-003; both ends must be named, and the result is in percentage points because the
+    underlying unit is %.
+
+- id: e4-006
+  spec_version: 1
+  question:
+    en: Compare Qatar's Real GDP with Japan's.
+    ar: قارن الناتج المحلي الإجمالي الحقيقي لقطر مع اليابان.
+  today: 2026-09-15
+  operation: comparison
+  measure: actual
+  expected: refusal
+  refusal_reason: >-
+    `Real GDP` is not one of the 21 details with a declared benchmark set, and carries no
+    country rows at all — only the national series. Cross-country comparison is not
+    supported for this indicator, which is a different answer from "Japan has no rows".
+  why: >-
+    Epic 4 / Story 4.3 — "not a declared benchmark" as its own refusal. 268 of 289 details
+    are in this state, so the refusal is the normal case and the acceptance criteria weight
+    it as heavily as comparing well.
+
+- id: e4-007
+  spec_version: 1
+  question:
+    en: How does Qatar's total population compare with Singapore's?
+    ar: كيف يقارن عدد سكان قطر مع سنغافورة؟
+  today: 2026-09-15
+  operation: comparison
+  measure: actual
+  expected: refusal
+  refusal_reason: >-
+    `Total Population` declares a benchmark set in P05 — Bahrain, KSA, Kuwait, Norway, Oman,
+    Qatar, Singapore, Switzerland, UAE — but all 208 of its datapoints are national
+    (blank country). The configuration promises a comparison the data cannot supply, and the
+    answer must say that rather than emitting an empty or a one-sided card.
+  why: >-
+    Epic 4 / Story 4.3 — the sharpest grounded instance of "declared but no rows", distinct
+    from e4-006's "not a declared benchmark". The only detail among the 21 with zero country
+    rows, measured on 2026-09-15.
+
+- id: e4-008
+  spec_version: 1
+  question:
+    en: What US tariff rate applies to South Korea?
+    ar: ما هي نسبة التعريفة الجمركية الأمريكية المطبقة على كوريا الجنوبية؟
+  today: 2026-09-15
+  operation: value
+  measure: actual
+  why: >-
+    Epic 4 / Story 4.1 — country identity through a reviewable alias map. `US Tariff` carries
+    the country as `Korea` (2026-01 = 16), while `Liner Shipping Connectivity Index Rank`
+    carries `South Korea`; both spellings survive publication (FACT 7). A reader asking for
+    South Korea must reach both, and a benchmark set holding both must not list the country
+    twice. The alias map is data, not a hard-coded dictionary.

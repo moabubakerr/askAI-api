@@ -1,0 +1,116 @@
+# The English half of the bilingual catalogue (FR-63, FR-63a, AD-11).
+#
+# This file and ar.yaml are one reviewable artifact in two halves. They are agreed by
+# the same people who agree the rules, and a wording fix is a change here and nowhere
+# else -- F-028 ("Analyst Summary" should be "Summary Analysis") and F-034 are label
+# defects, not code defects, and this is the file they are fixed in.
+#
+# Every id here exists in ar.yaml and every id there exists here; the loader refuses to
+# start otherwise. Reviewing the two side by side is the intended way to read them.
+#
+# A message is either a single string, or -- when it carries a count -- one string per
+# plural category that the language distinguishes. English distinguishes two, `one` and
+# `other`; Arabic distinguishes six, and ar.yaml supplies all six. The loader checks
+# each file against its own language's rule, so the asymmetry is expected and the
+# absence of a form is not.
+
+version: 1
+
+numbers:
+  # Western digits, comma groups, full-stop decimal.
+  digits: "0123456789"
+  group_separator: ","
+  decimal_separator: "."
+  group_size: 3
+
+messages:
+
+  # ------------------------------------------------------------------ field labels
+
+  label.value: "Value"
+  label.unit: "Unit"
+  label.period: "Period"
+  label.country: "Country"
+  label.source: "Source"
+  label.indicator: "Indicator"
+  scope.national: "National"
+
+  # ------------------------------------------------------------------ period forms
+
+  period.yearly: "{year}"
+  period.quarterly: "{quarter} {year}"
+  period.monthly: "{month} {year}"
+
+  period.quarter.1: "Q1"
+  period.quarter.2: "Q2"
+  period.quarter.3: "Q3"
+  period.quarter.4: "Q4"
+
+  period.month.1: "January"
+  period.month.2: "February"
+  period.month.3: "March"
+  period.month.4: "April"
+  period.month.5: "May"
+  period.month.6: "June"
+  period.month.7: "July"
+  period.month.8: "August"
+  period.month.9: "September"
+  period.month.10: "October"
+  period.month.11: "November"
+  period.month.12: "December"
+
+  # ------------------------------------------------------------------ the answer
+
+  answer.value: "{detail} was {value} {unit} in {period}."
+  answer.value_for_country: "{detail} in {country} was {value} {unit} in {period}."
+
+  # ------------------------------------------------------ clarifications and refusals
+
+  clarify.which_indicator: "Which indicator do you mean: {options}?"
+  clarify.which_period: "Which period do you mean for {detail}?"
+  refusal.not_published: "That is not in the published data, so there is no answer to give."
+  refusal.not_supported: "The published data cannot answer that question as asked."
+
+  # ------------------------------------------------------------------ counted nouns
+  #
+  # The unit the reader asked in is chosen by the caller, from these ids. There is no
+  # default unit: the engine's storage unit is not the reader's question (R-175).
+
+  count.indicator:
+    one: "{count} indicator"
+    other: "{count} indicators"
+
+  count.datapoint:
+    one: "{count} data point"
+    other: "{count} data points"
+
+  count.country:
+    one: "{count} country"
+    other: "{count} countries"
+
+  count.year:
+    one: "{count} year"
+    other: "{count} years"
+
+  count.quarter:
+    one: "{count} quarter"
+    other: "{count} quarters"
+
+  count.month:
+    one: "{count} month"
+    other: "{count} months"
+
+  # --------------------------------------------------------------- composed sentences
+  #
+  # These agree in number with the count they carry, and name their unit through
+  # {counted} rather than containing one (R-175). English distinguishes only the verb;
+  # Arabic distinguishes the verb, the dual and the plural of paucity as well, which is
+  # why the sentence and its noun are chosen by the same count in the same call.
+
+  sentence.found:
+    one: "We found {counted} that matches your question."
+    other: "We found {counted} that match your question."
+
+  sentence.available_for:
+    one: "{counted} is available for {detail}."
+    other: "{counted} are available for {detail}."

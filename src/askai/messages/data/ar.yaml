@@ -1,0 +1,168 @@
+# The Arabic half of the bilingual catalogue (FR-61, FR-62, FR-63, FR-63a, AD-11).
+#
+# Arabic is a first-class path, not a translation layer over an English answer. That is
+# a structural claim, and this file is where it is either true or false: the Arabic
+# wording is authored against the Arabic count, not derived from the English sentence.
+#
+# R-174 -- a counted noun in Arabic takes six forms, four of which English does not
+# distinguish at all:
+#
+#   0        zero   نقصد جمعًا مجردًا           مؤشرات
+#   1        one    المفرد                      مؤشر واحد
+#   2        two    المثنى                      مؤشران
+#   3-10     few    جمع القلة                   3 مؤشرات
+#   11-99    many   المفرد المنصوب (تمييز)      11 مؤشرًا
+#   100, 101 other  المفرد المجرور              100 مؤشر
+#
+# It is the last two digits that decide from 3 upward, so 103 takes the `few` form and
+# 111 the `many` form. The loader requires all six on every counted message here; a
+# missing dual stops startup rather than falling back to a plural that reads as an
+# error to every Arabic speaker who sees it.
+#
+# R-175 -- the sentences under `sentence.*` agree in number with the count they carry,
+# and name their unit through {counted} rather than containing one, so the unit is the
+# one the reader asked in.
+#
+# Every id here exists in en.yaml and every id there exists here; the loader refuses to
+# start otherwise.
+
+version: 1
+
+numbers:
+  # Western digit shapes, deliberately. The published data uses them, the period
+  # strings reject the Arabic-Indic ones outright -- so a figure and a period in one
+  # sentence would otherwise disagree -- and R-174's own worked examples are written
+  # "3 مؤشرات". The grouping and decimal marks are the Arabic ones: U+066C ARABIC
+  # THOUSANDS SEPARATOR and U+066B ARABIC DECIMAL SEPARATOR.
+  #
+  # This is the editorial decision most likely to be revisited, and it is data for
+  # exactly that reason: switching to "٠١٢٣٤٥٦٧٨٩" is a change to this line.
+  digits: "0123456789"
+  group_separator: "٬"
+  decimal_separator: "٫"
+  group_size: 3
+
+messages:
+
+  # ------------------------------------------------------------------ field labels
+
+  label.value: "القيمة"
+  label.unit: "الوحدة"
+  label.period: "الفترة"
+  label.country: "الدولة"
+  label.source: "المصدر"
+  label.indicator: "المؤشر"
+  scope.national: "على المستوى الوطني"
+
+  # ------------------------------------------------------------------ period forms
+  #
+  # The quarter is named, not numbered: "الربع الأول 2025", not "ر1 2025". A period
+  # form is written the way the language writes it, not the English one with the words
+  # replaced (FR-62).
+
+  period.yearly: "{year}"
+  period.quarterly: "{quarter} {year}"
+  period.monthly: "{month} {year}"
+
+  period.quarter.1: "الربع الأول"
+  period.quarter.2: "الربع الثاني"
+  period.quarter.3: "الربع الثالث"
+  period.quarter.4: "الربع الرابع"
+
+  period.month.1: "يناير"
+  period.month.2: "فبراير"
+  period.month.3: "مارس"
+  period.month.4: "أبريل"
+  period.month.5: "مايو"
+  period.month.6: "يونيو"
+  period.month.7: "يوليو"
+  period.month.8: "أغسطس"
+  period.month.9: "سبتمبر"
+  period.month.10: "أكتوبر"
+  period.month.11: "نوفمبر"
+  period.month.12: "ديسمبر"
+
+  # ------------------------------------------------------------------ the answer
+
+  answer.value: "بلغ {detail} {value} {unit} في {period}."
+  answer.value_for_country: "بلغ {detail} في {country} {value} {unit} في {period}."
+
+  # ------------------------------------------------------ clarifications and refusals
+
+  clarify.which_indicator: "أي مؤشر تقصد: {options}؟"
+  clarify.which_period: "أي فترة تقصد بشأن {detail}؟"
+  refusal.not_published: "هذه المعلومة غير متوفرة في البيانات المنشورة، ولا توجد إجابة يمكن تقديمها."
+  refusal.not_supported: "البيانات المنشورة لا تتيح الإجابة عن هذا السؤال بصيغته الحالية."
+
+  # ------------------------------------------------------------------ counted nouns
+
+  count.indicator:
+    zero: "مؤشرات"
+    one: "مؤشر واحد"
+    two: "مؤشران"
+    few: "{count} مؤشرات"
+    many: "{count} مؤشرًا"
+    other: "{count} مؤشر"
+
+  count.datapoint:
+    zero: "نقاط بيانات"
+    one: "نقطة بيانات واحدة"
+    two: "نقطتا بيانات"
+    few: "{count} نقاط بيانات"
+    many: "{count} نقطة بيانات"
+    other: "{count} نقطة بيانات"
+
+  count.country:
+    zero: "دول"
+    one: "دولة واحدة"
+    two: "دولتان"
+    few: "{count} دول"
+    many: "{count} دولة"
+    other: "{count} دولة"
+
+  count.year:
+    zero: "سنوات"
+    one: "سنة واحدة"
+    two: "سنتان"
+    few: "{count} سنوات"
+    many: "{count} سنة"
+    other: "{count} سنة"
+
+  count.quarter:
+    zero: "أرباع"
+    one: "ربع واحد"
+    two: "ربعان"
+    few: "{count} أرباع"
+    many: "{count} ربعًا"
+    other: "{count} ربع"
+
+  count.month:
+    zero: "أشهر"
+    one: "شهر واحد"
+    two: "شهران"
+    few: "{count} أشهر"
+    many: "{count} شهرًا"
+    other: "{count} شهر"
+
+  # --------------------------------------------------------------- composed sentences
+  #
+  # The verb changes with the count as well as the noun: يطابق for one, يطابقان for the
+  # dual, تطابق for the 3-10 plural. Rendering the noun first and dropping it into a
+  # fixed sentence would get the noun right and the verb wrong -- which is why the
+  # sentence and its noun are selected by the same count, in one call (R-175).
+
+  sentence.found:
+    zero: "لم نجد {counted} تطابق سؤالك."
+    one: "وجدنا {counted} يطابق سؤالك."
+    two: "وجدنا {counted} يطابقان سؤالك."
+    few: "وجدنا {counted} تطابق سؤالك."
+    many: "وجدنا {counted} يطابق سؤالك."
+    other: "وجدنا {counted} يطابق سؤالك."
+
+  sentence.available_for:
+    zero: "{counted} متاحة لـ{detail}."
+    one: "{counted} متاح لـ{detail}."
+    two: "{counted} متاحان لـ{detail}."
+    few: "{counted} متاحة لـ{detail}."
+    many: "{counted} متاحًا لـ{detail}."
+    other: "{counted} متاح لـ{detail}."

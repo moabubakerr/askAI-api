@@ -1,0 +1,77 @@
+# Grain selection -- which interval a question is answered at.
+#
+# Every rule here is `proposed`: docs/RULES.md v2.1 records 187 proposed, 1 rejected and
+# 0 agreed, and nobody holds the standing to agree one (FR-72a). The status is copied
+# from the catalogue, not assumed by the loader.
+area: GRAIN
+about: >-
+  Which publication interval a question is answered at, and what happens when the
+  indicator publishes at more than one. A period owns its grain, so nothing here is a
+  grain stored beside a period -- these are the rules for choosing which periods to read.
+
+rules:
+  - id: R-GRAIN-QUESTION-OUTRANKS-DATA
+    statement: >-
+      Interval discipline. A selection never mixes a year with its own quarters. When
+      the reader named an interval and rows exist at it, only those rows are used; when
+      rows exist at no such interval, the answer says so and uses what exists.
+    status: proposed
+    kind: code
+    sources:
+      - "docs/RULES.md R-81"
+      - "findings 1, 46, 56"
+    catalogue: ["R-81"]
+
+  - id: R-GRAIN-COARSEST-WITH-ENOUGH-READINGS
+    statement: >-
+      A series with no named grain is read at the coarsest interval that carries at
+      least the minimum number of readings below -- seven annual rows are not discarded
+      because two monthly rows are newer. A single reading is the newest of its kind.
+    status: proposed
+    kind: constant
+    sources:
+      - "docs/RULES.md R-82"
+      - "finding 56"
+    catalogue: ["R-82"]
+    values:
+      minimum_readings: 3
+    note: >-
+      Three is the catalogue's figure and the reason the rule exists: below it, "the
+      trend of inflation" came back as two monthly rows while seven annual rows sat
+      unread.
+
+  - id: R-GRAIN-TIE-GOES-COARSER
+    statement: >-
+      Grains are compared separately -- a year and its own quarter are not the same
+      reading -- and a tie on end date goes to the coarser grain ("2025" over
+      "2025-Q4"), unless the reader named a grain, whose grain outranks the convention.
+    status: proposed
+    kind: switch
+    sources:
+      - "docs/RULES.md R-92"
+      - "findings 1, 108"
+    catalogue: ["R-92"]
+    values:
+      tie_goes_to: coarser
+      named_grain_outranks: true
+
+  - id: R-GRAIN-PERIODLESS-WINDOW
+    statement: >-
+      A period-less question about one indicator is about a window expressed in years,
+      given per grain below; the fetch expands the window to the indicator's own grain.
+      A period-less set fetch uses the quarterly window unless a granularity was named.
+    status: proposed
+    kind: table
+    sources:
+      - "docs/RULES.md R-43"
+    catalogue: ["R-43"]
+    values:
+      window_years:
+        monthly: 3
+        quarterly: 6
+        yearly: 10
+      set_fetch_grain: quarterly
+    note: >-
+      Keyed by every grain on purpose: a table missing one would fall through to
+      whatever the caller does with a missing key, which is this constant living in code
+      again. The schema refuses a partial grain table for that reason.

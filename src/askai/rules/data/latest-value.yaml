@@ -1,0 +1,59 @@
+# The latest-value definition -- what "now", "latest" and "currently" resolve to.
+#
+# Statuses are the catalogue's (docs/RULES.md v2.1). One rule here is `rejected`: it is
+# loaded, enumerated, and never fired. It exists so it is not re-proposed.
+area: LATEST
+about: >-
+  What "latest" means when a reader does not name a period. Compile leaves the field
+  Deferred; execute resolves it against these rules and records what it resolved to.
+
+rules:
+  - id: R-LATEST-MOST-RECENT-ACTUAL
+    statement: >-
+      "Latest" means the most recent actual value at or before today. Future-dated rows
+      and placeholder values are never eligible, and a target or a baseline is never
+      served as the latest reading.
+    status: proposed
+    kind: constant
+    sources:
+      - "docs/PRD.md FR-8"
+      - "docs/ARCHITECTURE-SPINE.md AD-11"
+    values:
+      measure: actual
+      future_dated_eligible: false
+    note: >-
+      The published export carries 322 future-dated rows, 42 of them marked Actual, so
+      "the most recent row" and "the most recent actual at or before today" are
+      different answers on real data rather than in principle.
+
+  - id: R-LATEST-NAMES-THE-OTHER-GRAIN
+    statement: >-
+      When the question named no period and no grain and the indicator publishes at more
+      than one grain, the answer names the newest reading at the coarser grain as well,
+      rather than choosing between them silently.
+    status: proposed
+    kind: code
+    sources:
+      - "docs/RULES.md R-83"
+      - "finding 96"
+    catalogue: ["R-83"]
+
+  - id: R-LATEST-PER-MEMBER-ON-NEWER-ROW
+    statement: >-
+      When any member of a set publishes a reading newer than the aligned period and the
+      reader named no period, switch the whole set to per-indicator latest.
+    status: rejected
+    kind: code
+    sources:
+      - "docs/RULES.md R-157"
+      - "finding 133, read at answer_pipeline.py:2748"
+    catalogue: ["R-157"]
+    withdrawn_because: >-
+      Tried, implemented and withdrawn: it fixed the client's D5 case and broke
+      twenty-two checks across five harnesses, because it replaced a deliberate, tested
+      design for every set question rather than for the questions that want it. The
+      switch belongs on the question, not on the data. Do not re-propose without reading
+      those twenty-two checks first.
+    note: >-
+      Loaded and never fired. Firing it raises rather than returning nothing, so a
+      withdrawn rule can never be mistaken for one that ran and found nothing to do.
