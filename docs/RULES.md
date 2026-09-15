@@ -1,16 +1,22 @@
 ---
 title: "Ask AI — Rule Catalogue"
-status: draft
+status: v2 — statuses complete; coverage gap costed and open
 created: 2026-09-14
-updated: 2026-09-14
-rules: 166
-baseline: "askai-business-logic-spec v1.0 · release 4.6.0"
+updated: 2026-09-15
+rules: 169
+version: 2
+statuses: "proposed 168 · rejected 1 · agreed 0"
+baseline: "askai-business-logic-spec v1.0 · release 4.6.0, plus the two 4.7.0 guard findings (156, 157)"
 governs: "the answer engine — see ARCHITECTURE-SPINE.md and prd.md"
 ---
 
 # Ask AI — Rule Catalogue
 
-**166 rules. Every one enumerable, sourced, and mapped to what enforces it.**
+**169 rules. Every one enumerable, sourced, status-bearing, and mapped to what enforces it.**
+
+> **v2 — 2026-09-15.** Three rules added (`R-155`, `R-156`, `R-157`), a status assigned to all 169,
+> and the uncited-findings gap measured and bucketed rather than estimated. **No rule is `agreed`,
+> and that is deliberate — see §5.** What remains open is blocked on an input, not on effort: §4.2.
 
 This is the artifact the founding complaint asks for. When a stakeholder says *"it does not have
 good business logic"*, the accurate translation is *"I cannot see, agree, or verify the business
@@ -44,12 +50,13 @@ migration plan, and it arrived at the same taxonomy the architecture did indepen
 
 | Kind | Count | Becomes, in the new codebase |
 |---:|---|---|
-| `code` | **111** | a test — behaviour the corpus or a unit test asserts |
+| `code` | **113** | a test — behaviour the corpus or a unit test asserts |
 | `wording` | **21** | the bilingual message catalogue (`messages/`) |
 | `principle` | **12** | already stated as a PRD commitment — verify, do not restate |
 | `constant` | **12** | `rules/*.yaml` — a published value the engine reads |
 | `switch` | **8** | `rules/*.yaml` — a toggle or budget, held as data |
 | `table` | **2** | `rules/*.yaml` — a reviewed lookup |
+| `rejected` | **1** | nothing — recorded so it is not re-proposed (`R-157`) |
 
 **22 rules are data and can be carried across immediately.** 21 more become message-catalogue
 entries. The 111 `code` rules are acceptance criteria, read as each capability is built — not a
@@ -70,7 +77,7 @@ independent attempts at the same system arriving at the same seams:
 | 20 | B — System map and the life of a request | AD-9, AD-15 |
 | 18 | D — Resolution: which indicator, or which indicators | AD-25, AD-26 |
 | 17 | F — Fetching and selecting the rows | `execute/` · AD-3, AD-4, AD-5 |
-| 13 | H — Checks and guards | AD-7, AD-28 |
+| 16 | H — Checks and guards | AD-7, AD-28 |
 | 12 | A — Principles | the product commitments |
 | 7 | E — Planning: from a shape to a contract | AD-1 |
 | 6 | I — The renderer (optional, on request, gated) | AD-8, AD-28 |
@@ -79,39 +86,130 @@ independent attempts at the same system arriving at the same seams:
 
 ## 4. What is missing, and must be closed
 
-This catalogue is **not complete**, and the gaps are known rather than suspected.
+This catalogue is **not complete**, and the gaps are known rather than suspected. **v2 closed one of
+the three, closed most of a second, and converted the third from an unknown into a costed
+worklist** — it did not close it, and §4.2 says exactly why.
 
-### 4.1 It is a release behind
+### 4.1 It is a release behind — **mostly closed in v2**
 
 The baseline is **release 4.6.0**. The reference tree is **4.7.0 plus four patches**. Findings
-**153, 154, 155, 156 and 157** postdate this register and **no rule covers them** — including:
+**153, 154, 155, 156 and 157** postdate this register.
 
-- **finding 156** — *a decimal glued to its scale is still a decimal.* A number guard that rejected
-  a correct sentence because `753.2bn` did not match `753.2`.
-- **finding 157** — *the Council's sentence, moved onto another country.* An attributed sentence
-  about Qatar re-used on a Bahrain card, carrying its byline, and the guard passed it.
+| Finding | v1 state | v2 state |
+|---|---|---|
+| **156** — a decimal glued to its scale is still a decimal | no rule | ✅ **`R-155`** |
+| **157** — the Council's sentence, moved onto another country | no rule | ✅ **`R-156`** |
+| **153** — the back-office phase 1 | no rule | ✅ **correctly none** — out of scope with the deferred operator surface (triage bucket E) |
+| **154** — set scope and alignment family | no rule | ⛔ **still open** — see below |
+| **155** — display / the accounting contract | no rule | ⛔ **still open** — see below |
 
-Both are **guard holes**. AD-28 closes them architecturally; neither has a rule.
+**Both guard holes now carry rules.** AD-28 closes them architecturally; `R-155` and `R-156` make
+them reviewable and testable rather than only foreclosed.
 
-### 4.2 Sixty-nine findings are cited by no rule
+**154 and 155 remain open, deliberately.** The findings triage places them in the *Set scope &
+alignment* and *Display* families respectively, and that is **all that is known about them in this
+repository**. Writing a rule from a family label would be invention, not analysis, so neither was
+written. They join the §4.2 worklist.
 
-Of those: **18 are structurally foreclosed** by the architecture and correctly absent from a rules
-register; **4 have no explanatory block** at all (findings 44, 48, 78, 93); **2 are out of scope**
-(31 is the SPA, 153 is the deferred operator surface).
+### 4.2 Sixty-nine findings are cited by no rule — **measured, bucketed, still open**
 
-**That leaves roughly 45 findings carrying domain knowledge that no rule here cites.** The register's
-`source` field is terse, so some are certainly covered by a statement that simply does not name
-them — but that must be checked rule by rule, not assumed. Until it is, this catalogue should be
-read as *at least* 166 rules, not exactly 166.
+v2 re-ran the arithmetic rather than trusting it. **82 findings are cited by at least one rule; 69
+are not** — the v1 figure, confirmed exactly. Cross-mapping those 69 against the findings triage
+gives the first precise picture of what the gap actually contains:
 
-### 4.3 There is no `rejected` status, and there needs to be
+| Bucket | Uncited | What it means |
+|---|---:|---|
+| **A** — foreclosed by the architecture | **22** | Correctly absent from a rules register. Each becomes a test, not a rule. Includes 156 and 157, which v2 nevertheless gave rules because a guard hole deserves both |
+| **B** — domain knowledge | **36** | **The real work.** No architecture invents this |
+| **C** — instances and tuning | **5** | Corpus entries and measured constants, not rules |
+| **D** — no explanatory block | **4** | 44, 48, 78, 93 — unreadable without their reference sites |
+| **E** — out of scope | **2** | 31 (SPA), 153 (back-office) |
+| **?** — **classified by nothing** | **6** | **40, 64, 65, 66, 98, 107** |
 
-**Finding 133** records a rule that was implemented, fixed one client case, and **broke twenty-two
-checks across five harnesses** — so it was withdrawn. Nothing in this register says so.
+**The six unclassified findings are a gap the register did not know it had.** They appear in no
+bucket of the findings triage and are cited by no rule, so nobody has looked at them at all. They
+are the highest-value item on this list precisely because their content is unknown — a finding
+nobody has read is indistinguishable from one that was lost.
 
-A catalogue that records only what was adopted invites someone to re-propose a withdrawn rule in
-eighteen months and re-learn it the same way. Every rule needs a status:
-**`agreed` · `proposed` · `rejected`** — with the reason, for the last one especially.
+**36 + 6 = 42**, which is where v1's estimate of "roughly 45" actually lands.
+
+#### The 36 uncited domain findings, by family
+
+Every family below **already has cited members**, which is consistent with v1's suspicion that the
+terse `source` field simply does not name everything a statement covers. Consistent is not verified,
+and the triage is explicit: *check rule by rule, do not assume.*
+
+| Family | Uncited findings | of |
+|---|---|---:|
+| **Display** — the unit rides every row; a rank is an ordinal; a change needs its reading | 50, 73, 106, 118, 136, **155** | 8 |
+| **Language & bilingual** — Arabic plurals; the genitive construct; bidi; PDF hyphens | 14, 47, 72, 79, 92, 123 | 8 |
+| **Operations** — polar, superlative, sort, spread, conditional, capability | 6, 7, 15, 110, 134 | 17 |
+| **The headline is the answer to the question** | 5, 8, 59, 132 | 8 |
+| **Catalogue & groups** — the group not the category; who owns the indicator | 4, 12, 67, 71 | 6 |
+| **Grain & period binding** | 2, 35, 38 | 15 |
+| **Refusal & absence** | 9, 101, 137 | 8 |
+| **The answer's voice** | 52, 57, 105 | 6 |
+| **Attribution & assessment** | 33, 112 | 6 |
+| **Set scope & alignment** | 21, **154** | 6 |
+| **Follow-up & context** | 30, 42 | 2 |
+
+**Read the families by their ratios, not their counts.** *Display* (6 of 8 uncited) and *Language &
+bilingual* (6 of 8) are the two where most of the family is unaccounted for — so they are the most
+likely to be carrying a rule this register does not state. *Grain & period binding* has 3 of 15
+uncited and is the best-covered family in the catalogue, which is reassuring given it is the largest.
+
+#### Why this gap is not closed
+
+**`FINDINGS-INDEX.md` and the `app/` reference tree are not in this repository.** This repo carries
+`docs/`, `data/` and the planning scaffolding; the findings' own explanatory text — 151 findings,
+~1,120 references across 15 modules — is not among them.
+
+What survives is partial and worth naming: **every rule reproduces a one-line excerpt of each
+finding it cites**, under its **Why**. So the text exists for the 82 cited findings and for none of
+the 69 others. That asymmetry is exactly backwards from what closing this gap needs.
+
+**The work is therefore blocked on an input, not on effort.** Obtain the findings source, and
+closing §4.2 is a review-and-adopt exercise of days — an estimated **~38 domain rules** from 96
+findings, a 2.5:1 collapse, because the findings are instances and the rules are what they have in
+common.
+
+### 4.3 There is no `rejected` status — **closed in v2**
+
+**Every one of the 169 rules now carries a status.** The distribution:
+
+| Status | Count | Meaning |
+|---|---:|---|
+| `proposed` | **168** | Described, sourced and reviewable — **not yet agreed by anyone** |
+| `rejected` | **1** | `R-157`, with its reason |
+| `agreed` | **0** | See §5. This is not an oversight |
+
+**`R-157` is new, and is the entry §4.3 asked for.** Finding 133 records a rule that was
+implemented, fixed one client case, and **broke twenty-two checks across five harnesses** before
+being withdrawn. v1 noted this and had nowhere to put it; the register cited finding 133 only as
+supporting evidence under `R-30`, which is the rule that *survived*. `R-157` now records the one
+that did not, with its reason and an instruction not to re-propose it without reading those
+twenty-two checks. Its statement is flagged as **reconstructed rather than verbatim**, because the
+register never carried the withdrawn rule's own wording.
+
+**Twelve rules are flagged `proposed` *(agreed candidate)*** — the Part A principles, each of which
+is already a ratified PRD commitment. They are the obvious first batch for whoever holds the pen,
+and flagging them is as far as an analyst may go. Marking them `agreed` would be an analyst
+asserting agreement on a stakeholder's behalf, which is precisely the failure FR-72a exists to
+prevent.
+
+### 4.4 What v2 changed
+
+| | v1 | v2 |
+|---|---|---|
+| Rules | 166 | **169** |
+| Rules with a status | 0 | **169** |
+| Findings 153–157 covered | 0 of 5 | **3 of 5** (2 by rule, 1 correctly out of scope) |
+| Uncited findings | "roughly 45", unbucketed | **69 measured, bucketed; 42 actionable, 6 of them unexamined by anyone** |
+| Withdrawn rules recorded | none | **1**, with its reason |
+| Baseline | 4.6.0 | 4.6.0 + the two 4.7.0 guard findings |
+
+**Still open, and honestly so:** findings 154 and 155; the 36 uncited domain findings; the 6
+unclassified findings; the 4 unreadable ones. All four items need `FINDINGS-INDEX.md` and `app/`.
 
 ## 5. What this catalogue cannot do
 
@@ -121,8 +219,17 @@ It cannot agree itself.
 a corpus, and a CI gate. **`agree` requires a person with the standing to agree**, and that person
 has not been named (PRD FR-72a).
 
-Until they are, this is a very good description of what the system does. It is not yet an agreement
-about what the system *should* do — and that distinction is the whole of the original complaint.
+**v2 makes the gap visible rather than closing it.** Every rule now carries a status, and **every
+one of them says `proposed`**. That is not an oversight and not a placeholder to be bulk-edited: it
+is the honest state of a catalogue that describes a system accurately and has never been agreed by
+anyone. The twelve Part A principles are flagged as **agreed candidates** because each is already a
+ratified PRD commitment — they are the obvious first batch, and an analyst flagging them is as far
+as this can be carried without a person.
+
+A column of 169 `proposed` rules is now the most direct statement of the original complaint that
+exists anywhere in this project. Until someone moves some of them to `agreed`, this is a very good
+description of what the system does. It is not yet an agreement about what the system *should* do —
+and that distinction is the whole of the original complaint.
 
 ---
 
@@ -138,7 +245,7 @@ Statements are verbatim from the register. Ids are stable and must not be renumb
 
 **The model never produces a number, a topic, a chart, a period or a verdict about approved data.** Every figure on a card is read from an approved row or computed by code from approved rows. A language model is used only (a) optionally, on request, to re-tell a finished card, under a gate that rejects anything the card did not already contain; and (b) on the separate external-source agent, whose content is always labelled as external.
 
-**Becomes:** the PRD's commitments — already stated; verify, do not restate · **Source:** Council brief; findings 1, 32, 34, 49
+**Becomes:** the PRD's commitments — already stated; verify, do not restate · **Source:** Council brief; findings 1, 32, 34, 49 · **Status:** `proposed` *(agreed candidate — already a ratified PRD commitment)*
 
 **Why —**
   - *finding 1* — the tooltip read "2022 / value : 686.131074" - the raw
@@ -150,7 +257,7 @@ Statements are verbatim from the register. Ids are stable and must not be renumb
 
 **Code enforces, data decides.** Whether a move is favourable is the catalogue's Polarity field. Whether a reading exists is the database. Which indicators form a group is the CMS. The code applies those facts; it never guesses them from names.
 
-**Becomes:** the PRD's commitments — already stated; verify, do not restate · **Source:** findings 83, 94, 113, 146
+**Becomes:** the PRD's commitments — already stated; verify, do not restate · **Source:** findings 83, 94, 113, 146 · **Status:** `proposed` *(agreed candidate — already a ratified PRD commitment)*
 
 **Why —**
   - *finding 83* — THE ASSESSMENT. Built ONCE, from what has already been fetched.
@@ -162,7 +269,7 @@ Statements are verbatim from the register. Ids are stable and must not be renumb
 
 **Never answer a different question than the one asked without saying so.** A follow-up that borrows its subject, a period that had to be substituted, a subject matched by similarity rather than by name, a set aligned on a period other than the one asked — each is disclosed on the card in one sentence.
 
-**Becomes:** the PRD's commitments — already stated; verify, do not restate · **Source:** finding 32 and throughout
+**Becomes:** the PRD's commitments — already stated; verify, do not restate · **Source:** finding 32 and throughout · **Status:** `proposed` *(agreed candidate — already a ratified PRD commitment)*
 
 **Why —**
   - *finding 32* — The model may name the SUBJECT. It may not produce anything else.
@@ -171,7 +278,7 @@ Statements are verbatim from the register. Ids are stable and must not be renumb
 
 **Never show a value without naming what it measures.** Every figure carries its indicator name, its unit and its period; a derived figure says it is derived and from what.
 
-**Becomes:** the PRD's commitments — already stated; verify, do not restate · **Source:** findings 63, 141
+**Becomes:** the PRD's commitments — already stated; verify, do not restate · **Source:** findings 63, 141 · **Status:** `proposed` *(agreed candidate — already a ratified PRD commitment)*
 
 **Why —**
   - *finding 63* — the growth rate outranks every row-derived
@@ -181,7 +288,7 @@ Statements are verbatim from the register. Ids are stable and must not be renumb
 
 **Absence is proven by asking, never inferred.** "The approved data holds no reading" may be said only after the database was asked. A vocabulary miss and an outage are reported as what they are, in different words.
 
-**Becomes:** the PRD's commitments — already stated; verify, do not restate · **Source:** finding 125
+**Becomes:** the PRD's commitments — already stated; verify, do not restate · **Source:** finding 125 · **Status:** `proposed` *(agreed candidate — already a ratified PRD commitment)*
 
 **Why —**
   - *finding 125* — WHY THERE IS NO ANSWER. THREE REASONS, AND WE HAVE BEEN GIVING ONE.
@@ -190,7 +297,7 @@ Statements are verbatim from the register. Ids are stable and must not be renumb
 
 **One selection of rows, shared.** The headline, the sentence, the change, the chart and the citations all read the same selection, so no card can name two periods for one value.
 
-**Becomes:** the PRD's commitments — already stated; verify, do not restate · **Source:** pipeline rewrite (findings 11–41)
+**Becomes:** the PRD's commitments — already stated; verify, do not restate · **Source:** pipeline rewrite (findings 11–41) · **Status:** `proposed` *(agreed candidate — already a ratified PRD commitment)*
 
 **Why —**
   - *finding 11* — "How many international visitors arrived in Qatar in May 2025?" returned
@@ -199,7 +306,7 @@ Statements are verbatim from the register. Ids are stable and must not be renumb
 
 **The biggest number on the card must be the answer to the question.** A shape with no single answer (a series, a set) has no headline number.
 
-**Becomes:** the PRD's commitments — already stated; verify, do not restate · **Source:** finding 63
+**Becomes:** the PRD's commitments — already stated; verify, do not restate · **Source:** finding 63 · **Status:** `proposed` *(agreed candidate — already a ratified PRD commitment)*
 
 **Why —**
   - *finding 63* — the growth rate outranks every row-derived
@@ -208,7 +315,7 @@ Statements are verbatim from the register. Ids are stable and must not be renumb
 
 **A mode may show less than another; it may never show something the other does not.** Executive Lens is a filter over the same answer, never a different answer.
 
-**Becomes:** the PRD's commitments — already stated; verify, do not restate · **Source:** finding 34
+**Becomes:** the PRD's commitments — already stated; verify, do not restate · **Source:** finding 34 · **Status:** `proposed` *(agreed candidate — already a ratified PRD commitment)*
 
 **Why —**
   - *finding 34* — The reading, on request, and never unasked.
@@ -217,7 +324,7 @@ Statements are verbatim from the register. Ids are stable and must not be renumb
 
 **The computed text never states a cause, a forecast, a recommendation or a magnitude adjective.** Causes appear only inside a quoted SCEAI analyst note, with its byline. There is no score, no weighting and no index.
 
-**Becomes:** the PRD's commitments — already stated; verify, do not restate · **Source:** findings 83, 113; §5, §7
+**Becomes:** the PRD's commitments — already stated; verify, do not restate · **Source:** findings 83, 113; §5, §7 · **Status:** `proposed` *(agreed candidate — already a ratified PRD commitment)*
 
 **Why —**
   - *finding 83* — THE ASSESSMENT. Built ONCE, from what has already been fetched.
@@ -227,7 +334,7 @@ Statements are verbatim from the register. Ids are stable and must not be renumb
 
 **Approved data is never shown under an external badge, and external content is never shown as approved.** Provenance is decided by which source produced the text.
 
-**Becomes:** the PRD's commitments — already stated; verify, do not restate · **Source:** finding 49
+**Becomes:** the PRD's commitments — already stated; verify, do not restate · **Source:** finding 49 · **Status:** `proposed` *(agreed candidate — already a ratified PRD commitment)*
 
 **Why —**
   - *finding 49* — the pipeline declined to answer for agent=%r -
@@ -236,13 +343,13 @@ Statements are verbatim from the register. Ids are stable and must not be renumb
 
 **The system's internal vocabulary never reaches a reader.** Words such as "approved readings", "polarity", "ledger" or "count of directions" are for the evidence panel and the log, not the card.
 
-**Becomes:** the PRD's commitments — already stated; verify, do not restate · **Source:** §18, §19
+**Becomes:** the PRD's commitments — already stated; verify, do not restate · **Source:** §18, §19 · **Status:** `proposed` *(agreed candidate — already a ratified PRD commitment)*
 
 #### `P-12`
 
 **Every rule is reproducible and testable without a model.** The whole pipeline runs in the test harness with no application, no database and no model; a rule that cannot be exercised that way is not accepted.
 
-**Becomes:** the PRD's commitments — already stated; verify, do not restate · **Source:** project practice (35 harnesses, 3,432 checks)
+**Becomes:** the PRD's commitments — already stated; verify, do not restate · **Source:** project practice (35 harnesses, 3,432 checks) · **Status:** `proposed` *(agreed candidate — already a ratified PRD commitment)*
 
 
 ## Part B — System map and the life of a request
@@ -254,8 +361,7 @@ Statements are verbatim from the register. Ids are stable and must not be renumb
 
 The answer language is the language of the current question (Arabic script anywhere in it → Arabic), never the language of the previous exchange.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** BRD §13.1; finding 27
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** BRD §13.1; finding 27 · **Status:** `proposed`
 **Why —**
   - *finding 27* — «هل هناك شركات تكنولوجيا مالية جديدة تم افتتاحها في عام 2025؟» answered
 
@@ -263,8 +369,7 @@ The answer language is the language of the current question (Arabic script anywh
 
 The interface sends the last three exchanges. The server reads the previous **questions** for context (Part C6) and the previous **answer** only to resolve "the article" (Part D5). It never parses its own prose to recover a subject.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 135
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 135 · **Status:** `proposed`
 **Why —**
   - *finding 135* — A QUESTION THAT CARRIES NO SUBJECT OF ITS OWN.
 
@@ -272,8 +377,7 @@ The interface sends the last three exchanges. The server reads the previous **qu
 
 A caller that does not declare `tables` receives any table as one line per row (`- **Indicator** · reading · period · change · signal`); the facts and their order are identical.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 147
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 147 · **Status:** `proposed`
 **Why —**
   - *finding 147* — A TABLE ONLY FOR A SCREEN THAT CAN DRAW ONE. The 4.5.0 bundle says so
 
@@ -284,8 +388,7 @@ A caller that does not declare `tables` receives any table as one line per row (
 
 The library and the pipeline answer **only** for an approved-data agent (an agent configured with charts, and not the combined agent). The external agent and the combined view are answered by the chain, which owns the external fetch and its attribution.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 49 (P-10) · **Implemented at:** `ASKAI_PIPELINE`
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 49 (P-10) · **Implemented at:** `ASKAI_PIPELINE` · **Status:** `proposed`
 **Why —**
   - *finding 49* — the pipeline declined to answer for agent=%r -
 
@@ -293,8 +396,7 @@ The library and the pipeline answer **only** for an approved-data agent (an agen
 
 The pipeline gate is asked of the **prepared** question (after resolution and the set decision), not of the raw intent — so a question the catalogue-or-overview reader would have claimed still reaches the set route when two or more indicators resolve from it.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 102
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 102 · **Status:** `proposed`
 **Why —**
   - *finding 102* — THE SET ROUTE WAS BUILT, TESTED, AND UNREACHABLE.
 
@@ -302,9 +404,7 @@ The pipeline gate is asked of the **prepared** question (after resolution and th
 
 Agents are configured, not hard-coded: `ASKAI_AGENTS` = `id
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** label_en · **Implemented at:** `ASKAI_AGENTS`
-
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** label_en · **Implemented at:** `ASKAI_AGENTS` · **Status:** `proposed`
 ### B4. Budgets and timeouts
 
 #### `R-7`
@@ -313,8 +413,7 @@ The whole answer is held to one budget; an overrun returns a 200 card that says 
 
 - **Value:** `ASKAI_ASK_BUDGET_S` = 85 s (under the edge's 100 s)
 
-**Becomes:** `rules/*.yaml` — a toggle or budget, held as data · **Source:** finding 150 · **Implemented at:** `ASKAI_ASK_BUDGET_S`, `_ASK_BUDGET_S`
-
+**Becomes:** `rules/*.yaml` — a toggle or budget, held as data · **Source:** finding 150 · **Implemented at:** `ASKAI_ASK_BUDGET_S`, `_ASK_BUDGET_S` · **Status:** `proposed`
 **Why —**
   - *finding 150* — "THE SAME QUESTION SOMETIMES GETS A RESPONSE AND SOMETIMES NOT."
 
@@ -324,8 +423,7 @@ Idle connections are kept open longer than the tunnel connector's 90 s pool time
 
 - **Value:** `ASKAI_KEEPALIVE_S` = 120 s
 
-**Becomes:** `rules/*.yaml` — a toggle or budget, held as data · **Source:** finding 151 · **Implemented at:** `ASKAI_KEEPALIVE_S`, `_KEEPALIVE_S`
-
+**Becomes:** `rules/*.yaml` — a toggle or budget, held as data · **Source:** finding 151 · **Implemented at:** `ASKAI_KEEPALIVE_S`, `_KEEPALIVE_S` · **Status:** `proposed`
 **Why —**
   - *finding 151* — "HTTP 502 AFTER 21 s" - the failure card from 4.5.4 finally said which layer.
 
@@ -335,8 +433,7 @@ The interface abandons a request after 120 s (later than the edge's 100 s, so a 
 
 - **Value:** 120 s; one retry
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 150 · **Implemented at:** `_ASK_BUDGET_S`, `_KEEPALIVE_S`, `_LADDER_BUDGET`, `_WIDEN_TIMEOUT`
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 150 · **Implemented at:** `_ASK_BUDGET_S`, `_KEEPALIVE_S`, `_LADDER_BUDGET`, `_WIDEN_TIMEOUT` · **Status:** `proposed`
 **Why —**
   - *finding 150* — "THE SAME QUESTION SOMETIMES GETS A RESPONSE AND SOMETIMES NOT."
 
@@ -346,8 +443,7 @@ Resolution ladder budget; widening lookups run concurrently with a shorter timeo
 
 - **Value:** 8 s total; 3 s per widening lookup
 
-**Becomes:** `rules/*.yaml` — a toggle or budget, held as data · **Source:** findings 25, 74 · **Implemented at:** `_LADDER_BUDGET`, `_WIDEN_TIMEOUT`
-
+**Becomes:** `rules/*.yaml` — a toggle or budget, held as data · **Source:** findings 25, 74 · **Implemented at:** `_LADDER_BUDGET`, `_WIDEN_TIMEOUT` · **Status:** `proposed`
 **Why —**
   - *finding 25* — This call had no timeout of any kind.
   - *finding 74* — THE WIDENING WAS SERIAL, AND IT COST THE READER ELEVEN SECONDS.
@@ -358,8 +454,7 @@ Set resolution, set fetch, set notes, component fetch and journey fetch each hav
 
 - **Value:** 6 s / 12 s / 6 s / 6 s / 6 s
 
-**Becomes:** `rules/*.yaml` — a published value the engine reads · **Source:** findings 25, 74, 95 · **Implemented at:** `_SET_RESOLVE_BUDGET_S`, `_SET_FETCH_BUDGET_S`, `_SET_NOTES_BUDGET_S`, `_COMPONENT_BUDGET_S`, `_JOURNEY_BUDGET_S`
-
+**Becomes:** `rules/*.yaml` — a published value the engine reads · **Source:** findings 25, 74, 95 · **Implemented at:** `_SET_RESOLVE_BUDGET_S`, `_SET_FETCH_BUDGET_S`, `_SET_NOTES_BUDGET_S`, `_COMPONENT_BUDGET_S`, `_JOURNEY_BUDGET_S` · **Status:** `proposed`
 **Why —**
   - *finding 25* — This call had no timeout of any kind.
   - *finding 74* — THE WIDENING WAS SERIAL, AND IT COST THE READER ELEVEN SECONDS.
@@ -371,8 +466,7 @@ The legacy agent path and the external fetch have their own budgets.
 
 - **Value:** 45 s / 90 s
 
-**Becomes:** `rules/*.yaml` — a toggle or budget, held as data · **Source:** finding 25 · **Implemented at:** `_AGENT_BUDGET`, `_EXT_BUDGET`
-
+**Becomes:** `rules/*.yaml` — a toggle or budget, held as data · **Source:** finding 25 · **Implemented at:** `_AGENT_BUDGET`, `_EXT_BUDGET` · **Status:** `proposed`
 **Why —**
   - *finding 25* — This call had no timeout of any kind.
 
@@ -382,8 +476,7 @@ The renderer (Part I) has a request budget and a model budget.
 
 - **Value:** 60 s / 20 s
 
-**Becomes:** `rules/*.yaml` — a toggle or budget, held as data · **Source:** finding 145 · **Implemented at:** `_RENDER_BUDGET`, `_READING_BUDGET`
-
+**Becomes:** `rules/*.yaml` — a toggle or budget, held as data · **Source:** finding 145 · **Implemented at:** `_RENDER_BUDGET`, `_READING_BUDGET` · **Status:** `proposed`
 **Why —**
   - *finding 145* — THE EVIDENCE PACKAGE IS BUILT HERE, FROM THIS ANSWER, AND KEPT.
 
@@ -394,8 +487,7 @@ The renderer (Part I) has a request budget and a model budget.
 
 Every `/api/ask` writes one line: `finding150: /api/ask 3.2s route=pipeline shape=set agent=sceai chars=1180 q='…'`. An overrun writes `finding150: /api/ask OVERRAN the 85s budget …` at error level; a non-200 pass-through writes `status=non-200`. This line is the primary source of the KPIs in Part K.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 150
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 150 · **Status:** `proposed`
 **Why —**
   - *finding 150* — "THE SAME QUESTION SOMETIMES GETS A RESPONSE AND SOMETIMES NOT."
 
@@ -403,8 +495,7 @@ Every `/api/ask` writes one line: `finding150: /api/ask 3.2s route=pipeline shap
 
 The reading side writes `finding145: read via … accepted/rejected: reason`, counted in `/api/read/stats` (asked, rendered, rejected by reason, model unavailable, cache size).
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 145
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 145 · **Status:** `proposed`
 **Why —**
   - *finding 145* — THE EVIDENCE PACKAGE IS BUILT HERE, FROM THIS ANSWER, AND KEPT.
 
@@ -412,8 +503,7 @@ The reading side writes `finding145: read via … accepted/rejected: reason`, co
 
 Every stage writes its decision with its finding number (`finding103: … matched the reviewed surface …`, `finding95: 6 indicators at 2025 (annual), 2 stale, 0 absent`, `finding129: snapshot (asked for) …`). The decision trace screen in Part N is these lines, per request.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** project practice
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** project practice · **Status:** `proposed`
 **Why —**
   - *finding 95* — THE SET, FETCHED CONCURRENTLY AND LINED UP ON ONE PERIOD.
   - *finding 103* — THE REVIEWED VOCABULARY WAS NEVER CONSULTED.
@@ -428,32 +518,28 @@ R-7 overran
 
 - **Wording (EN):** "The answer did not arrive within 85 seconds, so nothing was checked. This is not a statement about the data. Please try again."
 
-**Becomes:** `messages/` — reader-facing text, in both languages
-
+**Becomes:** `messages/` — reader-facing text, in both languages · **Status:** `proposed`
 #### `R-18` — Handler failure
 
 An exception inside the answer (always a 200, never a 500)
 
 - **Wording (EN):** "Something failed inside this service … no indicator and no figure was checked."
 
-**Becomes:** `messages/` — reader-facing text, in both languages
-
+**Becomes:** `messages/` — reader-facing text, in both languages · **Status:** `proposed`
 #### `R-19` — Interface failure
 
 No usable reply reached the page
 
 - **Wording (EN):** "No answer arrived from the service. Please try again." + the detail: "(HTTP 502 after 21 s, sent again once)", "(no reply within 120 s)", "(connection dropped)".
 
-**Becomes:** `messages/` — reader-facing text, in both languages
-
+**Becomes:** `messages/` — reader-facing text, in both languages · **Status:** `proposed`
 #### `R-20` — Unreachable data
 
 indicator-svc raised or reported itself unavailable (finding 128)
 
 - **Wording (EN):** The card says the approved data could not be reached — and never that it is absent.
 
-**Becomes:** `messages/` — reader-facing text, in both languages
-
+**Becomes:** `messages/` — reader-facing text, in both languages · **Status:** `proposed`
 **Why —**
   - *finding 128* — `unavailable` IS OVERLOADED, AND THE OVERLOAD ALMOST SHIPPED A NEW
 
@@ -467,14 +553,12 @@ indicator-svc raised or reported itself unavailable (finding 128)
 
 Arabic is detected by script. Both English and Arabic texts of every sentence are composed side by side by the same composer; the card shows the one matching the question.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** R-1
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** R-1 · **Status:** `proposed`
 #### `R-22`
 
 Before matching, text is normalised: Unicode NFKC, case-folded, diacritics removed, Arabic letter variants folded (أ إ آ → ا, ى → ي, ة → ه, tatweel removed), hyphens and runs of whitespace collapsed. The same normalisation is applied to the question and to every reviewed surface, so a spelling difference never decides a match.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 103, 115
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 103, 115 · **Status:** `proposed`
 **Why —**
   - *finding 103* — THE REVIEWED VOCABULARY WAS NEVER CONSULTED.
   - *finding 115* — THE LINE THAT DECIDES WHICH WAY THE PARAGRAPH READS.
@@ -483,8 +567,7 @@ Before matching, text is normalised: Unicode NFKC, case-folded, diacritics remov
 
 Analyst text from the CMS is repaired for the 44 hyphenation breaks the export carries ("in-crease" → "increase") from `hyphen_fixes.json`; 722 legitimate hyphens are left alone.
 
-**Becomes:** `rules/*.yaml` — a reviewed lookup table · **Source:** finding 86
-
+**Becomes:** `rules/*.yaml` — a reviewed lookup table · **Source:** finding 86 · **Status:** `proposed`
 **Why —**
   - *finding 86* — `missing_sentence` is NOT in this list, and that is deliberate.
 
@@ -495,20 +578,17 @@ Analyst text from the CMS is repaired for the 44 hyphenation breaks the export c
 
 The order above is the only order. A new intent is inserted at the position its specificity earns, and the harness asserts the position.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** pipeline design
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** pipeline design · **Status:** `proposed`
 #### `R-25`
 
 Intents that answer from the catalogue or the library rather than from rows (CATALOGUE, CAPABILITY, OVERVIEW, LIBRARY, ARTICLE, ABSENCE) never resolve an indicator and never carry a figure.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** design
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** design · **Status:** `proposed`
 #### `R-26`
 
 When the library switch is off, ARTICLE and LIBRARY are unreachable — the intent cannot be claimed, so no reader meets an empty library card. Absence of a capability is expressed as unreachability, never as an empty answer.
 
-**Becomes:** `rules/*.yaml` — a toggle or budget, held as data · **Source:** findings 54, 68 · **Implemented at:** `ASKAI_ARTICLES`
-
+**Becomes:** `rules/*.yaml` — a toggle or budget, held as data · **Source:** findings 54, 68 · **Implemented at:** `ASKAI_ARTICLES` · **Status:** `proposed`
 **Why —**
   - *finding 54* — THE PIPELINE ANSWERS ONLY WHAT IT CAN ACTUALLY COMPOSE.
   - *finding 68* — A question about ARTICLES is not a question about data.
@@ -522,8 +602,7 @@ When the library switch is off, ARTICLE and LIBRARY are unreachable — the inte
 
 - **Effect:** Strictly additive: adds *what it measures* (the CMS definition), the breakdown into components, the peer table and the full analyst note. Never applied to a set card (eight definitions is a wall, not depth).
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 77
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 77 · **Status:** `proposed`
 **Why —**
   - *finding 77* — DEPTH IS NOT A DIFFERENT QUESTION. IT IS THE SAME QUESTION, ASKED WIDER.
 
@@ -533,8 +612,7 @@ When the library switch is off, ARTICLE and LIBRARY are unreachable — the inte
 
 - **Effect:** One extra clause: the move against the same period a year earlier, after the level. Not on FORECAST or SCENARIO (a refusal never carries "that is up 2.0%").
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 91, 109, 144, 145
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 91, 109, 144, 145 · **Status:** `proposed`
 **Why —**
   - *finding 91* — A QUESTION ABOUT MOVEMENT WANTS THE MOVEMENT.
   - *finding 109* — "THAT IS" NEEDS SOMETHING TO REFER TO.
@@ -547,8 +625,7 @@ When the library switch is off, ARTICLE and LIBRARY are unreachable — the inte
 
 - **Effect:** Permits the set route (Part D3). A flag only — the set exists only if ≥ 2 indicators resolve.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 94
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 94 · **Status:** `proposed`
 **Why —**
   - *finding 94* — A QUESTION CAN BE ABOUT SEVERAL INDICATORS AT ONCE, AND NINE OF THE
 
@@ -558,8 +635,7 @@ A snapshot phrase ("latest snapshot", "snapshot of", "give me the latest", "wher
 
 - **Effect:** Each indicator at its own latest period, with the period on every line, instead of one aligned period.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 129, 133
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 129, 133 · **Status:** `proposed`
 **Why —**
   - *finding 129* — THE QUESTION THAT WANTS EACH INDICATOR AT ITS OWN LATEST PERIOD.
   - *finding 133* — THE RULE THAT WAS TRIED HERE AND TAKEN BACK OUT.
@@ -570,8 +646,7 @@ The reader asked for the picture (R-30's phrases or the executive phrasing), as 
 
 - **Effect:** Selects the consolidated §17 structure (G5) rather than the set composers.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 147
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 147 · **Status:** `proposed`
 **Why —**
   - *finding 147* — A TABLE ONLY FOR A SCREEN THAT CAN DRAW ONE. The 4.5.0 bundle says so
 
@@ -581,8 +656,7 @@ The executive phrasing: "how is / was / has the economy (doing, performing, fari
 
 - **Effect:** The SET shape's four-sentence mode; since 4.5.0 both it and the snapshot share one composer.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 113
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 113 · **Status:** `proposed`
 **Why —**
   - *finding 113* — A BROAD QUESTION WANTS AN ASSESSMENT, NOT AN INVENTORY.
 
@@ -592,8 +666,7 @@ The executive phrasing: "how is / was / has the economy (doing, performing, fari
 
 - **Effect:** Where the catalogue publishes only shares of the quantity, the amount is derived and said to be derived (Part D4).
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 141
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 141 · **Status:** `proposed`
 **Why —**
   - *finding 141* — "HOW MUCH WAS GENERATED" IS A QUESTION ABOUT AN AMOUNT.
 
@@ -603,8 +676,7 @@ The executive phrasing: "how is / was / has the economy (doing, performing, fari
 
 - **Effect:** The complement of a share (100 − x), labelled derived, without naming the remainder as anything the catalogue does not publish.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 99
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 99 · **Status:** `proposed`
 **Why —**
   - *finding 99* — THE REST OF A SHARE, AND WHAT IT MUST NOT BE CALLED.
 
@@ -614,8 +686,7 @@ The executive phrasing: "how is / was / has the economy (doing, performing, fari
 
 - **Effect:** A multiplication the **reader** proposed, computed from exactly two readings and only when the denominator guard passes (G4).
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 100
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 100 · **Status:** `proposed`
 **Why —**
   - *finding 100* — THE MULTIPLICATION THE CLIENT MOST WANTS US TO REFUSE.
 
@@ -625,8 +696,7 @@ The executive phrasing: "how is / was / has the economy (doing, performing, fari
 
 - **Effect:** The catalogue's polarity read against the move — never an opinion of the system's.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 144
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 144 · **Status:** `proposed`
 **Why —**
   - *finding 144* — "IS THAT GOOD?" IS ANSWERED BY THE CATALOGUE, NOT BY US.
 
@@ -636,8 +706,7 @@ The executive phrasing: "how is / was / has the economy (doing, performing, fari
 
 - **Effect:** The peer table where benchmarks are published, without the rest of the depth card.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 144
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 144 · **Status:** `proposed`
 **Why —**
   - *finding 144* — "IS THAT GOOD?" IS ANSWERED BY THE CATALOGUE, NOT BY US.
 
@@ -647,8 +716,7 @@ The question ranges over countries ("which country had the lowest inflation").
 
 - **Effect:** The peer table leads and Qatar's own reading follows; the period extreme is not shown in their place.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 119
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 119 · **Status:** `proposed`
 **Why —**
   - *finding 119* — "WHICH COUNTRY HAD THE LOWEST INFLATION" WAS ANSWERED WITH A YEAR.
 
@@ -658,8 +726,7 @@ Which extreme (max / min) the words asked for.
 
 - **Effect:** The composer leads with the extreme that was asked for, not always the maximum.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 119
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 119 · **Status:** `proposed`
 **Why —**
   - *finding 119* — "WHICH COUNTRY HAD THE LOWEST INFLATION" WAS ANSWERED WITH A YEAR.
 
@@ -669,8 +736,7 @@ The question plainly carries a period phrase (a year, "N years/quarters/months",
 
 - **Effect:** The card says a period could not be read and shows the latest instead; the log reports it so the missing word is found by the system rather than by a screenshot. A granularity word alone ("monthly") is not a period.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 53, 54
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 53, 54 · **Status:** `proposed`
 **Why —**
   - *finding 53* — and never echo a period phrase this system could not read -
   - *finding 54* — THE PIPELINE ANSWERS ONLY WHAT IT CAN ACTUALLY COMPOSE.
@@ -682,8 +748,7 @@ The question plainly carries a period phrase (a year, "N years/quarters/months",
 
 Periods are read from the question by the shared period reader (years, quarters "Q1 2026" / "2026-Q1", months, "last N years", "from 2022 to 2025", "the latest 3 years", Arabic forms). A year expands to its quarters and months when the indicator publishes at those grains, so one list serves an indicator at any interval.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 41, 53
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 41, 53 · **Status:** `proposed`
 **Why —**
   - *finding 41* — —
   - *finding 53* — and never echo a period phrase this system could not read -
@@ -692,8 +757,7 @@ Periods are read from the question by the shared period reader (years, quarters 
 
 Granularity is read separately ("monthly", "quarterly", "annual"). When the reader names no period, the granularity they named is the only thing they said about shape, and it decides the interval; when they named periods, the periods decide.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 56
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 56 · **Status:** `proposed`
 **Why —**
   - *finding 56* — "Show the trend of Inflation" returned TWO readings: 2026-03 and 2026-04.
 
@@ -701,14 +765,12 @@ Granularity is read separately ("monthly", "quarterly", "annual"). When the read
 
 A period-less question about one indicator is about a **window** expressed in years: 3 years at monthly grain, 6 at quarterly, 10 at annual; the fetch expands the window to the indicator's own grain. A period-less set fetch uses the quarterly window (6 years) unless a granularity was named.
 
-**Becomes:** `rules/*.yaml` — a published value the engine reads · **Source:** design · **Implemented at:** `_WINDOW_YEARS`
-
+**Becomes:** `rules/*.yaml` — a published value the engine reads · **Source:** design · **Implemented at:** `_WINDOW_YEARS` · **Status:** `proposed`
 #### `R-44`
 
 A trend is drawn at the interval that yields at least 3 readings (`TREND_MIN`), and never more than 24 rows are shown (`SERIES_MAX`) — the most recent are kept and the card says how many matched.
 
-**Becomes:** `rules/*.yaml` — a published value the engine reads · **Source:** findings 56, 58 · **Implemented at:** `TREND_MIN`, `SERIES_MAX`
-
+**Becomes:** `rules/*.yaml` — a published value the engine reads · **Source:** findings 56, 58 · **Implemented at:** `TREND_MIN`, `SERIES_MAX` · **Status:** `proposed`
 **Why —**
   - *finding 56* — "Show the trend of Inflation" returned TWO readings: 2026-03 and 2026-04.
   - *finding 58* — "give the chart of monthly inflation" was answered with A SINGLE VALUE:
@@ -717,14 +779,12 @@ A trend is drawn at the interval that yields at least 3 readings (`TREND_MIN`), 
 
 A named single period is answered at that period. A question that names three or more periods on a change / growth / comparison shape is widened: the span is listed, not just its ends.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** design
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** design · **Status:** `proposed`
 #### `R-154`
 
 **The reader's period outranks every convention of ours, on the first question as on a follow-up.** "The latest snapshot of the national indicators for 2024" and "How was the economy doing in 2024?" are the picture **at 2024** (the executive structure aligned there, members without 2024 at their own latest with their date, the table column headed "Reading" rather than "Latest reading"), not each indicator's own latest. Until 4.5.5 the snapshot flag was set from the words alone and won over the named period with no disclosure; the past tense of the executive question reached no shape at all. Corrected in 4.5.6 (finding 152).
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 148, 152
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 148, 152 · **Status:** `proposed`
 **Why —**
   - *finding 148* — THE READER'S PERIOD, WHEN MOST OF THE SET HOLDS IT. "The
   - *finding 152* — THE READER'S PERIOD OUTRANKS OUR CONVENTION - ON THE FIRST QUESTION TOO.
@@ -739,8 +799,7 @@ The whole question is a period or a relative period: "2023", "what about 2023?",
 - **What is carried:** The previous question's subject — one indicator, or the whole set (with its executive / snapshot-asked flags) — and the new period.
 - **What the card says:** "…, read for 2024" on the carried block; the set lead reads "the period you asked about".
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 139, 148
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 139, 148 · **Status:** `proposed`
 **Why —**
   - *finding 139* — A YEAR IS A DIMENSION. IT IS NOT AN INDICATOR.
   - *finding 148* — THE READER'S PERIOD, WHEN MOST OF THE SET HOLDS IT. "The
@@ -752,8 +811,7 @@ The whole question is a period or a relative period: "2023", "what about 2023?",
 - **What is carried:** Only the framing (the shape, the periods) — the subject is the reader's own and is resolved from their words. A question that names its own subject can never fall through to a subject carry.
 - **What the card says:** finding 135
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** code
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** code · **Status:** `proposed`
 **Why —**
   - *finding 135* — A QUESTION THAT CARRIES NO SUBJECT OF ITS OWN.
 
@@ -764,8 +822,7 @@ The whole question is a period or a relative period: "2023", "what about 2023?",
 - **What is carried:** The subject (or set). The follow-up's **own** shape decides what is composed: "why" is a depth question about the carried subject; "which one fell most" is a superlative over the carried set; "is that good" adds the polarity verdict.
 - **What the card says:** finding 135, 144
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** code
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** code · **Status:** `proposed`
 **Why —**
   - *finding 135* — A QUESTION THAT CARRIES NO SUBJECT OF ITS OWN.
   - *finding 144* — "IS THAT GOOD?" IS ANSWERED BY THE CATALOGUE, NOT BY US.
@@ -774,8 +831,7 @@ The whole question is a period or a relative period: "2023", "what about 2023?",
 
 When a relative period ("the previous year", "Q4") follows a question that pinned no period, the shift is **deferred to the fetch** and computed from the indicator's own latest period — never claimed before a row for the shifted period actually comes back.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 142, 143
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 142, 143 · **Status:** `proposed`
 **Why —**
   - *finding 142* — THE PERIOD THE READER WAS LOOKING AT IS NOT ALWAYS ONE
   - *finding 143* — THE ORDINAL QUARTER WAS READ AS ITS YEAR.
@@ -784,8 +840,7 @@ When a relative period ("the previous year", "Q4") follows a question that pinne
 
 "For 2024" after a snapshot is the **same picture at 2024**: the executive structure, aligned at the period named — not the movement card, and never "the latest readings" under a disclosure that says 2024.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 148
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 148 · **Status:** `proposed`
 **Why —**
   - *finding 148* — THE READER'S PERIOD, WHEN MOST OF THE SET HOLDS IT. "The
 
@@ -793,8 +848,7 @@ When a relative period ("the previous year", "Q4") follows a question that pinne
 
 A dimension with no previous question to apply it to is an absence card of its own kind ("a period with nothing to apply it to"), never a failed catalogue search.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 139
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 139 · **Status:** `proposed`
 **Why —**
   - *finding 139* — A YEAR IS A DIMENSION. IT IS NOT AN INDICATOR.
 
@@ -802,8 +856,7 @@ A dimension with no previous question to apply it to is an absence card of its o
 
 The shape follows the subject that was carried: a follow-up that inherits a set of eight is composed as a set (or executive), never as a value card about one of the eight that contradicts its own first sentence.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 135
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 135 · **Status:** `proposed`
 **Why —**
   - *finding 135* — A QUESTION THAT CARRIES NO SUBJECT OF ITS OWN.
 
@@ -811,8 +864,7 @@ The shape follows the subject that was carried: a follow-up that inherits a set 
 
 Every carried card records what it carried. Until 4.5.2 this was a preface sentence ("Reading your question as: Gross National Income, for 2024."); at the Council's request (finding 149) the preface is no longer printed. The carry is now visible in three places: the period on every figure is the period asked; a set's lead sentence says "the period you asked about"; and the ledger block (evidence panel) is labelled with the carried subject and "read for 2024". A generated reading of a carried card must still disclose the carry or it is rejected (Part I). **Decision O-3 asks the Council to confirm this is the disclosure it wants.**
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** P-3; findings 135, 149
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** P-3; findings 135, 149 · **Status:** `proposed`
 **Why —**
   - *finding 135* — A QUESTION THAT CARRIES NO SUBJECT OF ITS OWN.
   - *finding 149* — —
@@ -821,8 +873,7 @@ Every carried card records what it carried. Until 4.5.2 this was a preface sente
 
 Context is never carried into the library: a question that says both "articles" and "national indicators" asked for the articles.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 85
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 85 · **Status:** `proposed`
 **Why —**
   - *finding 85* — NAMING THE TITLE IS THE REQUEST.
 
@@ -836,8 +887,7 @@ Context is never carried into the library: a question that says both "articles" 
 
 A fragment of a list ("…, revenues and the trade balance") is resolved by rungs 1–2 **only** — never by retrieval, which always returns its nearest match and would put an indicator nobody named on a Council card. A fragment that does not lexically name an approved indicator contributes nothing.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 94 · **Implemented at:** `_SURFACE_MIN`, `ASKAI_SURFACES`, `_LADDER_CONFIDENT`, `ASKAI_RESOLVE_CONFIDENT`, `_LADDER_BUDGET`, `_WIDEN_TIMEOUT`, `N`, `MIN_SCORE`, `MIN_MARGIN`, `TOP_K`, `ASKAI_RETRIEVAL`, `FLOOR`, `RELATIVE`, `TERMS_WEIGHT`, `_ASK_BAND_MAX`
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 94 · **Implemented at:** `_SURFACE_MIN`, `ASKAI_SURFACES`, `_LADDER_CONFIDENT`, `ASKAI_RESOLVE_CONFIDENT`, `_LADDER_BUDGET`, `_WIDEN_TIMEOUT`, `N`, `MIN_SCORE`, `MIN_MARGIN`, `TOP_K`, `ASKAI_RETRIEVAL`, `FLOOR`, `RELATIVE`, `TERMS_WEIGHT`, `_ASK_BAND_MAX` · **Status:** `proposed`
 **Why —**
   - *finding 94* — A QUESTION CAN BE ABOUT SEVERAL INDICATORS AT ONCE, AND NINE OF THE
 
@@ -845,8 +895,7 @@ A fragment of a list ("…, revenues and the trade balance") is resolved by rung
 
 "The service says inactive" is a fact and the indicator is never answered; "the service did not say" is not read as inactive. (The same rule as absence, applied to a flag.)
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 28 · **Implemented at:** `_SURFACE_MIN`, `ASKAI_SURFACES`, `_LADDER_CONFIDENT`, `ASKAI_RESOLVE_CONFIDENT`, `_LADDER_BUDGET`, `_WIDEN_TIMEOUT`, `N`, `MIN_SCORE`, `MIN_MARGIN`, `TOP_K`, `ASKAI_RETRIEVAL`, `FLOOR`, `RELATIVE`, `TERMS_WEIGHT`, `_ASK_BAND_MAX`
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 28 · **Implemented at:** `_SURFACE_MIN`, `ASKAI_SURFACES`, `_LADDER_CONFIDENT`, `ASKAI_RESOLVE_CONFIDENT`, `_LADDER_BUDGET`, `_WIDEN_TIMEOUT`, `N`, `MIN_SCORE`, `MIN_MARGIN`, `TOP_K`, `ASKAI_RETRIEVAL`, `FLOOR`, `RELATIVE`, `TERMS_WEIGHT`, `_ASK_BAND_MAX` · **Status:** `proposed`
 **Why —**
   - *finding 28* — This resolver filtered confidential candidates and nothing else, so an
 
@@ -854,17 +903,14 @@ A fragment of a list ("…, revenues and the trade balance") is resolved by rung
 
 Resolution is cached only for catalogue lookups (10 minutes); a question is never answered from a cached answer.
 
-**Becomes:** `rules/*.yaml` — a published value the engine reads · **Source:** design · **Implemented at:** `_RETRIEVAL_TTL`
-
-
+**Becomes:** `rules/*.yaml` — a published value the engine reads · **Source:** design · **Implemented at:** `_RETRIEVAL_TTL` · **Status:** `proposed`
 ### D3. Sets and groups
 
 #### `R-58` — Group
 
 The question names a group the CMS holds — one of 22 (8 sectors, 14 entities) built from the sectors and entities exports with reviewed surfaces per group ("national indicators", "our economy", "the diversification targets", "health", "banking", "SMEs", "the free zones", "Hormuz"…). The group's members become the set, ordered by English name, capped at 12; the card states how many further members are not listed. A group of one member is a sole member (rung 5).
 
-**Becomes:** `rules/*.yaml` — a reviewed lookup table · **Source:** findings 94, 102, 114 · **Implemented at:** `_SET_MAX`, `_SET_MIN`
-
+**Becomes:** `rules/*.yaml` — a reviewed lookup table · **Source:** findings 94, 102, 114 · **Implemented at:** `_SET_MAX`, `_SET_MIN` · **Status:** `proposed`
 **Why —**
   - *finding 94* — A QUESTION CAN BE ABOUT SEVERAL INDICATORS AT ONCE, AND NINE OF THE
   - *finding 102* — THE SET ROUTE WAS BUILT, TESTED, AND UNREACHABLE.
@@ -874,8 +920,7 @@ The question names a group the CMS holds — one of 22 (8 sectors, 14 entities) 
 
 The question lists indicators joined by "and", commas or «و»; each fragment (≥ 3 characters, leading verbs and question words stripped) resolves lexically (R-55); the distinct indicators, in the order named, become the set.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 94 · **Implemented at:** `_FRAG_MIN`
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 94 · **Implemented at:** `_FRAG_MIN` · **Status:** `proposed`
 **Why —**
   - *finding 94* — A QUESTION CAN BE ABOUT SEVERAL INDICATORS AT ONCE, AND NINE OF THE
 
@@ -883,8 +928,7 @@ The question lists indicators joined by "and", commas or «و»; each fragment (
 
 finding 140
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** code
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** code · **Status:** `proposed`
 **Why —**
   - *finding 140* — THE GROUP HAD ITS TURN AND PRODUCED NOTHING. SAY SO.
 
@@ -892,8 +936,7 @@ finding 140
 
 findings 90, 120, 121
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** table
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** table · **Status:** `proposed`
 **Why —**
   - *finding 90* — WHO OWNS THE INDICATOR.
   - *finding 120* — "WHAT IS THE DIFFERENCE BETWEEN THE EXPLORER DATA AND THE EXECUTIVE LENS"
@@ -906,8 +949,7 @@ findings 90, 120, 121
 
 When the reader asks for an **amount** (R-33) and the resolved indicator is a share ("… as Share of …"), the pipeline finds every published share of the quantity the phrase names (the words before "as share of", matched across catalogue names) and pairs each with the indicator its name says it is a share **of**. Each pair must pass the same-population guard (the share and its base must be shares/levels of the same population). The set becomes the share-and-base indicators; the card derives the amount, says it is derived and from which readings, and shows the readings under it.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 141
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 141 · **Status:** `proposed`
 **Why —**
   - *finding 141* — "HOW MUCH WAS GENERATED" IS A QUESTION ABOUT AN AMOUNT.
 
@@ -915,8 +957,7 @@ When the reader asks for an **amount** (R-33) and the resolved indicator is a sh
 
 Where two published routes give amounts more than 2 % apart, the card prints both and says they disagree, rather than silently picking one.
 
-**Becomes:** `rules/*.yaml` — a published value the engine reads · **Source:** finding 141; `_AMOUNT_DISAGREE` 0.02 · **Implemented at:** `_AMOUNT_DISAGREE`
-
+**Becomes:** `rules/*.yaml` — a published value the engine reads · **Source:** finding 141; `_AMOUNT_DISAGREE` 0.02 · **Implemented at:** `_AMOUNT_DISAGREE` · **Status:** `proposed`
 **Why —**
   - *finding 141* — "HOW MUCH WAS GENERATED" IS A QUESTION ABOUT AN AMOUNT.
 
@@ -924,8 +965,7 @@ Where two published routes give amounts more than 2 % apart, the card prints bot
 
 Where no route exists, the card says plainly that the amount is not published and shows the share it did find, named as a share.
 
-**Becomes:** `messages/` — reader-facing text, in both languages · **Source:** finding 141
-
+**Becomes:** `messages/` — reader-facing text, in both languages · **Source:** finding 141 · **Status:** `proposed`
 **Why —**
   - *finding 141* — "HOW MUCH WAS GENERATED" IS A QUESTION ABOUT AN AMOUNT.
 
@@ -936,8 +976,7 @@ Where no route exists, the card says plainly that the amount is not published an
 
 A library question searches the shipped article index (title, body, sector and entity tags, both languages) and lists the matching articles as data (title, date, id) with a preview control; no figure from an article is ever placed beside an approved value, and the preview says "Figures inside it are the authors' own and are not approved indicator data."
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 68, 122
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 68, 122 · **Status:** `proposed`
 **Why —**
   - *finding 68* — A question about ARTICLES is not a question about data.
   - *finding 122* — THE ARTICLE LIST, AS DATA AS WELL AS AS PROSE.
@@ -946,8 +985,7 @@ A library question searches the shipped article index (title, body, sector and e
 
 "The article" in a follow-up («أريد محتوى المقال») is resolved against the previous **answer** — the list the reader is looking at — and a title named in the question resolves directly. When it cannot be narrowed to one, the candidates are listed.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 75, 85
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 75, 85 · **Status:** `proposed`
 **Why —**
   - *finding 75* — A request for ONE article's CONTENT, as opposed to a list of what exists.
   - *finding 85* — NAMING THE TITLE IS THE REQUEST.
@@ -956,8 +994,7 @@ A library question searches the shipped article index (title, body, sector and e
 
 A summary of an article is generated by the model **only** when the reader asks for one ("summarise"), under the article summariser's own gate (every figure and name in the summary must be in the article), and is labelled generated. Off unless `ASKAI_ARTICLE_SUMMARY` and a model URL are set.
 
-**Becomes:** `rules/*.yaml` — a toggle or budget, held as data · **Source:** finding 87 · **Implemented at:** `ASKAI_ARTICLE_SUMMARY`, `ASKAI_ARTICLE_MODEL_URL`
-
+**Becomes:** `rules/*.yaml` — a toggle or budget, held as data · **Source:** finding 87 · **Implemented at:** `ASKAI_ARTICLE_SUMMARY`, `ASKAI_ARTICLE_MODEL_URL` · **Status:** `proposed`
 **Why —**
   - *finding 87* — THE CARD PROMISED TWO NOTES AND RENDERED ONE. MINE, FROM 3.3.0.
 
@@ -965,8 +1002,7 @@ A summary of an article is generated by the model **only** when the reader asks 
 
 A card about an indicator offers "Articles about X" as a follow-up chip when the library holds pieces on it; the chip carries the question, never the content.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 69
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 69 · **Status:** `proposed`
 **Why —**
   - *finding 69* — THE BRIDGE, AND IT IS A LINK, NOT CONTENT.
 
@@ -979,33 +1015,28 @@ An indicator resolved, the database was asked, it holds no reading for what was 
 
 - **What the card says:** "X is published, but the approved data holds no reading for …" — absence, proven.
 
-**Becomes:** `messages/` — reader-facing text, in both languages
-
+**Becomes:** `messages/` — reader-facing text, in both languages · **Status:** `proposed`
 #### `R-70` — `unresolved`
 
 The reader's words reached no indicator; the database was never asked.
 
 - **What the card says:** "Your question did not name an indicator the approved catalogue holds" + up to three candidates as questions. A set-shaped absence names no indicator at all.
 
-**Becomes:** `messages/` — reader-facing text, in both languages
-
+**Becomes:** `messages/` — reader-facing text, in both languages · **Status:** `proposed`
 #### `R-71` — `unreachable`
 
 indicator-svc raised or reported itself unavailable (set in exactly two places).
 
 - **What the card says:** "The approved data could not be reached" — an outage is never dressed as a statement about the data.
 
-**Becomes:** `messages/` — reader-facing text, in both languages
-
+**Becomes:** `messages/` — reader-facing text, in both languages · **Status:** `proposed`
 #### `R-72` — `dimension_alone`
 
 A period with no previous question to apply it to (R-51).
 
 - **What the card says:** "A period with nothing to apply it to."
 
-**Becomes:** `messages/` — reader-facing text, in both languages
-
-
+**Becomes:** `messages/` — reader-facing text, in both languages · **Status:** `proposed`
 ## Part E — Planning: from a shape to a contract
 
 
@@ -1015,8 +1046,7 @@ A period with no previous question to apply it to (R-51).
 
 An amount question (R-33, D4) is answered by the derivation, its readings and the analysts' notes; the movement, the tally and the "newer readings" paragraphs are not composed — a mode may show less.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 141; §31
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 141; §31 · **Status:** `proposed`
 **Why —**
   - *finding 141* — "HOW MUCH WAS GENERATED" IS A QUESTION ABOUT AN AMOUNT.
 
@@ -1024,8 +1054,7 @@ An amount question (R-33, D4) is answered by the derivation, its readings and th
 
 A snapshot that was asked for (R-31) and is not a product question gets the consolidated structure (`snapshot`, `evidence`). An **aligned** set — the reader asked for one period, or asked which rose and which fell — keeps the set composers: its question is the movement, not the picture.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 147
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 147 · **Status:** `proposed`
 **Why —**
   - *finding 147* — A TABLE ONLY FOR A SCREEN THAT CAN DRAW ONE. The 4.5.0 bundle says so
 
@@ -1033,8 +1062,7 @@ A snapshot that was asked for (R-31) and is not a product question gets the cons
 
 A cross-country question puts the peer table first; the period extreme becomes a headline of Qatar's own figure rather than nothing.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 119
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 119 · **Status:** `proposed`
 **Why —**
   - *finding 119* — "WHICH COUNTRY HAD THE LOWEST INFLATION" WAS ANSWERED WITH A YEAR.
 
@@ -1042,14 +1070,12 @@ A cross-country question puts the peer table first; the period extreme becomes a
 
 Three or more named periods on a change / growth / comparison shape widen the blocks to list the span.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** design
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** design · **Status:** `proposed`
 #### `R-77`
 
 Depth (R-27) widens a single-indicator shape: `measures` first (a reader cannot weigh a number before knowing what it counts), then the breakdown, then the peer table, then the champion, with the analyst block allowed to say more. Never on a set.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 77, 80, 90
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 77, 80, 90 · **Status:** `proposed`
 **Why —**
   - *finding 77* — DEPTH IS NOT A DIFFERENT QUESTION. IT IS THE SAME QUESTION, ASKED WIDER.
   - *finding 80* — THE COMPONENTS, WHICH EXISTED THE WHOLE TIME.
@@ -1059,8 +1085,7 @@ Depth (R-27) widens a single-indicator shape: `measures` first (a reader cannot 
 
 `wants_change` inserts the `change` block immediately after the first block; `wants_peers` inserts `peers` before `evidence`; `wants_verdict` inserts `favourable` after `change` (or after `assessment`, or second). None of these apply to SET, EXECUTIVE, FORECAST or SCENARIO.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 91, 144
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 91, 144 · **Status:** `proposed`
 **Why —**
   - *finding 91* — A QUESTION ABOUT MOVEMENT WANTS THE MOVEMENT.
   - *finding 144* — "IS THAT GOOD?" IS ANSWERED BY THE CATALOGUE, NOT BY US.
@@ -1069,8 +1094,7 @@ Depth (R-27) widens a single-indicator shape: `measures` first (a reader cannot 
 
 The plan records the interval the question was phrased in (from its periods, or its granularity when it named no period) so the check stage can say when the data could not honour it.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 56
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 56 · **Status:** `proposed`
 **Why —**
   - *finding 56* — "Show the trend of Inflation" returned TWO readings: 2026-03 and 2026-04.
 
@@ -1084,14 +1108,12 @@ The plan records the interval the question was phrased in (from its periods, or 
 
 Rows come from indicator-svc `/refs` for the resolved indicator over the periods the question named (expanded to the indicator's grains) or, for a period-less question, the window of R-43. The meta (name, unit, display decimals, polarity, source, definition) comes with the rows.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** design
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** design · **Status:** `proposed`
 #### `R-81`
 
 **Interval discipline.** A selection never mixes a year with its own quarters. When the reader named an interval and rows exist at it, only those rows are used; when they exist at no such interval, the card says so (gap `granularity`) and uses what exists.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 1, 46, 56
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 1, 46, 56 · **Status:** `proposed`
 **Why —**
   - *finding 1* — the tooltip read "2022 / value : 686.131074" - the raw
   - *finding 46* — THE QUESTION'S GRANULARITY OUTRANKS THE DATA'S LAST ROW.
@@ -1101,8 +1123,7 @@ Rows come from indicator-svc `/refs` for the resolved indicator over the periods
 
 A trend with no named grain is drawn at the **coarsest** interval that carries at least 3 readings (seven annual rows are not discarded because two monthly rows are newer). A single reading is the newest of its kind. Two endpoints are the first and last of the selection.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 56
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 56 · **Status:** `proposed`
 **Why —**
   - *finding 56* — "Show the trend of Inflation" returned TWO readings: 2026-03 and 2026-04.
 
@@ -1110,8 +1131,7 @@ A trend with no named grain is drawn at the **coarsest** interval that carries a
 
 **The other grain.** When the question named no period and no grain, and the indicator publishes at more than one grain (public debt 42.4 % at 2025-Q4 and 40.6 % for 2025), the card names the newest reading at the coarser grain as well, rather than choosing silently. Applies to value, polar, change, comparison and growth shapes.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 96
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 96 · **Status:** `proposed`
 **Why —**
   - *finding 96* — WHICH GRAIN "RIGHT NOW" MEANS, WHEN THE INDICATOR PUBLISHES AT TWO.
 
@@ -1119,8 +1139,7 @@ A trend with no named grain is drawn at the **coarsest** interval that carries a
 
 **The year-ago row.** Wherever the move is asked (R-28) or depth is asked (R-27), the same period one year earlier is fetched as one extra row (2025-Q4 → 2024-Q4; 2026-04 → 2025-04; 2025 → 2024). If the database holds no row for it, the card says which comparison period is absent; it never compares against some other period.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 91, 144
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 91, 144 · **Status:** `proposed`
 **Why —**
   - *finding 91* — A QUESTION ABOUT MOVEMENT WANTS THE MOVEMENT.
   - *finding 144* — "IS THAT GOOD?" IS ANSWERED BY THE CATALOGUE, NOT BY US.
@@ -1129,8 +1148,7 @@ A trend with no named grain is drawn at the **coarsest** interval that carries a
 
 **The analyst note** (`/commentary`) is fetched for the periods the answer shows, widened so that a quarterly note about 2025 is reachable from a card that cites 2025; a note that covers none of the card's periods is filed in the ledger, not spoken. One covering note per period on the card (the "journey"), at most 8.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 51, 82, 117 · **Implemented at:** `_JOURNEY_MAX`
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 51, 82, 117 · **Implemented at:** `_JOURNEY_MAX` · **Status:** `proposed`
 **Why —**
   - *finding 51* — A NOTE THAT COVERS NOTHING ON THIS CARD IS NOT SPOKEN.
   - *finding 82* — THE JOURNEY. ONE NOTE PER PERIOD, NOT ONE NOTE PER CARD.
@@ -1140,8 +1158,7 @@ A trend with no named grain is drawn at the **coarsest** interval that carries a
 
 **Depth data** (only when R-27): the peer table from `/benchmark` (at most 6 peers; a comparison at a period the card does not cover is flagged as not aligned); the sibling detail rows from `/refs` by detail id at the card's own period (at most 8, one fetch each within 6 s); the CMS definition; the group champion.
 
-**Becomes:** `rules/*.yaml` — a published value the engine reads · **Source:** findings 77, 80, 81, 90 · **Implemented at:** `_PEERS_MAX`, `_COMPONENTS_MAX`, `_COMPONENT_MAX_FETCH`
-
+**Becomes:** `rules/*.yaml` — a published value the engine reads · **Source:** findings 77, 80, 81, 90 · **Implemented at:** `_PEERS_MAX`, `_COMPONENTS_MAX`, `_COMPONENT_MAX_FETCH` · **Status:** `proposed`
 **Why —**
   - *finding 77* — DEPTH IS NOT A DIFFERENT QUESTION. IT IS THE SAME QUESTION, ASKED WIDER.
   - *finding 80* — THE COMPONENTS, WHICH EXISTED THE WHOLE TIME.
@@ -1152,8 +1169,7 @@ A trend with no named grain is drawn at the **coarsest** interval that carries a
 
 **What a breakdown is** is decided from the rows, never from the shape of the CMS table: a *decomposition* when the parts reconcile to the published whole (tolerance 1e-4); *additive peers* when they are additive units with no published whole; *related series* otherwise — and related series are never summed. Balancing items and non-additive units (rates, ranks, shares) are never summed.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 97 · **Implemented at:** `RECONCILE_TOL`
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 97 · **Implemented at:** `RECONCILE_TOL` · **Status:** `proposed`
 **Why —**
   - *finding 97* — A SIBLING IS NOT A COMPONENT.
 
@@ -1161,8 +1177,7 @@ A trend with no named grain is drawn at the **coarsest** interval that carries a
 
 A chart is built over exactly the periods the card cites; any point the card does not cite is dropped and a chart left with fewer than two points is not shown. Tooltip values follow the display policy (never 686.131074).
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 55
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 55 · **Status:** `proposed`
 **Why —**
   - *finding 55* — THE PIPELINE DREW NO CHARTS AT ALL, AND THAT IS MINE.
 
@@ -1173,8 +1188,7 @@ A chart is built over exactly the periods the card cites; any point the card doe
 
 Every member is fetched concurrently over the union of the named periods and the window, inside one budget (12 s). A member with no rows is recorded as **absent** and named on the card. Fewer than two members with rows is "not a set" — an ordinary empty result, never an outage.
 
-**Becomes:** `rules/*.yaml` — a published value the engine reads · **Source:** findings 95, 128, 131 · **Implemented at:** `_SET_FETCH_BUDGET_S`, `_SET_MIN`
-
+**Becomes:** `rules/*.yaml` — a published value the engine reads · **Source:** findings 95, 128, 131 · **Implemented at:** `_SET_FETCH_BUDGET_S`, `_SET_MIN` · **Status:** `proposed`
 **Why —**
   - *finding 95* — THE SET, FETCHED CONCURRENTLY AND LINED UP ON ONE PERIOD.
   - *finding 128* — `unavailable` IS OVERLOADED, AND THE OVERLOAD ALMOST SHIPPED A NEW
@@ -1184,8 +1198,7 @@ Every member is fetched concurrently over the union of the named periods and the
 
 **The named-period rule.** When the reader named a period: if every member has it, the set is aligned on it. If at least two and at least **half** of them have it, the set answers at that period, and the rest are shown at their own latest reading — those older than the named period as "not published for 2024; the latest available reading is older", those newer as newer readings. If fewer than half have it, the card states who has it and who does not, at the newest period the majority reaches. The lead sentence then reads "**Readings at 2024** — the period you asked about; these 6 have it."
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 104, 148
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 104, 148 · **Status:** `proposed`
 **Why —**
   - *finding 104* — A NAMED PERIOD MUST NOT BYPASS THE ALIGNMENT.
   - *finding 148* — THE READER'S PERIOD, WHEN MOST OF THE SET HOLDS IT. "The
@@ -1194,8 +1207,7 @@ Every member is fetched concurrently over the union of the named periods and the
 
 **Alignment with no named period** (a comparison, "which rose and which fell"): the set is lined up on the newest period **every** member shares; a laggard is dropped from the alignment whenever dropping it buys recency, and the dropping stops when it stops buying any, with a floor of a majority (never fewer than 2). Dropped members are listed with their own dates, never removed from the card. On the eight national indicators this gives six at 2025 with GNI (2023) and FDI Stock (2024) listed separately.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 108
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 108 · **Status:** `proposed`
 **Why —**
   - *finding 108* — the grain the QUESTION was phrased in steers the tie-break.
 
@@ -1203,8 +1215,7 @@ Every member is fetched concurrently over the union of the named periods and the
 
 Grains are compared separately (a year and its own quarter are not the same reading); a tie on end-date goes to the **coarser** grain ("2025" over "2025-Q4") unless the reader named a grain ("in Q1 2026"), whose grain outranks the convention.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 1, 108
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 1, 108 · **Status:** `proposed`
 **Why —**
   - *finding 1* — the tooltip read "2022 / value : 686.131074" - the raw
   - *finding 108* — the grain the QUESTION was phrased in steers the tie-break.
@@ -1213,8 +1224,7 @@ Grains are compared separately (a year and its own quarter are not the same read
 
 **Newer readings.** Members whose own latest reading is newer than the aligned period are read at their own latest **too**, in a separate paragraph, so that a card aligned at 2025 cannot hide that revenues have a 2026-Q1 reading.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 138
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 138 · **Status:** `proposed`
 **Why —**
   - *finding 138* — THE READINGS THAT REACH FURTHER WERE DISCLOSED AND NEVER READ.
 
@@ -1222,8 +1232,7 @@ Grains are compared separately (a year and its own quarter are not the same read
 
 **A snapshot** (R-30) — or a set with no shared period at all — reports each member at its own newest reading (ties to the finer grain), sorted by name, and the card says the periods differ.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 129, 130
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 129, 130 · **Status:** `proposed`
 **Why —**
   - *finding 129* — THE QUESTION THAT WANTS EACH INDICATOR AT ITS OWN LATEST PERIOD.
   - *finding 130* — —
@@ -1232,14 +1241,12 @@ Grains are compared separately (a year and its own quarter are not the same read
 
 Each member's **change** is the move against the same period one year earlier, computed from the rows already fetched for that member — never a second fetch, so the pair can never come from two different requests.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** design
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** design · **Status:** `proposed`
 #### `R-96`
 
 The analysts' notes for the set are fetched per member at the period the card shows it; up to 3 are spoken, all are in the ledger.
 
-**Becomes:** `rules/*.yaml` — a published value the engine reads · **Source:** finding 111 · **Implemented at:** `_SET_NOTES_SHOWN`
-
+**Becomes:** `rules/*.yaml` — a published value the engine reads · **Source:** finding 111 · **Implemented at:** `_SET_NOTES_SHOWN` · **Status:** `proposed`
 **Why —**
   - *finding 111* — THE ANALYSIS THE COUNCIL ALREADY WROTE.
 
@@ -1253,20 +1260,17 @@ The analysts' notes for the set are fetched per member at the period the card sh
 
 Composers **append**; none may overwrite another's sentence, so no ordering can lose a sentence. Structured content (a list, a table) starts its own line; once an answer is multi-line it stays multi-line.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** design
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** design · **Status:** `proposed`
 #### `R-98`
 
 Measured first, generated last, absent never omitted. There is no "unknown" class: a fact the system cannot place is not shown.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** block model
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** block model · **Status:** `proposed`
 #### `R-99`
 
 Every card ends with the evidence block: the citations (indicator, period, value, revision status, source) — the source is a CMS field and is labelled as such, not as a reading.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 36
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 36 · **Status:** `proposed`
 **Why —**
   - *finding 36* — `derived` against
 
@@ -1274,8 +1278,7 @@ Every card ends with the evidence block: the citations (indicator, period, value
 
 Executive Lens is a filter over classes and display sections; dropping `generated` provably removes only generated content.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 34 (P-8)
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 34 (P-8) · **Status:** `proposed`
 **Why —**
   - *finding 34* — The reading, on request, and never unasked.
 
@@ -1286,8 +1289,7 @@ Executive Lens is a filter over classes and display sections; dropping `generate
 
 A value is shown with the CMS display decimals and its unit; the money form is `QAR 185.2bn` (the scale prefix comes from the CMS Format field, e.g. "bn0.0", composed by the loader into "bn QAR"); percentages as `2.6%`; ranks as ordinals (`78th`); an `NA` unit is silent. Arabic writes the scale in words: «185.2 مليار ر.ق».
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 60, 147
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 60, 147 · **Status:** `proposed`
 **Why —**
   - *finding 60* — THE UNIT RIDES EVERY ROW.
   - *finding 147* — A TABLE ONLY FOR A SCREEN THAT CAN DRAW ONE. The 4.5.0 bundle says so
@@ -1296,8 +1298,7 @@ A value is shown with the CMS display decimals and its unit; the money form is `
 
 A **percent-measured** indicator changes in **points** (pp), never in per cent of itself; a **rank** changes in **places** ("up 9 places", «تقدّم 9 مراتب») and lower is better; everything else changes in per cent. A rank whose catalogue polarity says "increase" contradicts itself and the card says so.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 1, 109
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 1, 109 · **Status:** `proposed`
 **Why —**
   - *finding 1* — the tooltip read "2022 / value : 686.131074" - the raw
   - *finding 109* — "THAT IS" NEEDS SOMETHING TO REFER TO.
@@ -1306,14 +1307,12 @@ A **percent-measured** indicator changes in **points** (pp), never in per cent o
 
 A move smaller than 2 % of the starting level (floored at 0.05 in the unit) is **flat** — not a direction.
 
-**Becomes:** `rules/*.yaml` — a published value the engine reads · **Source:** `FLAT_RATIO` 0.02, `FLAT_FLOOR` 0.05 · **Implemented at:** `FLAT_RATIO`, `FLAT_FLOOR`
-
+**Becomes:** `rules/*.yaml` — a published value the engine reads · **Source:** `FLAT_RATIO` 0.02, `FLAT_FLOOR` 0.05 · **Implemented at:** `FLAT_RATIO`, `FLAT_FLOOR` · **Status:** `proposed`
 #### `R-104`
 
 Periods are written as the database writes them (`2025`, `2025-Q4`, `2026-04`) and every figure carries one. Signed changes and periods are isolated for bidirectional text so that Arabic prose never shows "Q4-2025" or "2.0%+".
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 147
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 147 · **Status:** `proposed`
 **Why —**
   - *finding 147* — A TABLE ONLY FOR A SCREEN THAT CAN DRAW ONE. The 4.5.0 bundle says so
 
@@ -1321,8 +1320,7 @@ Periods are written as the database writes them (`2025`, `2025-Q4`, `2026-04`) a
 
 Arabic sentences are composed in parallel, not translated: feminine agreement for «الإشارة» (إيجابية / سلبية / مستقرة / غير مصنّفة), «بحسب تحليل الأمانة،» for the analysts' sentence, «الصورة العامة» for the overall assessment.
 
-**Becomes:** `messages/` — reader-facing text, in both languages · **Source:** findings 115, 147
-
+**Becomes:** `messages/` — reader-facing text, in both languages · **Source:** findings 115, 147 · **Status:** `proposed`
 **Why —**
   - *finding 115* — THE LINE THAT DECIDES WHICH WAY THE PARAGRAPH READS.
   - *finding 147* — A TABLE ONLY FOR A SCREEN THAT CAN DRAW ONE. The 4.5.0 bundle says so
@@ -1334,8 +1332,7 @@ Arabic sentences are composed in parallel, not translated: feminine agreement fo
 
 Lead line: "**Readings at 2025** — the latest annual period these 6 share." or "**Latest readings** — each indicator at its own latest period." or, at a named period, "**Readings at 2024** — the period you asked about; these 6 have it." Then one line per member: name · reading · period · change.
 
-**Becomes:** `messages/` — reader-facing text, in both languages · **Source:** findings 95, 129, 147, 148
-
+**Becomes:** `messages/` — reader-facing text, in both languages · **Source:** findings 95, 129, 147, 148 · **Status:** `proposed`
 **Why —**
   - *finding 95* — THE SET, FETCHED CONCURRENTLY AND LINED UP ON ONE PERIOD.
   - *finding 129* — THE QUESTION THAT WANTS EACH INDICATOR AT ITS OWN LATEST PERIOD.
@@ -1346,8 +1343,7 @@ Lead line: "**Readings at 2025** — the latest annual period these 6 share." or
 
 Members that could not reach the period: "Not published for 2024; the latest available reading is older: …". Members that returned nothing: "No reading was returned for X." A trimmed group: "This group holds N further indicators that are not listed here."
 
-**Becomes:** `messages/` — reader-facing text, in both languages · **Source:** findings 102, 104, 131
-
+**Becomes:** `messages/` — reader-facing text, in both languages · **Source:** findings 102, 104, 131 · **Status:** `proposed`
 **Why —**
   - *finding 102* — THE SET ROUTE WAS BUILT, TESTED, AND UNREACHABLE.
   - *finding 104* — A NAMED PERIOD MUST NOT BYPASS THE ALIGNMENT.
@@ -1357,8 +1353,7 @@ Members that could not reach the period: "Not published for 2024; the latest ava
 
 Movement: "Signal — **Positive**: …; **Negative**: …; **Stable**: …; **Not classified**: …" against the same period a year earlier — direction from arithmetic, the signal word from the catalogue's polarity. When the reader named the period, the "newer readings" paragraph is not spoken (ledger only).
 
-**Becomes:** `messages/` — reader-facing text, in both languages · **Source:** findings 94, 148
-
+**Becomes:** `messages/` — reader-facing text, in both languages · **Source:** findings 94, 148 · **Status:** `proposed`
 **Why —**
   - *finding 94* — A QUESTION CAN BE ABOUT SEVERAL INDICATORS AT ONCE, AND NINE OF THE
   - *finding 148* — THE READER'S PERIOD, WHEN MOST OF THE SET HOLDS IT. "The
@@ -1367,8 +1362,7 @@ Movement: "Signal — **Positive**: …; **Negative**: …; **Stable**: …; **N
 
 The largest move is taken over percentage changes only; a member that cannot supply one (a rate, a rank, points) is reported as excluded, never ranked anyway.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 94
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 94 · **Status:** `proposed`
 **Why —**
   - *finding 94* — A QUESTION CAN BE ABOUT SEVERAL INDICATORS AT ONCE, AND NINE OF THE
 
@@ -1376,8 +1370,7 @@ The largest move is taken over percentage changes only; a member that cannot sup
 
 A product the reader proposed (R-35) is computed only from exactly two readings whose denominators are the same population; otherwise it is refused and the refusal says why ("a share of government revenue cannot be applied to non-hydrocarbon GDP").
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 100
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 100 · **Status:** `proposed`
 **Why —**
   - *finding 100* — THE MULTIPLICATION THE CLIENT MOST WANTS US TO REFUSE.
 
@@ -1385,8 +1378,7 @@ A product the reader proposed (R-35) is computed only from exactly two readings 
 
 Analysts' notes: "**Trade Balance (Goods & Services), 2025-Q4** — SCEAI notes that …", up to 3; the remainder counted in the ledger only (`set_analyst_more`).
 
-**Becomes:** `messages/` — reader-facing text, in both languages · **Source:** finding 111, §19 · **Implemented at:** `_SET_NOTE_MAX`
-
+**Becomes:** `messages/` — reader-facing text, in both languages · **Source:** finding 111, §19 · **Implemented at:** `_SET_NOTE_MAX` · **Status:** `proposed`
 **Why —**
   - *finding 111* — THE ANALYSIS THE COUNCIL ALREADY WROTE.
 
@@ -1397,8 +1389,7 @@ Analysts' notes: "**Trade Balance (Goods & Services), 2025-Q4** — SCEAI notes 
 
 **The lead order** for the concerns (and the positives): a signal whose published analysis states a historical extreme reaching back at least one year ("the lowest since Q3 2017") leads; then the tier; then the size of the move; then the name. An extreme reaching back less than a year ("since February 2026") stays in the ledger. This reproduces the Council's own worked example on the real export.
 
-**Becomes:** `rules/*.yaml` — a published value the engine reads · **Source:** §6; finding 147 · **Implemented at:** `_EXTREME_MIN_YEARS`
-
+**Becomes:** `rules/*.yaml` — a published value the engine reads · **Source:** §6; finding 147 · **Implemented at:** `_EXTREME_MIN_YEARS` · **Status:** `proposed`
 **Why —**
   - *finding 147* — A TABLE ONLY FOR A SCREEN THAT CAN DRAW ONE. The 4.5.0 bundle says so
 
@@ -1406,8 +1397,7 @@ Analysts' notes: "**Trade Balance (Goods & Services), 2025-Q4** — SCEAI notes 
 
 The table rows are ordered by tier then size; only the lead concern uses the extreme-first rule.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 147
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 147 · **Status:** `proposed`
 **Why —**
   - *finding 147* — A TABLE ONLY FOR A SCREEN THAT CAN DRAW ONE. The 4.5.0 bundle says so
 
@@ -1415,8 +1405,7 @@ The table rows are ordered by tier then size; only the lead concern uses the ext
 
 The confidence level and the rule that produced the label are in the ledger and the reasoning object, not printed on the card ("Confidence: medium" reads like a score). **Decision O-4.**
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 113
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 113 · **Status:** `proposed`
 **Why —**
   - *finding 113* — A BROAD QUESTION WANTS AN ASSESSMENT, NOT AN INVENTORY.
 
@@ -1424,23 +1413,19 @@ The confidence level and the rule that produced the label are in the ledger and 
 
 When no analyst note exists for any concern, the SCEAI sentence is omitted. The Council's §22 wording for that case was not recoverable from the thread and is not implemented. **Decision O-5.**
 
-**Becomes:** `messages/` — reader-facing text, in both languages · **Source:** §22
-
+**Becomes:** `messages/` — reader-facing text, in both languages · **Source:** §22 · **Status:** `proposed`
 #### `R-116`
 
 None of the banned §18/§19 vocabulary appears on this card (Appendix B); every underlying fact stays in the ledger (`set_snapshot`, `executive` with the assessment JSON, `exec_analyst`, `context`, `set_note`, `set_trimmed`, `set_absent`).
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** §18, §19
-
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** §18, §19 · **Status:** `proposed`
 ### G6. Refusal, scenario, absence, library, article cards
 
 #### `R-117`
 
 **Scenario** ("if gas prices rise, will GDP grow?"): the card names what the approved data holds about each indicator the question named (with a citation), states that no approved analysis connects them (the CMS mappings table is empty; 32 indicator-to-indicator links across 1,031 analyses, nearly all part-of-whole), and says what would have to exist for the question to be answerable. No headline figure.
 
-**Becomes:** `messages/` — reader-facing text, in both languages · **Source:** finding 88
-
+**Becomes:** `messages/` — reader-facing text, in both languages · **Source:** finding 88 · **Status:** `proposed`
 **Why —**
   - *finding 88* — A CONDITIONAL IS NOT A READING, AND ANSWERING IT WITH ONE IS WORSE THAN
 
@@ -1448,14 +1433,12 @@ None of the banned §18/§19 vocabulary appears on this card (Appendix B); every
 
 **Forecast**: refused — no projection series exists in the approved data; the external agent is where projections live.
 
-**Becomes:** `messages/` — reader-facing text, in both languages · **Source:** design
-
+**Becomes:** `messages/` — reader-facing text, in both languages · **Source:** design · **Status:** `proposed`
 #### `R-119`
 
 **Absence** names the question and the reason (D6), and offers candidates as questions.
 
-**Becomes:** `messages/` — reader-facing text, in both languages · **Source:** findings 39, 125, 126
-
+**Becomes:** `messages/` — reader-facing text, in both languages · **Source:** findings 39, 125, 126 · **Status:** `proposed`
 **Why —**
   - *finding 39* — The reader typed «لاقتصاد في قطر» - "the economy in Qatar" one letter
   - *finding 125* — WHY THERE IS NO ANSWER. THREE REASONS, AND WE HAVE BEEN GIVING ONE.
@@ -1465,8 +1448,7 @@ None of the banned §18/§19 vocabulary appears on this card (Appendix B); every
 
 **Library / article** cards carry no headline, no chart, no approved figure; the article's own words are shown in the language held, with a note when the language differs from the question's and when the text is truncated.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 68, 75, 122
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 68, 75, 122 · **Status:** `proposed`
 **Why —**
   - *finding 68* — A question about ARTICLES is not a question about data.
   - *finding 75* — A request for ONE article's CONTENT, as opposed to a list of what exists.
@@ -1479,8 +1461,7 @@ None of the banned §18/§19 vocabulary appears on this card (Appendix B); every
 
 Only an **attributed** block may carry a cause, and only in the analysts' own words with the byline ("According to SCEAI, 2026-Q1:", "SCEAI notes that …", «بحسب تحليل الأمانة،»). The computed paragraph (assessment, narrative, themes, takeaway) never states why.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 83 (P-9)
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 83 (P-9) · **Status:** `proposed`
 **Why —**
   - *finding 83* — THE ASSESSMENT. Built ONCE, from what has already been fetched.
 
@@ -1488,8 +1469,7 @@ Only an **attributed** block may carry a cause, and only in the analysts' own wo
 
 A note is spoken only when it covers a period the card shows; the note nearest the card's period is chosen; the detailed section is spoken only on a depth card. Analyst text is cleaned of the export's hyphenation breaks (R-23) and of markup.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 51, 77, 117
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 51, 77, 117 · **Status:** `proposed`
 **Why —**
   - *finding 51* — A NOTE THAT COVERS NOTHING ON THIS CARD IS NOT SPOKEN.
   - *finding 77* — DEPTH IS NOT A DIFFERENT QUESTION. IT IS THE SAME QUESTION, ASKED WIDER.
@@ -1499,8 +1479,7 @@ A note is spoken only when it covers a period the card shows; the note nearest t
 
 On a snapshot the analysts' sentence is condensed to the first sentence, at most 180 characters, re-cased to read after "SCEAI notes that" (proper nouns and "QAR" keep their capitals).
 
-**Becomes:** `rules/*.yaml` — a published value the engine reads · **Source:** finding 147 · **Implemented at:** `_EXEC_NOTE_MAX`
-
+**Becomes:** `rules/*.yaml` — a published value the engine reads · **Source:** finding 147 · **Implemented at:** `_EXEC_NOTE_MAX` · **Status:** `proposed`
 **Why —**
   - *finding 147* — A TABLE ONLY FOR A SCREEN THAT CAN DRAW ONE. The 4.5.0 bundle says so
 
@@ -1508,8 +1487,7 @@ On a snapshot the analysts' sentence is condensed to the first sentence, at most
 
 A historical extreme in a note ("the lowest total revenue since Q3 2017") is recognised by pattern (lowest / highest / … since <period>) in both languages, and its reach in years is computed against the card's period.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 147
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 147 · **Status:** `proposed`
 **Why —**
   - *finding 147* — A TABLE ONLY FOR A SCREEN THAT CAN DRAW ONE. The 4.5.0 bundle says so
 
@@ -1517,8 +1495,7 @@ A historical extreme in a note ("the lowest total revenue since Q3 2017") is rec
 
 The attribution tag is configurable (`ASKAI_TAG_EN` / `ASKAI_TAG_AR`, default "According to SCEAI" / «وفقًا للأمانة»).
 
-**Becomes:** `rules/*.yaml` — a toggle or budget, held as data · **Source:** finding 117 · **Implemented at:** `ASKAI_TAG_EN`, `ASKAI_TAG_AR`
-
+**Becomes:** `rules/*.yaml` — a toggle or budget, held as data · **Source:** finding 117 · **Implemented at:** `ASKAI_TAG_EN`, `ASKAI_TAG_AR` · **Status:** `proposed`
 **Why —**
   - *finding 117* — ONE ANALYSIS ON A CARD, AND IT IS THEIRS WHERE THEY HAVE WRITTEN ONE.
 
@@ -1532,8 +1509,7 @@ The attribution tag is configurable (`ASKAI_TAG_EN` / `ASKAI_TAG_AR`, default "A
 
 A plan that wanted a headline and got none, a headline composed for a shape that has no single answer, a headline whose period is outside the selection, or a chart plotting a period the card does not cite, marks the answer `shape_ok = false`, repairs what it can (drops the headline or the uncited points) and logs a warning. The KPI in Part K counts these.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 37, 55
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 37, 55 · **Status:** `proposed`
 **Why —**
   - *finding 37* — The live card read
   - *finding 55* — THE PIPELINE DREW NO CHARTS AT ALL, AND THAT IS MINE.
@@ -1542,8 +1518,7 @@ A plan that wanted a headline and got none, a headline composed for a shape that
 
 A set that was asked for N members and delivered fewer says so and is marked `shape_ok = false` unless every missing member is accounted for as absent, stale or trimmed.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 94, 102, 130
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 94, 102, 130 · **Status:** `proposed`
 **Why —**
   - *finding 94* — A QUESTION CAN BE ABOUT SEVERAL INDICATORS AT ONCE, AND NINE OF THE
   - *finding 102* — THE SET ROUTE WAS BUILT, TESTED, AND UNREACHABLE.
@@ -1558,8 +1533,7 @@ No cause, forecast, recommendation or policy word in computed text.
 
 - **Enforced where:** composers (none is able to write one); renderer gate step 1
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 83; §7
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 83; §7 · **Status:** `proposed`
 **Why —**
   - *finding 83* — THE ASSESSMENT. Built ONCE, from what has already been fetched.
 
@@ -1569,8 +1543,7 @@ No score, no weighting, no index, no percentage "of positivity"; no magnitude ad
 
 - **Enforced where:** reasoning engine (no such field exists); composers' fixed vocabulary; renderer gate
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 113; §5
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 113; §5 · **Status:** `proposed`
 **Why —**
   - *finding 113* — A BROAD QUESTION WANTS AN ASSESSMENT, NOT AN INVENTORY.
 
@@ -1580,16 +1553,14 @@ No internal vocabulary on a card (Appendix B).
 
 - **Enforced where:** composers rewritten in 4.5.0; renderer gate step 0; harness32 asserts every card
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** §18, §19
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** §18, §19 · **Status:** `proposed`
 #### `R-131`
 
 One card, one indicator — unless the question asked for a set; and a set card names every member it was asked about.
 
 - **Enforced where:** plan (the set shape exists only when ≥ 2 resolve); check
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 94, 130
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 94, 130 · **Status:** `proposed`
 **Why —**
   - *finding 94* — A QUESTION CAN BE ABOUT SEVERAL INDICATORS AT ONCE, AND NINE OF THE
   - *finding 130* — —
@@ -1600,8 +1571,7 @@ The biggest number on the card is the answer (no headline on a series, a set, a 
 
 - **Enforced where:** shape table; check
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 63
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 63 · **Status:** `proposed`
 **Why —**
   - *finding 63* — the growth rate outranks every row-derived
 
@@ -1611,8 +1581,7 @@ No value without its name, unit and period; a derived value says it is derived.
 
 - **Enforced where:** composers; ledger classes
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 63, 141
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 63, 141 · **Status:** `proposed`
 **Why —**
   - *finding 63* — the growth rate outranks every row-derived
   - *finding 141* — "HOW MUCH WAS GENERATED" IS A QUESTION ABOUT AN AMOUNT.
@@ -1623,8 +1592,7 @@ Absence is proven by asking (D6); an outage is never dressed as absence and abse
 
 - **Enforced where:** `Ask.absence_reason`, `Plan.unreachable`
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 125, 128
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 125, 128 · **Status:** `proposed`
 **Why —**
   - *finding 125* — WHY THERE IS NO ANSWER. THREE REASONS, AND WE HAVE BEEN GIVING ONE.
   - *finding 128* — `unavailable` IS OVERLOADED, AND THE OVERLOAD ALMOST SHIPPED A NEW
@@ -1635,8 +1603,7 @@ Approved data never under an external badge; external content never as approved.
 
 - **Enforced where:** route gate (R-4)
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 49
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 49 · **Status:** `proposed`
 **Why —**
   - *finding 49* — the pipeline declined to answer for agent=%r -
 
@@ -1646,8 +1613,7 @@ A mode shows less, never more (R-100).
 
 - **Enforced where:** interface filter
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 34
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 34 · **Status:** `proposed`
 **Why —**
   - *finding 34* — The reading, on request, and never unasked.
 
@@ -1657,8 +1623,7 @@ A carried context is disclosed (R-53); a substituted period is disclosed (H1); a
 
 - **Enforced where:** composers; renderer gate step 9
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 32
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 32 · **Status:** `proposed`
 **Why —**
   - *finding 32* — The model may name the SUBJECT. It may not produce anything else.
 
@@ -1668,11 +1633,58 @@ A carried context is disclosed (R-53); a substituted period is disclosed (H1); a
 
 - **Enforced where:** interface + `/api/read`
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 34
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 34 · **Status:** `proposed`
 **Why —**
   - *finding 34* — The reading, on request, and never unasked.
 
+
+#### `R-155`
+
+**A number in prose must match a number on the card after normalisation, not before it.** A figure written with its scale attached — `753.2bn`, `٧٥٣٫٢ مليار` — is the same figure as the card's `753.2` carrying unit `bn`. The guard compares the normalised numeric token and the normalised unit separately; it does not compare the rendered string.
+
+- **Effect:** the guard stops rejecting correct sentences, which is what makes a discard rate readable as a real signal rather than as noise.
+- **Enforced where:** the narration guard, number check (AD-28 check 1)
+
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 156 (postdates the 4.6.0 baseline; written for v2) · **Status:** `proposed`
+
+**Why —**
+  - *finding 156* — a decimal glued to its scale is still a decimal. A number guard rejected a correct sentence because `753.2bn` did not match `753.2`.
+
+**`[v2]`** New in this revision. The register's baseline is release 4.6.0 and this finding postdates it.
+
+#### `R-156`
+
+**An attributed sentence belongs to the entity it was written about, and may not be moved.** A passage carrying a byline is bound to the indicator, period and country of the datapoint it was published against. Re-using it on a card for a different entity is prohibited even where the sentence reads as generic, and the guard's named-entity check tests the attribution's entity against the card's, not merely the sentence's wording.
+
+- **Effect:** closes the hole where a sentence about Qatar appeared on a Bahrain card **carrying its byline**, and the guard passed it because every number and name in the sentence was legitimate — just legitimate somewhere else.
+- **Enforced where:** the narration guard, named-entity check (AD-28 check 2); provenance envelope (AD-6)
+
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 157 (postdates the 4.6.0 baseline; written for v2) · **Status:** `proposed`
+
+**Why —**
+  - *finding 157* — the Council's sentence, moved onto another country. An attributed sentence about Qatar re-used on a Bahrain card, carrying its byline, and the guard passed it.
+
+**`[v2]`** New in this revision. The register's baseline is release 4.6.0 and this finding postdates it.
+
+#### `R-157`
+
+**`[REJECTED]` A level comparison of named indicators with no period and no superlative must not be aligned onto one common period.** Tried, implemented, and **withdrawn**.
+
+- **Why it was withdrawn:** it fixed one client case and **broke twenty-two checks across five harnesses**. The behaviour that survived is `R-30` — each indicator at its own latest period, with the period stated on every line.
+- **Do not re-propose without reading those twenty-two checks first.** This entry exists so that the next person to notice the same client case learns the outcome in a minute rather than re-discovering it over a release.
+
+**Becomes:** nothing — it is not implemented, and must not be · **Source:** finding 133, via `R-30` and the findings triage · **Status:** `rejected`
+
+**Why —**
+  - *finding 133* — the rule that was tried here and taken back out.
+
+**`[v2]`** New in this revision, and the reason §4.3 asked for a `rejected` status.
+
+> ⚠️ **Statement reconstructed, not verbatim.** The register carries finding 133 only as a citation
+> under `R-30`; it does not carry the withdrawn rule's own wording. The statement above is the
+> inverse of what `R-30` settled, which is the only reading the surrounding evidence supports — but
+> it is **inference, not the register's text**. Confirm it against `FINDINGS-INDEX.md` when that
+> becomes available, and correct the statement rather than deleting the entry.
 
 ## Part I — The renderer (optional, on request, gated)
 
@@ -1683,8 +1695,7 @@ A carried context is disclosed (R-53); a substituted period is disclosed (H1); a
 
 The package is built at answer time from the same ledger the card was composed from, cached under an opaque `read_id` (up to 400 entries), and rebuilt from the question and history after a restart — so the reading is of **this** card, never of a second run that might resolve a follow-up differently.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 145 · **Implemented at:** `ASKAI_READING_MODEL_URL`, `_READ_CACHE_MAX`
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 145 · **Implemented at:** `ASKAI_READING_MODEL_URL`, `_READ_CACHE_MAX` · **Status:** `proposed`
 **Why —**
   - *finding 145* — THE EVIDENCE PACKAGE IS BUILT HERE, FROM THIS ANSWER, AND KEPT.
 
@@ -1692,8 +1703,7 @@ The package is built at answer time from the same ledger the card was composed f
 
 Cards with no measured evidence (absence, forecast, scenario, library, article, catalogue, capability) are not renderable.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 145
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 145 · **Status:** `proposed`
 **Why —**
   - *finding 145* — THE EVIDENCE PACKAGE IS BUILT HERE, FROM THIS ANSWER, AND KEPT.
 
@@ -1701,8 +1711,7 @@ Cards with no measured evidence (absence, forecast, scenario, library, article, 
 
 The prompt (v4) instructs the model to restate only; to use the computed labels exactly; to keep the analysts' sentence in the "SCEAI notes that" form; never to reproduce the table; and never to use the §14a banned words. Prompt text is a file shipped with the release (`renderer_prompt.md`).
 
-**Becomes:** `messages/` — reader-facing text, in both languages · **Source:** findings 143, 147
-
+**Becomes:** `messages/` — reader-facing text, in both languages · **Source:** findings 143, 147 · **Status:** `proposed`
 **Why —**
   - *finding 143* — THE ORDINAL QUARTER WAS READ AS ITS YEAR.
   - *finding 147* — A TABLE ONLY FOR A SCREEN THAT CAN DRAW ONE. The 4.5.0 bundle says so
@@ -1711,14 +1720,12 @@ The prompt (v4) instructs the model to restate only; to use the computed labels 
 
 Length by shape: word budgets (value 140 · change 200 · growth 200 · comparison 220 · polar 160 · series 280 · spread 220 · superlative 200 · sort 220 · set 420 · executive 400 · overview 400), 3,000 characters, and token caps (set 720 · executive 760 · series 520 · overview 760 · default 440); a reply cut off by its cap is rejected.
 
-**Becomes:** `rules/*.yaml` — a published value the engine reads · **Source:** §21 · **Implemented at:** `BUDGET_WORDS`, `MAX_CHARS`, `MAX_TOKENS`, `MAX_TOKENS_DEFAULT`
-
+**Becomes:** `rules/*.yaml` — a published value the engine reads · **Source:** §21 · **Implemented at:** `BUDGET_WORDS`, `MAX_CHARS`, `MAX_TOKENS`, `MAX_TOKENS_DEFAULT` · **Status:** `proposed`
 #### `R-143`
 
 Every request, acceptance and rejection (with its reason) is counted and exposed at `/api/read/stats`; the rollout decision for the renderer is taken on those numbers.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 145
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 145 · **Status:** `proposed`
 **Why —**
   - *finding 145* — THE EVIDENCE PACKAGE IS BUILT HERE, FROM THIS ANSWER, AND KEPT.
 
@@ -1726,8 +1733,7 @@ Every request, acceptance and rejection (with its reason) is counted and exposed
 
 The reader is told **why** a reading was withheld, in words that describe the rule rather than the mechanism. The withheld line is "The figures above stand as written."
 
-**Becomes:** `messages/` — reader-facing text, in both languages · **Source:** finding 145
-
+**Becomes:** `messages/` — reader-facing text, in both languages · **Source:** finding 145 · **Status:** `proposed`
 **Why —**
   - *finding 145* — THE EVIDENCE PACKAGE IS BUILT HERE, FROM THIS ANSWER, AND KEPT.
 
@@ -1741,8 +1747,7 @@ The reader is told **why** a reading was withheld, in words that describe the ru
 
 **Executive Lens** and **Explore Data** are the same request and the same answer. Executive Lens hides the chart, the "How to read this" definition, the analysts' detailed section and the related-indicator list, and shows the "what changed" sentence only when there is no headline figure. Nothing is hidden that the reader asked for.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 26, 34
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 26, 34 · **Status:** `proposed`
 **Why —**
   - *finding 26* — ONE question, asked five times, produced THREE different cards:
   - *finding 34* — The reading, on request, and never unasked.
@@ -1751,8 +1756,7 @@ The reader is told **why** a reading was withheld, in words that describe the ru
 
 The evidence panel ("Where each part came from" / "Data evidence") is collapsed by default in both modes and one click from open; it shows the ledger classes with their descriptions and the citations with revision status and source.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 26
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 26 · **Status:** `proposed`
 **Why —**
   - *finding 26* — ONE question, asked five times, produced THREE different cards:
 
@@ -1760,8 +1764,7 @@ The evidence panel ("Where each part came from" / "Data evidence") is collapsed 
 
 Suggested follow-ups are questions, never content; "Articles about X" is offered where the library holds pieces on the indicator.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 69
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 69 · **Status:** `proposed`
 **Why —**
   - *finding 69* — THE BRIDGE, AND IT IS A LINK, NOT CONTENT.
 
@@ -1769,8 +1772,7 @@ Suggested follow-ups are questions, never content; "Articles about X" is offered
 
 Combined view makes two labelled requests — the approved agent and the external agent — and renders two cards under two source headings ("According to SCEAI" / "According to <external label>"), never a merged one.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 49, 84, 89
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 49, 84, 89 · **Status:** `proposed`
 **Why —**
   - *finding 49* — the pipeline declined to answer for agent=%r -
   - *finding 84* — TWO SOURCES, COMPARED - NEVER MERGED.
@@ -1780,8 +1782,7 @@ Combined view makes two labelled requests — the approved agent and the externa
 
 A table is drawn as a table (header, numeric columns right-aligned, every cell in its own text direction) by the current bundle; an older bundle receives lines (R-3).
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 147
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 147 · **Status:** `proposed`
 **Why —**
   - *finding 147* — A TABLE ONLY FOR A SCREEN THAT CAN DRAW ONE. The 4.5.0 bundle says so
 
@@ -1789,9 +1790,7 @@ A table is drawn as a table (header, numeric columns right-aligned, every cell i
 
 Two disclaimers are fixed on the page: "Ask AI is an assistive layer. Verify figures against the Economic Monitoring Dashboard as the source of truth." and the POC note that roles and privileges are not enforced.
 
-**Becomes:** `messages/` — reader-facing text, in both languages · **Source:** BRD
-
-
+**Becomes:** `messages/` — reader-facing text, in both languages · **Source:** BRD · **Status:** `proposed`
 ## Part M — The reviewed data tables (the editable business logic)
 
 
@@ -1801,17 +1800,14 @@ Two disclaimers are fixed on the page: "Ask AI is an assistive layer. Verify fig
 
 A table change is published by rebuilding the index (where generated), running the harnesses that assert the table's invariants, and restarting the service. A back-office editor must run the same validations and the same harness subset before a change becomes live; a change that fails them is not published.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Status:** `proposed`
 #### `R-152`
 
 No table may contain a value, a period or a new indicator. Tables add spellings, groupings, orderings and repairs to what the catalogue already holds; they never add facts.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** P-2
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** P-2 · **Status:** `proposed`
 #### `R-153`
 
 Every table carries provenance (the export files and row counts it was built from, the date, the Council document it implements).
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** practice
-
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** practice · **Status:** `proposed`

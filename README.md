@@ -10,10 +10,10 @@ is made from, and the reviewed data it inherits. Start by reading them in the or
 
 | Document | What it is | Read it for |
 |---|---|---|
-| **[`docs/PRD.md`](docs/PRD.md)** | 128 functional requirements, 12 NFRs, a glossary | *what* the engine must do, and how far each capability actually reaches |
+| **[`docs/PRD.md`](docs/PRD.md)** | 132 numbered requirement ids — 127 in scope, 5 deferred — 12 NFRs, a glossary | *what* the engine must do, and how far each capability actually reaches |
 | **[`docs/ARCHITECTURE-SPINE.md`](docs/ARCHITECTURE-SPINE.md)** | 30 architecture decisions, the layer contract, the API and index design | *how* it is built, and which invariants may not be broken |
 | **[`docs/DATA-CONTRACT.md`](docs/DATA-CONTRACT.md)** | the published data, measured and verified — 31 files, 33 foreign keys | the seven structural facts behind almost every recorded failure |
-| **[`docs/RULES.md`](docs/RULES.md)** | 166 business rules, sourced and mapped | *what is true* — the domain knowledge no architecture derives |
+| **[`docs/RULES.md`](docs/RULES.md)** | 169 business rules, sourced, mapped and status-bearing | *what is true* — the domain knowledge no architecture derives |
 | **[`docs/FINDINGS-TRIAGE.md`](docs/FINDINGS-TRIAGE.md)** | 151 recorded failures, classified | which failures the architecture forecloses, and which need a rule |
 
 If you read only one thing first, read the PRD's §1 and §4 — seven measured data facts and

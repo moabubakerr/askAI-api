@@ -67,7 +67,7 @@ Produce `AGENTS.md` for this repository so every later agent starts oriented.
 | 12 | **Latency and NFR evidence** | **Murat** · `bmad-testarch-nfr` |
 | 13 | **Retrospective per epic** | `bmad-retrospective` |
 
-**Build order:** `core/` first — it is pure, depends on nothing, and is the cheapest test of whether
+**Build order:** `domain/` first — it is pure, depends on nothing, and is the cheapest test of whether
 the architecture survives a type checker. Then the read model and refresh, then the index, then one
 capability end to end through every layer before building the rest.
 
