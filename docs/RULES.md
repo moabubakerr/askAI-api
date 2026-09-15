@@ -1,27 +1,23 @@
 ---
 title: "Ask AI — Rule Catalogue"
-status: v2 — statuses complete; coverage gap costed and open
+status: v2.1 — all three register gaps closed; agreement outstanding
 created: 2026-09-14
 updated: 2026-09-15
-rules: 169
-version: 2
-statuses: "proposed 168 · rejected 1 · agreed 0"
-baseline: "askai-business-logic-spec v1.0 · release 4.6.0, plus the two 4.7.0 guard findings (156, 157)"
+rules: 188
+version: 2.1
+statuses: "proposed 187 · rejected 1 · agreed 0"
+baseline: "askai-business-logic-spec v1.0 · release 4.6.0, plus findings 154-157 and the 36 uncited findings read at source in 4.7.0+4"
 governs: "the answer engine — see ARCHITECTURE-SPINE.md and prd.md"
 ---
 
 # Ask AI — Rule Catalogue
 
-**169 rules. Every one enumerable, sourced, status-bearing, and mapped to what enforces it.**
+**188 rules. Every one enumerable, sourced, status-bearing, and mapped to what enforces it.**
 
-> **v2 — 2026-09-15.** Three rules added (`R-155`, `R-156`, `R-157`), a status assigned to all 169,
-> and the uncited-findings gap measured and bucketed rather than estimated. **No rule is `agreed`,
-> and that is deliberate — see §5.** What remains open is blocked on an input, not on effort: §4.2.
-
-This is the artifact the founding complaint asks for. When a stakeholder says *"it does not have
-good business logic"*, the accurate translation is *"I cannot see, agree, or verify the business
-logic."* This document answers **see**. The architecture answers **verify**. Only a person can
-answer **agree** — see §5.
+> **v2.1 — 2026-09-15.** The register's three stated gaps are closed. 19 rules recovered by reading
+> the 36 uncited findings at their own reference sites (Part V2), 17 more findings cited on rules
+> that already stated them, findings 154 and 155 resolved, and `R-157`'s statement corrected from
+> inference to source. **No rule is `agreed`, and that is deliberate — see §5.**
 
 ## 1. Where these rules come from
 
@@ -86,130 +82,110 @@ independent attempts at the same system arriving at the same seams:
 
 ## 4. What is missing, and must be closed
 
-This catalogue is **not complete**, and the gaps are known rather than suspected. **v2 closed one of
-the three, closed most of a second, and converted the third from an unknown into a costed
-worklist** — it did not close it, and §4.2 says exactly why.
+**All three gaps are now closed.** v2 assigned a status to every rule and wrote the two guard rules;
+v2.1 read the 36 uncited findings at their own reference sites and closed the coverage gap. What
+remains open is named in §5, and it is not a gap in the catalogue.
 
-### 4.1 It is a release behind — **mostly closed in v2**
+### 4.1 It is a release behind — **closed**
 
-The baseline is **release 4.6.0**. The reference tree is **4.7.0 plus four patches**. Findings
-**153, 154, 155, 156 and 157** postdate this register.
+The register's baseline is **release 4.6.0**; the reference tree is **4.7.0 plus four patches**.
+Findings **153–157** postdate it.
 
-| Finding | v1 state | v2 state |
-|---|---|---|
-| **156** — a decimal glued to its scale is still a decimal | no rule | ✅ **`R-155`** |
-| **157** — the Council's sentence, moved onto another country | no rule | ✅ **`R-156`** |
-| **153** — the back-office phase 1 | no rule | ✅ **correctly none** — out of scope with the deferred operator surface (triage bucket E) |
-| **154** — set scope and alignment family | no rule | ⛔ **still open** — see below |
-| **155** — display / the accounting contract | no rule | ⛔ **still open** — see below |
+| Finding | Resolution |
+|---|---|
+| **153** — the back-office phase 1 | **Correctly no rule** — out of scope with the deferred operator surface |
+| **154** — the executive question and its spelling | **`R-164`** |
+| **155** — the accounting contract | **`R-127`**, which already stated it; the citation was added |
+| **156** — a decimal glued to its scale | **`R-155`** |
+| **157** — an attributed sentence moved onto another country | **`R-156`** |
 
-**Both guard holes now carry rules.** AD-28 closes them architecturally; `R-155` and `R-156` make
-them reviewable and testable rather than only foreclosed.
+### 4.2 Sixty-nine findings were cited by no rule — **closed**
 
-**154 and 155 remain open, deliberately.** The findings triage places them in the *Set scope &
-alignment* and *Display* families respectively, and that is **all that is known about them in this
-repository**. Writing a rule from a family label would be invention, not analysis, so neither was
-written. They join the §4.2 worklist.
+**82 findings were cited by at least one rule; 69 were not.** v2.1 read every one of the actionable
+ones at the `file:line` the findings index gives for it, and the gap resolves as follows:
 
-### 4.2 Sixty-nine findings are cited by no rule — **measured, bucketed, still open**
-
-v2 re-ran the arithmetic rather than trusting it. **82 findings are cited by at least one rule; 69
-are not** — the v1 figure, confirmed exactly. Cross-mapping those 69 against the findings triage
-gives the first precise picture of what the gap actually contains:
-
-| Bucket | Uncited | What it means |
+| Bucket | Count | Resolution |
 |---|---:|---|
-| **A** — foreclosed by the architecture | **22** | Correctly absent from a rules register. Each becomes a test, not a rule. Includes 156 and 157, which v2 nevertheless gave rules because a guard hole deserves both |
-| **B** — domain knowledge | **36** | **The real work.** No architecture invents this |
-| **C** — instances and tuning | **5** | Corpus entries and measured constants, not rules |
-| **D** — no explanatory block | **4** | 44, 48, 78, 93 — unreadable without their reference sites |
-| **E** — out of scope | **2** | 31 (SPA), 153 (back-office) |
-| **?** — **classified by nothing** | **6** | **40, 64, 65, 66, 98, 107** |
+| **A** — foreclosed by the architecture | 22 | Correctly absent from a rules register. Each becomes a test. Findings 156 and 157 were given rules anyway, because a guard hole deserves both |
+| **B** — domain knowledge | **36** | **Read and resolved: 19 new rules, 17 citations added to rules that already said it** |
+| **C** — instances and tuning | 5 | Corpus entries and measured constants, not rules |
+| **D** — no explanatory block | 4 | **Read at their reference sites** — 44 → `P-6`, 48 → `R-97`, 78 → `R-176`, 93 → `R-162` |
+| **E** — out of scope | 2 | 31 (the SPA), 153 (the back-office) |
+| **?** — appeared in no bucket | 6 | **They do not exist** — see below |
 
-**The six unclassified findings are a gap the register did not know it had.** They appear in no
-bucket of the findings triage and are cited by no rule, so nobody has looked at them at all. They
-are the highest-value item on this list precisely because their content is unknown — a finding
-nobody has read is indistinguishable from one that was lost.
+#### The six that were never issued
 
-**36 + 6 = 42**, which is where v1's estimate of "roughly 45" actually lands.
+**Findings 40, 64, 65, 66, 98 and 107 are phantom numbers.** The findings index is explicit:
+*"Numbers never issued in this tree: 0 occurrences anywhere, including `tests/` and the JSON data.
+Most likely withdrawn, merged, or raised against the SPA, which is not in this tree. Nothing to
+recover."*
 
-#### The 36 uncited domain findings, by family
+The v2 revision of this section called them *"a gap the register did not know it had"* and *"the
+highest-value item on this list, because a finding nobody has read is indistinguishable from one
+that was lost."* **That was wrong**, and it is recorded rather than quietly deleted: the answer was
+in the index all along, and the error was checking this repository for the findings source and
+stopping there.
 
-Every family below **already has cited members**, which is consistent with v1's suspicion that the
-terse `source` field simply does not name everything a statement covers. Consistent is not verified,
-and the triage is explicit: *check rule by rule, do not assume.*
+#### What the 36 actually contained
 
-| Family | Uncited findings | of |
-|---|---|---:|
-| **Display** — the unit rides every row; a rank is an ordinal; a change needs its reading | 50, 73, 106, 118, 136, **155** | 8 |
-| **Language & bilingual** — Arabic plurals; the genitive construct; bidi; PDF hyphens | 14, 47, 72, 79, 92, 123 | 8 |
-| **Operations** — polar, superlative, sort, spread, conditional, capability | 6, 7, 15, 110, 134 | 17 |
-| **The headline is the answer to the question** | 5, 8, 59, 132 | 8 |
-| **Catalogue & groups** — the group not the category; who owns the indicator | 4, 12, 67, 71 | 6 |
-| **Grain & period binding** | 2, 35, 38 | 15 |
-| **Refusal & absence** | 9, 101, 137 | 8 |
-| **The answer's voice** | 52, 57, 105 | 6 |
-| **Attribution & assessment** | 33, 112 | 6 |
-| **Set scope & alignment** | 21, **154** | 6 |
-| **Follow-up & context** | 30, 42 | 2 |
+**Nineteen were genuine gaps** and became `R-158` – `R-176`, collected in **Part V2** rather than
+threaded into Parts A–M, because they were never in `askai-business-logic-spec v1.0` and inserting
+them would misrepresent what that specification said. Each names the part it would belong to.
 
-**Read the families by their ratios, not their counts.** *Display* (6 of 8 uncited) and *Language &
-bilingual* (6 of 8) are the two where most of the family is unaccounted for — so they are the most
-likely to be carrying a rule this register does not state. *Grain & period binding* has 3 of 15
-uncited and is the best-covered family in the catalogue, which is reassuring given it is the largest.
+**Seventeen needed no rule.** The catalogue already stated them and the terse `source` field simply
+did not name them — exactly what v1 suspected. Each is now cited on the rule that covers it, marked
+`**v2 also covers:**`:
 
-#### Why this gap is not closed
+| Finding | Already stated by | Finding | Already stated by |
+|---|---|---|---|
+| 2 — a growth question answered with a level | `R-132` | 67 — the group, not the category | `R-58` |
+| 4 — the economy question answered with one indicator | `R-32` | 79 — the hyphens that came in from a PDF | `R-23` |
+| 5 — a superlative answered with the newest row | `R-39` | 112 — polarity answers "are we going the right way" | `P-2` |
+| 21 — a group scope dropped in silence | `P-3` | 123 — "our economy" too | `R-32` |
+| 33 — six correct readings and no reasoning | `P-9` | 134 — the question a Council paper is written from | `R-112` |
+| 42 — Arabic morphology defeats token overlap | `R-22` | 136 — "unchanged" beside a magnitude | `R-103` |
+| 44 — three periods for one value | `P-6` | 137 — the ones set aside were never answered | `R-131` |
+| 48 — the gap owns its sentence | `R-97` | 155 — the accounting contract | `R-127` |
+| 59 — the headline is a derived quantity | `R-126` | | |
 
-**`FINDINGS-INDEX.md` and the `app/` reference tree are not in this repository.** This repo carries
-`docs/`, `data/` and the planning scaffolding; the findings' own explanatory text — 151 findings,
-~1,120 references across 15 modules — is not among them.
+**The 2.5:1 collapse the triage predicted held**: 36 findings, 19 rules.
 
-What survives is partial and worth naming: **every rule reproduces a one-line excerpt of each
-finding it cites**, under its **Why**. So the text exists for the 82 cited findings and for none of
-the 69 others. That asymmetry is exactly backwards from what closing this gap needs.
+### 4.3 There is no `rejected` status — **closed**
 
-**The work is therefore blocked on an input, not on effort.** Obtain the findings source, and
-closing §4.2 is a review-and-adopt exercise of days — an estimated **~38 domain rules** from 96
-findings, a 2.5:1 collapse, because the findings are instances and the rules are what they have in
-common.
-
-### 4.3 There is no `rejected` status — **closed in v2**
-
-**Every one of the 169 rules now carries a status.** The distribution:
+**Every one of the 188 rules carries a status.**
 
 | Status | Count | Meaning |
 |---|---:|---|
-| `proposed` | **168** | Described, sourced and reviewable — **not yet agreed by anyone** |
+| `proposed` | **187** | Described, sourced and reviewable — **not yet agreed by anyone** |
 | `rejected` | **1** | `R-157`, with its reason |
 | `agreed` | **0** | See §5. This is not an oversight |
 
-**`R-157` is new, and is the entry §4.3 asked for.** Finding 133 records a rule that was
-implemented, fixed one client case, and **broke twenty-two checks across five harnesses** before
-being withdrawn. v1 noted this and had nowhere to put it; the register cited finding 133 only as
-supporting evidence under `R-30`, which is the rule that *survived*. `R-157` now records the one
-that did not, with its reason and an instruction not to re-propose it without reading those
-twenty-two checks. Its statement is flagged as **reconstructed rather than verbatim**, because the
-register never carried the withdrawn rule's own wording.
+**`R-157` records the rule that was withdrawn.** Finding 133's rule was implemented, fixed the
+client's D5 case, and **broke twenty-two checks across five harnesses** — because it replaced
+`R-95`, `R-104` and `R-118`, a deliberate and tested design, for *every* set question rather than
+for the questions that want it. The entry exists so nobody re-proposes it in eighteen months.
 
-**Twelve rules are flagged `proposed` *(agreed candidate)*** — the Part A principles, each of which
-is already a ratified PRD commitment. They are the obvious first batch for whoever holds the pen,
-and flagging them is as far as an analyst may go. Marking them `agreed` would be an analyst
-asserting agreement on a stakeholder's behalf, which is precisely the failure FR-72a exists to
-prevent.
+> **A correction worth keeping.** v2 wrote `R-157`'s statement by inference — the register cites
+> finding 133 only as supporting evidence under `R-30`, and never carried the withdrawn rule's own
+> wording — and flagged it as reconstructed. v2.1 read the finding and **the inference was wrong**:
+> the withdrawn rule triggered on the *data* (a member publishing a newer reading), not on the
+> question's shape. The statement is corrected and now verbatim-sourced. The flag did its job.
 
-### 4.4 What v2 changed
+**Twelve rules are `proposed` *(agreed candidate)*** — the Part A principles, each already a
+ratified PRD commitment. They are the obvious first batch for whoever holds the pen. Flagging them
+is as far as an analyst may go; marking them `agreed` would be an analyst asserting agreement on a
+stakeholder's behalf, which is what FR-72a exists to prevent.
 
-| | v1 | v2 |
-|---|---|---|
-| Rules | 166 | **169** |
-| Rules with a status | 0 | **169** |
-| Findings 153–157 covered | 0 of 5 | **3 of 5** (2 by rule, 1 correctly out of scope) |
-| Uncited findings | "roughly 45", unbucketed | **69 measured, bucketed; 42 actionable, 6 of them unexamined by anyone** |
-| Withdrawn rules recorded | none | **1**, with its reason |
-| Baseline | 4.6.0 | 4.6.0 + the two 4.7.0 guard findings |
+### 4.4 What each revision changed
 
-**Still open, and honestly so:** findings 154 and 155; the 36 uncited domain findings; the 6
-unclassified findings; the 4 unreadable ones. All four items need `FINDINGS-INDEX.md` and `app/`.
+| | v1 | v2 | v2.1 |
+|---|---|---|---|
+| Rules | 166 | 169 | **188** |
+| Rules with a status | 0 | 169 | **188** |
+| Findings 153–157 covered | 0 of 5 | 3 of 5 | **5 of 5** |
+| Findings cited by no rule | 69, "roughly 45" actionable | 69, bucketed | **0 actionable** |
+| Withdrawn rules recorded | none | 1, statement inferred | **1, statement verified** |
+| Findings read at source | — | — | **40** |
 
 ## 5. What this catalogue cannot do
 
@@ -257,7 +233,7 @@ Statements are verbatim from the register. Ids are stable and must not be renumb
 
 **Code enforces, data decides.** Whether a move is favourable is the catalogue's Polarity field. Whether a reading exists is the database. Which indicators form a group is the CMS. The code applies those facts; it never guesses them from names.
 
-**Becomes:** the PRD's commitments — already stated; verify, do not restate · **Source:** findings 83, 94, 113, 146 · **Status:** `proposed` *(agreed candidate — already a ratified PRD commitment)*
+**Becomes:** the PRD's commitments — already stated; verify, do not restate · **Source:** findings 83, 94, 113, 146 · **v2 also covers:** finding 112 · **Status:** `proposed` *(agreed candidate — already a ratified PRD commitment)*
 
 **Why —**
   - *finding 83* — THE ASSESSMENT. Built ONCE, from what has already been fetched.
@@ -269,7 +245,7 @@ Statements are verbatim from the register. Ids are stable and must not be renumb
 
 **Never answer a different question than the one asked without saying so.** A follow-up that borrows its subject, a period that had to be substituted, a subject matched by similarity rather than by name, a set aligned on a period other than the one asked — each is disclosed on the card in one sentence.
 
-**Becomes:** the PRD's commitments — already stated; verify, do not restate · **Source:** finding 32 and throughout · **Status:** `proposed` *(agreed candidate — already a ratified PRD commitment)*
+**Becomes:** the PRD's commitments — already stated; verify, do not restate · **Source:** finding 32 and throughout · **v2 also covers:** finding 21 · **Status:** `proposed` *(agreed candidate — already a ratified PRD commitment)*
 
 **Why —**
   - *finding 32* — The model may name the SUBJECT. It may not produce anything else.
@@ -297,7 +273,7 @@ Statements are verbatim from the register. Ids are stable and must not be renumb
 
 **One selection of rows, shared.** The headline, the sentence, the change, the chart and the citations all read the same selection, so no card can name two periods for one value.
 
-**Becomes:** the PRD's commitments — already stated; verify, do not restate · **Source:** pipeline rewrite (findings 11–41) · **Status:** `proposed` *(agreed candidate — already a ratified PRD commitment)*
+**Becomes:** the PRD's commitments — already stated; verify, do not restate · **Source:** pipeline rewrite (findings 11–41) · **v2 also covers:** finding 44 · **Status:** `proposed` *(agreed candidate — already a ratified PRD commitment)*
 
 **Why —**
   - *finding 11* — "How many international visitors arrived in Qatar in May 2025?" returned
@@ -324,7 +300,7 @@ Statements are verbatim from the register. Ids are stable and must not be renumb
 
 **The computed text never states a cause, a forecast, a recommendation or a magnitude adjective.** Causes appear only inside a quoted SCEAI analyst note, with its byline. There is no score, no weighting and no index.
 
-**Becomes:** the PRD's commitments — already stated; verify, do not restate · **Source:** findings 83, 113; §5, §7 · **Status:** `proposed` *(agreed candidate — already a ratified PRD commitment)*
+**Becomes:** the PRD's commitments — already stated; verify, do not restate · **Source:** findings 83, 113; §5, §7 · **v2 also covers:** finding 33 · **Status:** `proposed` *(agreed candidate — already a ratified PRD commitment)*
 
 **Why —**
   - *finding 83* — THE ASSESSMENT. Built ONCE, from what has already been fetched.
@@ -558,7 +534,7 @@ Arabic is detected by script. Both English and Arabic texts of every sentence ar
 
 Before matching, text is normalised: Unicode NFKC, case-folded, diacritics removed, Arabic letter variants folded (أ إ آ → ا, ى → ي, ة → ه, tatweel removed), hyphens and runs of whitespace collapsed. The same normalisation is applied to the question and to every reviewed surface, so a spelling difference never decides a match.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 103, 115 · **Status:** `proposed`
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 103, 115 · **v2 also covers:** finding 42 · **Status:** `proposed`
 **Why —**
   - *finding 103* — THE REVIEWED VOCABULARY WAS NEVER CONSULTED.
   - *finding 115* — THE LINE THAT DECIDES WHICH WAY THE PARAGRAPH READS.
@@ -567,7 +543,7 @@ Before matching, text is normalised: Unicode NFKC, case-folded, diacritics remov
 
 Analyst text from the CMS is repaired for the 44 hyphenation breaks the export carries ("in-crease" → "increase") from `hyphen_fixes.json`; 722 legitimate hyphens are left alone.
 
-**Becomes:** `rules/*.yaml` — a reviewed lookup table · **Source:** finding 86 · **Status:** `proposed`
+**Becomes:** `rules/*.yaml` — a reviewed lookup table · **Source:** finding 86 · **v2 also covers:** finding 79 · **Status:** `proposed`
 **Why —**
   - *finding 86* — `missing_sentence` is NOT in this list, and that is deliberate.
 
@@ -656,7 +632,7 @@ The executive phrasing: "how is / was / has the economy (doing, performing, fari
 
 - **Effect:** The SET shape's four-sentence mode; since 4.5.0 both it and the snapshot share one composer.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 113 · **Status:** `proposed`
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 113 · **v2 also covers:** findings 4, 123 · **Status:** `proposed`
 **Why —**
   - *finding 113* — A BROAD QUESTION WANTS AN ASSESSMENT, NOT AN INVENTORY.
 
@@ -726,7 +702,7 @@ Which extreme (max / min) the words asked for.
 
 - **Effect:** The composer leads with the extreme that was asked for, not always the maximum.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 119 · **Status:** `proposed`
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 119 · **v2 also covers:** finding 5 · **Status:** `proposed`
 **Why —**
   - *finding 119* — "WHICH COUNTRY HAD THE LOWEST INFLATION" WAS ANSWERED WITH A YEAR.
 
@@ -910,7 +886,7 @@ Resolution is cached only for catalogue lookups (10 minutes); a question is neve
 
 The question names a group the CMS holds — one of 22 (8 sectors, 14 entities) built from the sectors and entities exports with reviewed surfaces per group ("national indicators", "our economy", "the diversification targets", "health", "banking", "SMEs", "the free zones", "Hormuz"…). The group's members become the set, ordered by English name, capped at 12; the card states how many further members are not listed. A group of one member is a sole member (rung 5).
 
-**Becomes:** `rules/*.yaml` — a reviewed lookup table · **Source:** findings 94, 102, 114 · **Implemented at:** `_SET_MAX`, `_SET_MIN` · **Status:** `proposed`
+**Becomes:** `rules/*.yaml` — a reviewed lookup table · **Source:** findings 94, 102, 114 · **Implemented at:** `_SET_MAX`, `_SET_MIN` · **v2 also covers:** finding 67 · **Status:** `proposed`
 **Why —**
   - *finding 94* — A QUESTION CAN BE ABOUT SEVERAL INDICATORS AT ONCE, AND NINE OF THE
   - *finding 102* — THE SET ROUTE WAS BUILT, TESTED, AND UNREACHABLE.
@@ -1260,7 +1236,7 @@ The analysts' notes for the set are fetched per member at the period the card sh
 
 Composers **append**; none may overwrite another's sentence, so no ordering can lose a sentence. Structured content (a list, a table) starts its own line; once an answer is multi-line it stays multi-line.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** design · **Status:** `proposed`
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** design · **v2 also covers:** finding 48 · **Status:** `proposed`
 #### `R-98`
 
 Measured first, generated last, absent never omitted. There is no "unknown" class: a fact the system cannot place is not shown.
@@ -1307,7 +1283,7 @@ A **percent-measured** indicator changes in **points** (pp), never in per cent o
 
 A move smaller than 2 % of the starting level (floored at 0.05 in the unit) is **flat** — not a direction.
 
-**Becomes:** `rules/*.yaml` — a published value the engine reads · **Source:** `FLAT_RATIO` 0.02, `FLAT_FLOOR` 0.05 · **Implemented at:** `FLAT_RATIO`, `FLAT_FLOOR` · **Status:** `proposed`
+**Becomes:** `rules/*.yaml` — a published value the engine reads · **Source:** `FLAT_RATIO` 0.02, `FLAT_FLOOR` 0.05 · **Implemented at:** `FLAT_RATIO`, `FLAT_FLOOR` · **v2 also covers:** finding 136 · **Status:** `proposed`
 #### `R-104`
 
 Periods are written as the database writes them (`2025`, `2025-Q4`, `2026-04`) and every figure carries one. Signed changes and periods are isolated for bidirectional text so that Arabic prose never shows "Q4-2025" or "2.0%+".
@@ -1389,7 +1365,7 @@ Analysts' notes: "**Trade Balance (Goods & Services), 2025-Q4** — SCEAI notes 
 
 **The lead order** for the concerns (and the positives): a signal whose published analysis states a historical extreme reaching back at least one year ("the lowest since Q3 2017") leads; then the tier; then the size of the move; then the name. An extreme reaching back less than a year ("since February 2026") stays in the ledger. This reproduces the Council's own worked example on the real export.
 
-**Becomes:** `rules/*.yaml` — a published value the engine reads · **Source:** §6; finding 147 · **Implemented at:** `_EXTREME_MIN_YEARS` · **Status:** `proposed`
+**Becomes:** `rules/*.yaml` — a published value the engine reads · **Source:** §6; finding 147 · **Implemented at:** `_EXTREME_MIN_YEARS` · **v2 also covers:** finding 134 · **Status:** `proposed`
 **Why —**
   - *finding 147* — A TABLE ONLY FOR A SCREEN THAT CAN DRAW ONE. The 4.5.0 bundle says so
 
@@ -1509,7 +1485,7 @@ The attribution tag is configurable (`ASKAI_TAG_EN` / `ASKAI_TAG_AR`, default "A
 
 A plan that wanted a headline and got none, a headline composed for a shape that has no single answer, a headline whose period is outside the selection, or a chart plotting a period the card does not cite, marks the answer `shape_ok = false`, repairs what it can (drops the headline or the uncited points) and logs a warning. The KPI in Part K counts these.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 37, 55 · **Status:** `proposed`
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 37, 55 · **v2 also covers:** finding 59 · **Status:** `proposed`
 **Why —**
   - *finding 37* — The live card read
   - *finding 55* — THE PIPELINE DREW NO CHARTS AT ALL, AND THAT IS MINE.
@@ -1518,7 +1494,7 @@ A plan that wanted a headline and got none, a headline composed for a shape that
 
 A set that was asked for N members and delivered fewer says so and is marked `shape_ok = false` unless every missing member is accounted for as absent, stale or trimmed.
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 94, 102, 130 · **Status:** `proposed`
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 94, 102, 130 · **v2 also covers:** finding 155 · **Status:** `proposed`
 **Why —**
   - *finding 94* — A QUESTION CAN BE ABOUT SEVERAL INDICATORS AT ONCE, AND NINE OF THE
   - *finding 102* — THE SET ROUTE WAS BUILT, TESTED, AND UNREACHABLE.
@@ -1560,7 +1536,7 @@ One card, one indicator — unless the question asked for a set; and a set card 
 
 - **Enforced where:** plan (the set shape exists only when ≥ 2 resolve); check
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 94, 130 · **Status:** `proposed`
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 94, 130 · **v2 also covers:** finding 137 · **Status:** `proposed`
 **Why —**
   - *finding 94* — A QUESTION CAN BE ABOUT SEVERAL INDICATORS AT ONCE, AND NINE OF THE
   - *finding 130* — —
@@ -1571,7 +1547,7 @@ The biggest number on the card is the answer (no headline on a series, a set, a 
 
 - **Enforced where:** shape table; check
 
-**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 63 · **Status:** `proposed`
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 63 · **v2 also covers:** finding 2 · **Status:** `proposed`
 **Why —**
   - *finding 63* — the growth rate outranks every row-derived
 
@@ -1668,28 +1644,18 @@ A carried context is disclosed (R-53); a substituted period is disclosed (H1); a
 
 #### `R-157`
 
-**`[REJECTED]` A level comparison of named indicators with no period and no superlative must not be aligned onto one common period.** Tried, implemented, and **withdrawn**.
+**`[REJECTED]` When any member of a set publishes a reading newer than the aligned period and the reader named no period, switch the whole set to per-indicator latest.** Tried, implemented, and **withdrawn**.
 
-- **Why it was withdrawn:** it fixed one client case and **broke twenty-two checks across five harnesses**. The behaviour that survived is `R-30` — each indicator at its own latest period, with the period stated on every line.
-- **Do not re-propose without reading those twenty-two checks first.** This entry exists so that the next person to notice the same client case learns the outcome in a minute rather than re-discovering it over a release.
+- **Why it was withdrawn:** it fixed the client's D5 case and **broke twenty-two checks across five harnesses**, because it replaced `R-95`, `R-104` and `R-118` — a deliberate, tested design — for *every* set question rather than for the questions that actually want it.
+- **What survived instead:** the switch belongs on the **question**, not on the data — `R-30`'s snapshot phrasing, the executive shape, and a level comparison between named indicators with no period stated. Alignment is kept so the tally and the ranking mean something, and the card names each member that has a newer reading and the period it sits at. Nothing is hidden; a different thing is emphasised.
+- **Do not re-propose without reading those twenty-two checks first.** This entry exists so the next person who notices the same client case learns the outcome in a minute rather than re-discovering it over a release.
 
-**Becomes:** nothing — it is not implemented, and must not be · **Source:** finding 133, via `R-30` and the findings triage · **Status:** `rejected`
+**Becomes:** nothing — it is not implemented, and must not be · **Source:** finding 133, read at `answer_pipeline.py:2748` · **Status:** `rejected`
 
 **Why —**
-  - *finding 133* — the rule that was tried here and taken back out.
+  - *finding 133* — the rule that was tried here and taken back out. "The first draft made 'any member publishes further, and the reader named no period' switch the whole set to per-indicator latest. It fixed the client's D5 and broke twenty-two checks across five harnesses."
 
-**`[v2]`** New in this revision, and the reason §4.3 asked for a `rejected` status.
-
-> ⚠️ **Statement reconstructed, not verbatim.** The register carries finding 133 only as a citation
-> under `R-30`; it does not carry the withdrawn rule's own wording. The statement above is the
-> inverse of what `R-30` settled, which is the only reading the surrounding evidence supports — but
-> it is **inference, not the register's text**. Confirm it against `FINDINGS-INDEX.md` when that
-> becomes available, and correct the statement rather than deleting the entry.
-
-## Part I — The renderer (optional, on request, gated)
-
-
-### The renderer (optional, on request, gated)
+**`[v2]`** New in this revision, and the reason §4.3 asked for a `rejected` status. **Statement corrected in the same revision:** the first draft of this entry inferred the rule as the inverse of `R-30` and was wrong — the withdrawn rule was triggered by the *data* (a member publishing further), not by the question's shape. Verified against the finding's own text.
 
 #### `R-139`
 
@@ -1811,3 +1777,264 @@ No table may contain a value, a period or a new indicator. Tables add spellings,
 Every table carries provenance (the export files and row counts it was built from, the date, the Council document it implements).
 
 **Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** practice · **Status:** `proposed`
+
+## Part V2 — recovered in the v2 pass
+
+**Nineteen rules, recovered by reading the 36 uncited findings at their own reference sites in
+`app/`.** They are collected here rather than threaded into Parts A–M because they were never in
+`askai-business-logic-spec v1.0` — the register's parts are that specification's structure, and
+inserting into it would misrepresent what the specification said. Each rule names the part it
+would belong to, so a future re-baseline can place it.
+
+Every one is `proposed`. Seventeen further findings needed no rule: their statements were already
+in the catalogue, and the v2 pass added the citation rather than a duplicate — listed in §4.2.
+
+### V2.C — Reading the question
+
+#### `R-158`
+
+**A period phrase changes *when* a question asks about, never *what*.** Period and span vocabulary is removed before a question is scored for subject salience, and the same list serves the follow-up test and the salience test — one list read twice, never two lists that drift.
+
+- **Effect:** «الاقتصاد في السنوات الخمس الماضية» stops resolving to a labour indicator on its span words while «الاقتصاد في قطر» correctly gives the overview.
+- **Would belong to:** Part C — Reading the question.
+
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 38, read at `main.py:5860` · **Status:** `proposed`
+
+**Why —**
+  - *finding 38* — the span words counted as salient and the question therefore "had another subject". It does not.
+
+#### `R-159`
+
+**A vocabulary used for matching is structural and exists in both languages, never a list of fixed phrases in one.** Where English matches on a shape — a cue word, a short window, a topic word — Arabic matches on the same shape. A phrase list is permitted only where the phrases are themselves the reviewed data (Part M).
+
+- **Effect:** «وضع الاقتصاد» (the genitive construct) is recognised as readily as «الوضع الاقتصادي»; the Arabic follow-up words — ماذا، خلال، لعام، بالنسبة، أما، كان — exist because their English counterparts do.
+- **Why it is one rule and not two:** findings 14 and 30 are the same defect in two features. The English path is exercised constantly in development and the Arabic path only by the client, so a per-feature fix never generalises.
+- **Would belong to:** Part C — Reading the question.
+
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 14 and 30, read at `main.py:5795` and `main.py:6817` · **Status:** `proposed`
+
+**Why —**
+  - *finding 14* — the English side above is STRUCTURAL and it generalises. The Arabic side was a list of four fixed phrases. A phrase list will always miss the next phrasing.
+  - *finding 30* — the feature was half-built in one language and complete in the other, and the half that was missing is the half a bilingual deployment is judged on.
+
+#### `R-160`
+
+**A qualifier the resolved indicator's own name contradicts is a different question, not a near miss.** The subject guard asks whether this is the right *subject*; a second guard asks whether it is the right *measure* of it. Where the two disagree the question is declined and the difference named, never smoothed over.
+
+- **Clause:** the reviewed basis table is a tuple of **sides**, each side a tuple of names for one basis, so that "nominal" and "at current prices" are one basis under two names and «بالأسعار الجارية» can collide with "Real". A flat list of mutually exclusive terms cannot express this and will report no conflict.
+- **Effect:** "What is the value of Nominal GDP in Q4-2025?" is no longer answered with Real GDP because "GDP" appears in "Real Gross Domestic Product". The gap between them *is* inflation.
+- **Would belong to:** Part C — Reading the question; the table to Part M.
+
+**Becomes:** a test — behaviour a corpus entry or unit test asserts, plus `rules/*.yaml` for the basis table · **Source:** finding 9, read at `main.py:3125` · **Status:** `proposed`
+
+**Why —**
+  - *finding 9* — the only thing distinguishing them — the word in the indicator's own name — was the word the matcher discarded as noise.
+
+#### `R-161`
+
+**A polar question is answered yes or no, computed from approved readings, and the pair compared is the one the question's own scope names.** «هل» and the English polar forms mark a question the reader wants decided, not two numbers to subtract themselves. A question scoped to a year compares the end of the preceding year with the end of that year, which may require fetching a period the retrieval was not asked for.
+
+- **Effect:** «هل هناك شركات تكنولوجيا مالية جديدة تم افتتاحها في عام 2025؟» stops returning `14 · 2025-Q4` and "no change" for a quarter when it was asked about a year.
+- **Would belong to:** Part C (the intent) and Part G (the composition).
+
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 15, read at `main.py:4538` · **Status:** `proposed`
+
+**Why —**
+  - *finding 15* — every figure correct, and not an answer. The reader asked for yes or no and was handed two numbers and left to subtract.
+
+### V2.D — Resolution
+
+#### `R-162`
+
+**The reviewed vocabulary is consulted on every resolution, not only after the service fails.** A reviewed surface table that runs as a fallback behind a scoring service is inert whenever that service returns anything above its own floor — which is nearly always.
+
+- **Effect:** the 97 reviewed surfaces stop being unreachable. "Are Qatar's exports going up or down?" stops resolving to Helium Export, and "How big is Qatar's non-oil economy?" stops resolving to Real GDP.
+- **Would belong to:** Part D — Resolution.
+
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 93, read at `main.py:462` · **Status:** `proposed`
+
+**Why —**
+  - *finding 93* — THE REVIEWED VOCABULARY WAS NEVER CONSULTED. The retrieval ladder only runs when the service resolve has ALREADY FAILED.
+
+#### `R-163`
+
+**Resolving to *something* and resolving to something *useful* are different outcomes, and the rescue fires on the outcome.** Where a question is better answered by a group or a set, that route is tried because the single-indicator answer is unhelpful — not only because nothing resolved at all.
+
+- **Effect:** "Is Qatar's economy growing?" reaches the group route that resolves all eight national indicators, instead of taking the ladder's nearest match above its floor and reporting "Nothing in the approved data matches".
+- **Would belong to:** Part D — Resolution.
+
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 110, read at `answer_pipeline.py:4452` · **Status:** `proposed`
+
+**Why —**
+  - *finding 110* — THE RESCUE FIRES ON THE OUTCOME, NOT ON THE RESOLUTION. Live, something almost always resolves.
+
+#### `R-164`
+
+**When the question is the executive question and nothing resolved from its own words, the reviewed national group answers it.** The group is looked up in the same reviewed table by the name that table publishes; this adds no membership decision and no vocabulary of ours. The fallback is recorded on the answer, in the log and in the trace, so a card that arrived this way is never silent about it.
+
+- **Clause:** a constant, not an environment switch — the module that holds it reads no environment (`P-12`).
+- **Clause:** where the group holds fewer members than a set requires, the question is answered as it was before rather than as a short set.
+- **Effect:** the Council's specified card stops being replaced by whatever the chain returns whenever the reader's exact phrasing is not among the reviewed surfaces.
+- **Would belong to:** Part D — Resolution, or Part E — Planning.
+
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 154, read at `answer_pipeline.py:1737` · **Status:** `proposed`
+
+**Why —**
+  - *finding 154* — THE EXECUTIVE QUESTION HAS ONE ANSWER, AND A SPELLING MUST NOT DECIDE IT. That is what happened live.
+
+#### `R-165`
+
+**A category is answered with the groups inside it and their counts — the level above the list, not the list.** Naming the group level makes a new question askable; the category name then no longer names any group and must not fall through to the whole catalogue.
+
+- **Effect:** "List the indicators in Sectors" returns the eight sectors and their counts, not 105 indicator names nobody can scan.
+- **Would belong to:** Part D — Resolution, sets and groups.
+
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 71, read at `main.py:6454` · **Status:** `proposed`
+
+**Why —**
+  - *finding 71* — naming the level made a new question askable and left it unanswered, which is the same shape as finding 67 itself.
+
+### V2.F — Fetching and selecting
+
+#### `R-166`
+
+**A cross-country question the approved data cannot answer is answered by naming the absence.** A ranking over periods is never presented as though it were a ranking over countries.
+
+- **Effect:** where the peer table exists the question is routed to it; where it does not, the card says so rather than quietly substituting a different comparison.
+- **Would belong to:** Part F — Fetching and selecting the rows.
+
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 101, read at `answer_pipeline.py:3685` · **Status:** `proposed`
+
+**Why —**
+  - *finding 101* — THE READER ASKED ABOUT COUNTRIES AND WE HAVE ONLY QATAR. Say so. This is the half of the fix that matters most.
+
+### V2.G — Composition
+
+#### `R-167`
+
+**Where the reader asks for the absolute value of a change, the magnitude in the indicator's own unit leads and the percentage follows — never the reverse.**
+
+- **Effect:** "How did Qatar's GDP change between Q1 2025 and Q4 2025? Provide the absolute value." leads with the change, not with the level at the end of the span in 48pt.
+- **Would belong to:** Part G — Composition.
+
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 8, read at `main.py:4308` · **Status:** `proposed`
+
+**Why —**
+  - *finding 8* — a reader who asked for a change was shown a level in 48pt. "Provide the absolute value" says the quantity wanted is the magnitude in the indicator's own unit.
+
+#### `R-168`
+
+**A change is always shown with the reading it moved to.** A percentage on its own makes the reader ask "from what?" and go looking, which is the opposite of an executive summary.
+
+- **Effect:** "Real GDP +2.0% (2025-Q4)" becomes "Real GDP reached QAR 185.2bn in Q4 2025, up 2% year-on-year". The neighbouring branches already carried the value; the rule makes it uniform.
+- **Would belong to:** Part G — Composition.
+
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 132, read at `pipeline_blocks.py:3324` · **Status:** `proposed`
+
+**Why —**
+  - *finding 132* — A CHANGE WITH NO READING BEHIND IT.
+
+#### `R-169`
+
+**A series names each period with its reading, in sequence.** Endpoints and a delta are not a series; the reader asked how it moved, and the movement is the sequence.
+
+- **Effect:** closes the gap the client demonstrated by putting the external card beside ours — "in 2024 the inflation rate was 1.23% year-on-year; in 2025 it decreased to 0.54%; by 2026 it increased again to 2.05%" against our two endpoints and a pp delta. Every figure is still read from an approved row; only the shape of the telling changes.
+- **Would belong to:** Part G — Composition.
+
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 57, read at `pipeline_blocks.py:512` · **Status:** `proposed`
+
+**Why —**
+  - *finding 57* — what Oxford does that we did not.
+
+#### `R-170`
+
+**A list is a list: one reading, or one name, per line.** Items run together with semicolons or commas are a paragraph the reader must parse rather than a list they can scan.
+
+- **Effect:** four readings stop sharing one sentence, and twelve indicator names stop running together with commas. The renderer already splits on newlines, so this needs nothing from the interface.
+- **Would belong to:** Part G — Composition.
+
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 50 and 73, read at `pipeline_blocks.py:486` and `main.py:6505` · **Status:** `proposed`
+
+**Why —**
+  - *finding 50* — a series is a LIST. Semicolons ran four readings into one sentence and the reader had to parse it.
+  - *finding 73* — ONE NAME PER LINE.
+
+#### `R-171`
+
+**A name and its period are written together, in the same breath — never as two lists the reader must pair positionally.** Two adjacent lists of equal length mean a positional pairing to a reader, and any independent ordering of them produces a wrong claim.
+
+- **Effect:** "Government Revenues, Inflation have a more recent approved reading (2026-04, 2026-Q1)" — where the names were sorted alphabetically and the periods as text, so both pairings came out inverted — becomes impossible to express.
+- **Would belong to:** Part G — Composition.
+
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 118, read at `answer_pipeline.py:3614` · **Status:** `proposed`
+
+**Why —**
+  - *finding 118* — EACH NAME CARRIES ITS OWN PERIOD, IN THE SAME BREATH.
+
+#### `R-172`
+
+**The card opens in the reader's own words, by deterministic string surgery on the question.** The interrogative is stripped and the reader's own phrase becomes the opening; nothing is invented and no model is involved.
+
+- **Clause:** the opener list is matched **longest first**, so "what is happening to" is stripped before "what is" and the bare subject is left standing.
+- **Clause:** **never echo a question that proposes its own answer.** Where the reader's words contain a figure they supplied themselves, the echo is suppressed rather than welded to an approved reading — the alternative puts a reader-invented number beside an approved one under one sentence.
+- **Effect:** "Inflation — 4 approved readings in %" becomes "The inflation for the last 5 years — 4 approved readings in %"; "The happening to government revenues" stops occurring; and the worst card of the client's acceptance run stops being producible.
+- **Would belong to:** Part G — Composition.
+
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** findings 52, 92 and 105, read at `pipeline_blocks.py:110`, `:120` and `:286` · **Status:** `proposed`
+
+**Why —**
+  - *finding 52* — the answer opens in the reader's own words. Correct, and it reads like a database replying.
+  - *finding 92* — the opener list is matched LONGEST FIRST.
+  - *finding 105* — NEVER ECHO A QUESTION THAT PROPOSES ITS OWN ANSWER. It is the worst card in the set.
+
+#### `R-173`
+
+**A rank is an integer ordinal.** The display-decimal policy cap never applies to a rank, whatever the CMS publishes in the format field — including an empty one.
+
+- **Effect:** `11.00 Rank` stops occurring where an indicator carries `Format=''` while another carries `Format='00'`. "11.00th" is not a thing.
+- **Would belong to:** Part G — Numbers, units, periods.
+
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 106, read at `main.py:2878` · **Status:** `proposed`
+
+**Why —**
+  - *finding 106* — A RANK IS AN ORDINAL. The difference is one CMS field.
+
+### V2.G/L — Language
+
+#### `R-174`
+
+**Arabic counts do not pluralise the way English does, and the card applies the Arabic bands.** One takes the singular; two takes the dual; three to ten take the plural; eleven upwards returns to the singular accusative.
+
+- **Clause:** `1 → مؤشر واحد` · `2 → مؤشران` · `3–10 → 3 مؤشرات` · `11+ → singular accusative`.
+- **Effect:** «يضم قطاع السياحة 6 مؤشرًا» and «ضمن 17 قطاعات» — wrong in opposite directions — stop reaching a Council card. Written the English way they read to an Arabic reader as "6 indicator" and "17 sectorses" read to an English one.
+- **Would belong to:** Part G — Numbers, units, periods and Arabic.
+
+**Becomes:** a test, plus `rules/*.yaml` for the bands · **Source:** finding 72, read at `main.py:5429` · **Status:** `proposed`
+
+**Why —**
+  - *finding 72* — ARABIC COUNTS DO NOT PLURALISE THE WAY ENGLISH DOES. And this card goes to the Council.
+
+#### `R-175`
+
+**A composed sentence agrees in number with the count it carries, and names the unit the reader asked in.** The count is known where the sentence is built, so the sentence agrees with it rather than being written for the common case and left wrong for the other one.
+
+- **Effect:** "2026 do not" — a plural verb on a singular subject — stops reaching a Council card; and the sentence says "of the 5 years requested" rather than "periods", which is our word for it and not the reader's.
+- **Would belong to:** Part G — Composition; the Arabic half is `R-105`'s territory.
+
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 47, read at `answer_pipeline.py:3563` · **Status:** `proposed`
+
+**Why —**
+  - *finding 47* — a plural verb on a singular subject, on a card that goes to the Council.
+
+#### `R-176`
+
+**Every path that renders CMS text strips its markup itself, and never relies on an upstream having done so.** Markup is formatting from another medium, never content.
+
+- **Effect:** the one path that trusted indicator-svc to have stripped the HTML — the article index — put a base64 `<img>` string on a Council card in front of the client. Nothing that renders CMS text should depend on someone upstream having remembered.
+- **Would belong to:** Part G — Composition; companion to `R-23`, which repairs the hyphenation the same export carries.
+
+**Becomes:** a test — behaviour a corpus entry or unit test asserts · **Source:** finding 78, read at `pipeline_blocks.py:1406` · **Status:** `proposed`
+
+**Why —**
+  - *finding 78* — markup is formatting from another medium, never content.
+
