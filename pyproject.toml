@@ -33,6 +33,10 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/askai"]
+# PEP 561. Without it, mypy treats the *installed* askai as untyped, so a file checked
+# on its own — tests/type_fixtures/*, which is how the negative assertions run — sees
+# `Any` everywhere and the errors they assert on never appear.
+force-include = { "src/askai/py.typed" = "askai/py.typed" }
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
@@ -56,6 +60,11 @@ strict = true
 # tests/ is checked too: the corpus runner is a gate, not a helper.
 files = ["src/askai", "tests"]
 mypy_path = ["tests"]
+# The negative fixtures are *expected* to fail --strict; that is what they assert.
+# mypy applies `exclude` when it walks a directory but not to a path named on the
+# command line, so these stay out of the whole-tree run while
+# tests/test_type_invariants.py can still check each one directly.
+exclude = ['^tests[\\/]type_fixtures[\\/]']
 
 # ---------------------------------------------------------------- AD-2
 # The dependency contract, enforced from the first commit. A violation

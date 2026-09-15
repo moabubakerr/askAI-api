@@ -1,10 +1,15 @@
 """The corpus runner.
 
 Loads every ``corpus/*.yaml`` and ``corpus/*.yml``, parses each entry and
-executes it. ``QuerySpec``
-does not exist yet (Story 1.11), so "execute" is structural validation only:
-a file must parse to a list of mappings whose keys are strings. The assertion
-surface against the ``QuerySpec`` and the typed elements arrives with 1.11/1.13.
+executes it. Binding a ``QuerySpec`` arrives with Story 1.11, so "execute" is
+structural validation only: a file must parse to a list of mappings whose keys
+are strings, and an entry that declares a ``spec_version`` must declare one this
+runner recognises. The assertion surface against the ``QuerySpec`` and the typed
+elements arrives with 1.11/1.13.
+
+``spec_version`` is the entry shape's first real field. It exists so that a
+change to the serialised spec surfaces as a failing corpus rather than as stale
+entries passing quietly against a shape that no longer exists.
 
 Failures name the offending file and the reason; they are never swallowed.
 
@@ -22,7 +27,22 @@ from typing import Any
 
 import yaml
 
+from askai.domain.spec import SPEC_VERSION
+
 CORPUS_DIR = Path(__file__).resolve().parent.parent / "corpus"
+
+#: Spec shapes this runner can execute. Spelled out literally, *not* derived from
+#: ``SPEC_VERSION``: deriving it would mean bumping the spec to 2 silently dropped
+#: support for 1, so the "keep the old one where it is still executable" decision would
+#: be made by a line that looks like it needs no editing. This list has to be edited.
+SUPPORTED_SPEC_VERSIONS: frozenset[int] = frozenset({1})
+
+if SPEC_VERSION not in SUPPORTED_SPEC_VERSIONS:
+    raise RuntimeError(
+        f"the domain serialises spec_version {SPEC_VERSION}, which this runner does not "
+        f"support ({sorted(SUPPORTED_SPEC_VERSIONS)}); add it, and decide explicitly "
+        "whether the older versions are still executable"
+    )
 
 
 class CorpusError(Exception):
@@ -80,10 +100,40 @@ def load_corpus(corpus_dir: Path = CORPUS_DIR) -> list[CorpusEntry]:
 def run_entry(entry: CorpusEntry) -> None:
     """Execute one entry.
 
-    With no ``QuerySpec`` to bind against, execution is the structural check
-    ``load_corpus`` already made. This function is the seam Story 1.11 fills;
-    it must never grow an assertion on prose.
+    With no question compiling to a ``QuerySpec`` yet, execution is the
+    ``spec_version`` check plus the structural check ``load_corpus`` already made.
+    This function is the seam Story 1.11 fills; it must never grow an assertion
+    on prose.
     """
+    _check_spec_version(entry)
+
+
+def _check_spec_version(entry: CorpusEntry) -> None:
+    """Reject an entry written against a spec shape this runner does not know.
+
+    Absence is still tolerated: the entry shape stays provisional until Story 1.11,
+    and entries predating the field are not yet wrong. A version that is *present*
+    and unrecognised is rejected, naming the file, the entry and both versions -- the
+    alternative is asserting the new shape against an entry written for the old one
+    and reporting the mismatch as a content failure.
+    """
+    if "spec_version" not in entry.data:
+        return
+
+    declared = entry.data["spec_version"]
+    supported = ", ".join(str(version) for version in sorted(SUPPORTED_SPEC_VERSIONS))
+    # bool is an int in Python, and `spec_version: yes` parses to True in YAML.
+    if not isinstance(declared, int) or isinstance(declared, bool):
+        raise CorpusError(
+            f"{entry.source}: entry {entry.index} declares spec_version "
+            f"{declared!r} ({type(declared).__name__}), which is not an integer; "
+            f"this runner supports {supported}"
+        )
+    if declared not in SUPPORTED_SPEC_VERSIONS:
+        raise CorpusError(
+            f"{entry.source}: entry {entry.index} declares spec_version {declared}, "
+            f"which this runner does not recognise; it supports {supported}"
+        )
 
 
 def run_corpus(corpus_dir: Path = CORPUS_DIR) -> int:

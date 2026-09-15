@@ -13,7 +13,14 @@ from pathlib import Path
 
 import pytest
 
-from corpus_runner import CORPUS_DIR, CorpusError, load_corpus, main, run_corpus
+from corpus_runner import (
+    CORPUS_DIR,
+    SUPPORTED_SPEC_VERSIONS,
+    CorpusError,
+    load_corpus,
+    main,
+    run_corpus,
+)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 PACKAGE_ROOT = PROJECT_ROOT / "src" / "askai"
@@ -129,3 +136,63 @@ def test_corpus_runner_rejects_a_file_that_is_not_a_list(tmp_path: Path) -> None
         run_corpus(tmp_path)
     assert str(bad) in str(excinfo.value)
     assert "expected a list of entries" in str(excinfo.value)
+
+
+# ------------------------------------------------------- spec_version (Story 1.2)
+
+
+def test_the_supported_spec_version_set_starts_at_one() -> None:
+    assert SUPPORTED_SPEC_VERSIONS == frozenset({1})
+
+
+def test_corpus_runner_accepts_the_recognised_spec_version(tmp_path: Path) -> None:
+    (tmp_path / "ok.yaml").write_text(
+        "- spec_version: 1\n  question: what is inflation\n", encoding="utf-8"
+    )
+    assert run_corpus(tmp_path) == 1
+
+
+def test_corpus_runner_rejects_an_unknown_spec_version(tmp_path: Path) -> None:
+    """The gate the field exists for: a shape change fails loudly, entry by entry."""
+    bad = tmp_path / "future.yaml"
+    bad.write_text(
+        "- spec_version: 1\n  question: first\n- spec_version: 7\n  question: second\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(CorpusError) as excinfo:
+        run_corpus(tmp_path)
+    message = str(excinfo.value)
+    assert str(bad) in message, "the rejection must name the file"
+    assert "entry 1" in message, "the rejection must name the entry"
+    assert "spec_version 7" in message, "the rejection must name the entry's version"
+    # Pinned by its own phrasing: "1" alone is already satisfied by the substring
+    # "entry 1", so dropping the supported-versions half would leave this green.
+    assert "supports 1" in message, "the rejection must name the supported version"
+
+
+def test_corpus_runner_rejects_a_non_integer_spec_version(tmp_path: Path) -> None:
+    bad = tmp_path / "stringly.yaml"
+    bad.write_text("- spec_version: '1'\n", encoding="utf-8")
+    with pytest.raises(CorpusError) as excinfo:
+        run_corpus(tmp_path)
+    assert "not an integer" in str(excinfo.value)
+
+
+def test_corpus_runner_rejects_a_boolean_spec_version(tmp_path: Path) -> None:
+    """`spec_version: yes` is YAML for True, and True == 1 in Python."""
+    bad = tmp_path / "boolish.yaml"
+    bad.write_text("- spec_version: yes\n", encoding="utf-8")
+    with pytest.raises(CorpusError) as excinfo:
+        run_corpus(tmp_path)
+    assert "not an integer" in str(excinfo.value)
+
+
+def test_an_entry_without_a_spec_version_is_still_tolerated(tmp_path: Path) -> None:
+    """The rest of the entry shape is provisional until 1.11; absence is not yet wrong."""
+    (tmp_path / "legacy.yaml").write_text("- question: what is inflation\n", encoding="utf-8")
+    assert run_corpus(tmp_path) == 1
+
+
+def test_main_reports_failure_on_an_unknown_spec_version(tmp_path: Path) -> None:
+    (tmp_path / "future.yaml").write_text("- spec_version: 99\n", encoding="utf-8")
+    assert main([str(tmp_path)]) == 1
