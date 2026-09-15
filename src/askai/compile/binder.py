@@ -48,16 +48,14 @@ from askai.compile.lexicon import (
     grain_words,
     latest_words,
     measure_words,
-    month_numbers,
-    quarter_numbers,
     readings_for_latest,
 )
+from askai.compile.periods import PeriodRefusal, grain_of, implied_grain, period_named
 from askai.compile.question import Question, Span
-from askai.domain.period import Grain, Period, PeriodFormatError
+from askai.domain.period import Grain
 from askai.domain.scope import CountryScope, DeclaredBenchmarks, Named
 from askai.domain.spec import (
     Bound,
-    Exact,
     FieldState,
     LastN,
     Latest,
@@ -173,52 +171,17 @@ def _bind_detail(
 # ------------------------------------------------------------------------------- period
 
 
-def _explicit_periods(question: Question) -> tuple[Period, ...]:
-    """Every published period spelling the raw words carry -- ``2025``, ``2025-Q1``, ``2025-04``.
-
-    Read off the raw words because the fold collapses punctuation, and asked of
-    ``Period`` because ``Period`` is the one thing that decides what a published period
-    spelling is.
-    """
-    found: list[Period] = []
-    for word in question.raw_words:
-        try:
-            parsed = Period(word)
-        except PeriodFormatError:
-            continue
-        if parsed not in found:
-            found.append(parsed)
-    return tuple(found)
-
-
-def _periods_named(question: Question, *, excluding: Span | None) -> tuple[Period, ...]:
-    """The periods the question named outright, in the order it named them.
-
-    A month or quarter named in words is a period only alongside a year: "April" on its
-    own names no year, and picking one would be compile inventing a period.
-    """
-    explicit = _explicit_periods(question)
-    dated = tuple(found for found in explicit if found.grain is not Grain.YEARLY)
-    if dated:
-        return dated
-
-    years = tuple(found.start.year for found in explicit if found.grain is Grain.YEARLY)
-    if not years:
-        return ()
-
-    month = question.numbered(month_numbers(), excluding=excluding)
-    if month is not None:
-        return tuple(Period(f"{year:04d}-{month[0]:02d}") for year in years)
-    quarter = question.numbered(quarter_numbers(), excluding=excluding)
-    if quarter is not None:
-        return tuple(Period(f"{year:04d}-Q{quarter[0]}") for year in years)
-    return tuple(Period(f"{year:04d}") for year in years)
-
-
 def _named_grain(question: Question, *, excluding: Span | None) -> Grain | None:
-    """The interval the question named in words, if it named one (FR-4)."""
+    """The interval the question named in words, if it named one (FR-4).
+
+    A month name or a quarter phrase carrying no year counts too, and counts as the
+    reader naming it (FR-5): *"What was inflation in April?"* names no period -- picking
+    the year would be compile inventing one -- but it does say monthly.
+    """
     found = question.names_one_of(grain_words(), excluding=excluding)
-    return None if found is None else found[0]
+    if found is not None:
+        return found[0]
+    return implied_grain(question, excluding=excluding)
 
 
 def _latest_at(interval: Grain | None) -> PeriodSpec:
@@ -251,23 +214,29 @@ def _bind_period(
     earlier: CompiledQuestion | None,
     catalogue: CataloguePort,
     detail_id: str | None,
+    today: date,
     *,
     excluding: Span | None,
 ) -> _Resolved[PeriodSpec]:
-    """The period, by AD-19's ladder, with FR-4 and FR-6 applied to whatever named a grain."""
-    named = _periods_named(question, excluding=excluding)
-    if len(named) > 1:
-        spelt = ", ".join(str(found) for found in named)
-        return _not_bound(unbound(UnboundReason.MORE_THAN_ONE_PERIOD_NAMED, spelt))
+    """The period, by AD-19's ladder, with FR-4 and FR-6 applied to whatever named a grain.
 
-    # A period names its own interval, and that interval is one the reader named.
-    interval = named[0].grain if named else _named_grain(question, excluding=excluding)
+    Every shape of period expression -- absolute, relative, span, open span, in either
+    language -- is read by ``compile.periods`` and arrives here as one ``PeriodSpec``, so
+    this stays the ladder it was and does not become a second parser (FR-7).
+    """
+    named = period_named(question, today, excluding=excluding)
+    if isinstance(named, PeriodRefusal):
+        return _not_bound(unbound(named.reason, named.particulars))
+
+    # A period expression names its own interval, and that interval is one the reader
+    # named -- "over the last 5 years" says yearly as surely as the word "yearly" does.
+    interval = grain_of(named) if named is not None else _named_grain(question, excluding=excluding)
     if interval is not None and _unpublished(catalogue, detail_id, interval):
         assert detail_id is not None  # _unpublished is False without a bound detail
         return _not_bound(_refuse_interval(catalogue, detail_id, interval))
 
-    if named:
-        return _from_reader(period_field(Exact(named[0])))
+    if named is not None:
+        return _from_reader(period_field(named))
 
     if question.names(latest_words(), excluding=excluding) is not None:
         at = interval if interval is not None else _declared(catalogue, detail_id)
@@ -365,7 +334,7 @@ def compile_question(request: CompileInput, catalogue: CataloguePort) -> Compile
 
     detail, span = _bind_detail(question, earlier, catalogue)
     detail_id = detail.state.value if isinstance(detail.state, Bound) else None
-    period = _bind_period(question, earlier, catalogue, detail_id, excluding=span)
+    period = _bind_period(question, earlier, catalogue, detail_id, request.today, excluding=span)
     scope = _bind_country_scope(question, earlier, catalogue)
     measure = _bind_measure(question, earlier, excluding=span)
     operation = _bind_operation(earlier)

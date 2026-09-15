@@ -149,11 +149,30 @@ rules:
         - currently
         - today
         - most recent
+        - lately
+        - right now
+        - at present
+        - at the moment
+        - nowadays
+        - these days
+        - as of today
+        - up to date
         - الان
         - حاليا
         - الحالي
         - احدث
         - اليوم
+        - مؤخرا
+        - هذه الايام
+        - في الوقت الحالي
+        - في الوقت الحاضر
+        - الوقت الراهن
+        - حتي الان
+        - في الاونه الاخيره
+    note: >-
+      "Lately" and "right now" are the same request as "now": the most recent published
+      reading. They name a period as surely as a date does, so the field is deferred for
+      execute to resolve against the data rather than defaulted or left unbound.
 
   - id: R-BIND-GRAIN-WORDS
     statement: >-
@@ -317,7 +336,264 @@ rules:
         second quarter: 2
         third quarter: 3
         fourth quarter: 4
+        1st quarter: 1
+        2nd quarter: 2
+        3rd quarter: 3
+        4th quarter: 4
+        quarter 1: 1
+        quarter 2: 2
+        quarter 3: 3
+        quarter 4: 4
+        q1: 1
+        q2: 2
+        q3: 3
+        q4: 4
         الربع الاول: 1
         الربع الثاني: 2
         الربع الثالث: 3
         الربع الرابع: 4
+        الربع 1: 1
+        الربع 2: 2
+        الربع 3: 3
+        الربع 4: 4
+    note: >-
+      "Q4-2025" is how a reader writes the published period 2025-Q4, and the two are not
+      the same string: the published form is the only one a datapoint is keyed by, so the
+      reader's spelling is read here -- "q4" beside a year -- and turned into the
+      published one. The fold collapses the hyphen, so "Q4-2025" arrives as "q4 2025" and
+      needs no separate entry.
+
+  - id: R-BIND-PERIOD-NOUNS
+    statement: >-
+      The nouns a reader counts periods in -- "years", "quarters", "months" and their
+      Arabic forms -- keyed by the interval each one names. These count as naming a grain
+      only inside a period expression: a noun on its own is how an indicator is described,
+      and only a relative expression, a span or an ordinal turns one into an interval.
+    status: proposed
+    kind: table
+    sources:
+      - "docs/PRD.md FR-4, FR-5"
+      - "corpus/epic-3.yaml e3-001, e3-002"
+    values:
+      monthly_nouns:
+        - month
+        - months
+        - شهر
+        - شهرا
+        - اشهر
+        - شهور
+        - الشهر
+        - الاشهر
+        - الشهور
+      quarterly_nouns:
+        - quarter
+        - quarters
+        - ربع
+        - ارباع
+        - الربع
+        - الارباع
+        - ارباع السنه
+      yearly_nouns:
+        - year
+        - years
+        - سنه
+        - سنوات
+        - عام
+        - اعوام
+        - السنه
+        - السنوات
+        - العام
+        - الاعوام
+    note: >-
+      These are deliberately separate from R-BIND-GRAIN-WORDS. "Quarter" as a bare word is
+      how a quarter of a year is named ("the first quarter of 2026"), so reading it as an
+      interval wherever it appears would turn a named period into a grain -- which is why
+      the grain table leaves it out and this one, read only inside a period expression,
+      carries it.
+
+  - id: R-BIND-RELATIVE-PERIOD-WORDS
+    statement: >-
+      The words that point a period noun backwards from now -- "the last 5 years", "over
+      the past 3 quarters", "العام الماضي". A relative expression names a count and an
+      interval, so it binds to the last n periods at that interval and is deferred for
+      execute to anchor on the published data; it is never resolved to a period here.
+    status: proposed
+    kind: table
+    sources:
+      - "docs/PRD.md FR-7"
+      - "docs/ARCHITECTURE-SPINE.md AD-1, AD-17"
+    values:
+      back_words:
+        - last
+        - past
+        - previous
+        - prior
+        - recent
+        - trailing
+        - اخر
+        - الاخيره
+        - الاخيرين
+        - الماضيه
+        - الماضي
+        - الماضيين
+        - الماضيتين
+        - السابقه
+        - السابق
+        - المنصرمه
+        - الفائته
+    note: >-
+      Arabic puts the qualifier after the noun ("السنوات الخمس الماضية") and English puts
+      it before ("the last five years"), so the reader is matched on the *set* of parts a
+      period expression is made of rather than on their order. That is one parser for both
+      languages rather than one each, which is what makes the two resolve identically.
+
+  - id: R-BIND-COUNT-WORDS
+    statement: >-
+      The counts a reader writes in words, in both languages, mapped to the number they
+      name. A count written in digits is read as the digits it is; a count written in
+      words is read here, so "the last five years" and "the last 5 years" are one request.
+    status: proposed
+    kind: table
+    sources:
+      - "docs/PRD.md FR-7"
+      - "corpus/epic-3.yaml e3-001"
+    values:
+      counts:
+        one: 1
+        two: 2
+        three: 3
+        four: 4
+        five: 5
+        six: 6
+        seven: 7
+        eight: 8
+        nine: 9
+        ten: 10
+        eleven: 11
+        twelve: 12
+        واحد: 1
+        اثنين: 2
+        اثنتين: 2
+        ثلاث: 3
+        ثلاثه: 3
+        اربع: 4
+        اربعه: 4
+        خمس: 5
+        خمسه: 5
+        ست: 6
+        سته: 6
+        سبع: 7
+        سبعه: 7
+        ثماني: 8
+        ثمانيه: 8
+        تسع: 9
+        تسعه: 9
+        عشر: 10
+        عشره: 10
+        اثني عشر: 12
+        الثلاث: 3
+        الاربع: 4
+        الخمس: 5
+        الست: 6
+        السبع: 7
+        الثماني: 8
+        التسع: 9
+        العشر: 10
+
+  - id: R-BIND-PERIOD-RANGE-WORDS
+    statement: >-
+      The words that make two named periods a span rather than two separate readings --
+      "from 2019 to 2025", "من 2021 إلى 2025" -- and the words that make them a comparison
+      instead. Two periods with a span word between them bind to a range; two periods with
+      a comparison word are left unbound, because a comparison of two readings and a run
+      of readings across them are different questions.
+    status: proposed
+    kind: table
+    sources:
+      - "docs/PRD.md FR-7, FR-16, FR-23"
+      - "corpus/epic-3.yaml e3-001, e3-002, e3-006"
+    values:
+      from_words:
+        - from
+        - since
+        - starting
+        - starting from
+        - beginning
+        - as of
+        - من
+        - منذ
+        - ابتداء من
+        - اعتبارا من
+        - بدايه من
+      to_words:
+        - to
+        - until
+        - till
+        - through
+        - up to
+        - ending
+        - onwards
+        - الي
+        - حتي
+        - وحتي
+        - لغايه
+        - الي غايه
+      comparison_words:
+        - between
+        - compare
+        - compared
+        - comparison
+        - versus
+        - vs
+        - بين
+        - قارن
+        - مقارنه
+        - مقابل
+    note: >-
+      "Between 2019 and 2025" is deliberately a comparison word and not a span word, in
+      both languages. Arabic writes a two-period comparison as "بين عامي 2022 و2025" and
+      English writes one as "between 2022 and 2025"; reading either as a range would turn
+      the question FR-23 is about into the question FR-16 is about. A reader who means the
+      span says "from ... to ...", and that is the form that binds to a range.
+
+  - id: R-BIND-OPEN-RANGE-ENDS-AT-TODAY
+    statement: >-
+      A range whose end the reader left open -- "since 2019", "منذ 2019" -- ends at the
+      period containing today, at the grain the reader's own start period names. Today is
+      an input to compiling and never a clock read, so an open range compiles to the same
+      span on every run and stops being the same span the day after it is asked.
+    status: proposed
+    kind: constant
+    sources:
+      - "docs/PRD.md FR-7"
+      - "docs/ARCHITECTURE-SPINE.md AD-17"
+    values:
+      end: today
+    note: >-
+      The alternative -- ending the range at the newest published period -- would be a
+      data read inside compile, which is the one thing AD-1 puts out of reach. Ending at
+      today is determinate before any data access, and a span that runs past the last
+      published reading is execute's to state as a gap, not compile's to shorten.
+
+  - id: R-BIND-PERIOD-PREFIXES
+    statement: >-
+      The one-letter Arabic conjunctions a reader writes joined to a period -- "و2025" is
+      the whole of "and 2025". A period token carrying one of these is read as the period
+      it names, so that a question listing two periods in Arabic names two periods, as the
+      same question in English does.
+    status: proposed
+    kind: table
+    sources:
+      - "docs/PRD.md FR-7, FR-63"
+      - "corpus/epic-3.yaml e3-006"
+    values:
+      prefixes:
+        - و
+        - ف
+    note: >-
+      This is not a second normalisation (AD-26): the fold is untouched, and nothing here
+      changes how text is compared. It is a list of the spellings a *published period*
+      arrives in, read in the one module that turns a reader's spelling into a published
+      one -- the same job "Q4-2025" needs doing. A word list is what the grain table does
+      for the same clitic, and a year cannot be listed that way because every year would
+      need its own entry.

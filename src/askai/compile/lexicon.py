@@ -35,6 +35,8 @@ __all__ = [
     "BindingRule",
     "Clause",
     "benchmark_words",
+    "comparison_words",
+    "count_words",
     "default_country_scope",
     "default_measure",
     "default_operation",
@@ -43,9 +45,15 @@ __all__ = [
     "latest_words",
     "measure_words",
     "month_numbers",
+    "open_range_ends_at_today",
+    "period_nouns",
+    "period_prefixes",
     "precedence_order",
     "quarter_numbers",
+    "range_from_words",
+    "range_to_words",
     "readings_for_latest",
+    "relative_back_words",
 ]
 
 
@@ -64,19 +72,32 @@ class BindingRule(StrEnum):
     BENCHMARK_WORDS = "R-BIND-BENCHMARK-WORDS"
     MONTH_NAMES = "R-BIND-MONTH-NAMES"
     QUARTER_WORDS = "R-BIND-QUARTER-WORDS"
+    PERIOD_NOUNS = "R-BIND-PERIOD-NOUNS"
+    RELATIVE_PERIOD_WORDS = "R-BIND-RELATIVE-PERIOD-WORDS"
+    COUNT_WORDS = "R-BIND-COUNT-WORDS"
+    PERIOD_RANGE_WORDS = "R-BIND-PERIOD-RANGE-WORDS"
+    OPEN_RANGE_END = "R-BIND-OPEN-RANGE-ENDS-AT-TODAY"
+    PERIOD_PREFIXES = "R-BIND-PERIOD-PREFIXES"
 
 
 class Clause(StrEnum):
     """The clause names those rules carry."""
 
+    BACK_WORDS = "back_words"
+    COMPARISON_WORDS = "comparison_words"
+    COUNTS = "counts"
+    END = "end"
+    FROM_WORDS = "from_words"
     MEASURE = "measure"
     MONTHS = "months"
     OPERATION = "operation"
     ORDER = "order"
     PERIOD = "period"
+    PREFIXES = "prefixes"
     QUARTERS = "quarters"
     READINGS = "readings"
     SCOPE = "scope"
+    TO_WORDS = "to_words"
     WORDS = "words"
 
 
@@ -96,6 +117,18 @@ class PeriodDefault(StrEnum):
     """The period a rule may default to. One member today, and it is deferred, not bound."""
 
     LATEST = "latest"
+
+
+class OpenRangeEnd(StrEnum):
+    """What closes a range whose end the reader left open. Closed, and closed for a reason.
+
+    ``TODAY`` is the only member a pure layer can honour: ``today`` is an input to
+    compiling, so an open range compiles to the same span on every run. The obvious
+    alternative -- the newest published period -- is a data read, which AD-1 puts out of
+    ``compile/``'s reach entirely, so it is not a member that could be selected here.
+    """
+
+    TODAY = "today"
 
 
 def _phrase(rule: BindingRule, clause: Clause) -> str:
@@ -218,3 +251,56 @@ def month_numbers() -> Mapping[str, int]:
 def quarter_numbers() -> Mapping[str, int]:
     """Quarter phrases, in both languages, to the quarter they name."""
     return _numbers(BindingRule.QUARTER_WORDS, Clause.QUARTERS)
+
+
+@cache
+def period_nouns() -> Mapping[Grain, frozenset[str]]:
+    """Each interval and the nouns a reader counts periods in, keyed by the grain.
+
+    Derived from ``Grain`` for the same reason ``grain_words`` is: a grain added to the
+    domain fails here, naming the clause the file is missing, rather than silently
+    having no nouns and so no relative expression.
+    """
+    return {value: _phrases(BindingRule.PERIOD_NOUNS, f"{value.value}_nouns") for value in Grain}
+
+
+@cache
+def relative_back_words() -> frozenset[str]:
+    """The words that point a period noun backwards from now -- "last", "past", "الماضية"."""
+    return _phrases(BindingRule.RELATIVE_PERIOD_WORDS, Clause.BACK_WORDS)
+
+
+@cache
+def count_words() -> Mapping[str, int]:
+    """Counts written in words, in both languages, to the number they name."""
+    return _numbers(BindingRule.COUNT_WORDS, Clause.COUNTS)
+
+
+@cache
+def range_from_words() -> frozenset[str]:
+    """The words that open a span -- "from", "since", "منذ"."""
+    return _phrases(BindingRule.PERIOD_RANGE_WORDS, Clause.FROM_WORDS)
+
+
+@cache
+def range_to_words() -> frozenset[str]:
+    """The words that close a span -- "to", "until", "إلى"."""
+    return _phrases(BindingRule.PERIOD_RANGE_WORDS, Clause.TO_WORDS)
+
+
+@cache
+def comparison_words() -> frozenset[str]:
+    """The words that make two named periods a comparison rather than a span (FR-23)."""
+    return _phrases(BindingRule.PERIOD_RANGE_WORDS, Clause.COMPARISON_WORDS)
+
+
+@cache
+def period_prefixes() -> frozenset[str]:
+    """The one-letter conjunctions a reader writes joined to a period -- "و2025"."""
+    return _phrases(BindingRule.PERIOD_PREFIXES, Clause.PREFIXES)
+
+
+@cache
+def open_range_ends_at_today() -> bool:
+    """Does a range whose end the reader left open end at the period containing ``today``?"""
+    return OpenRangeEnd(_phrase(BindingRule.OPEN_RANGE_END, Clause.END)) is OpenRangeEnd.TODAY

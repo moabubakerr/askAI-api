@@ -87,6 +87,7 @@ class UnboundReason(StrEnum):
     DETAIL_NAME_IS_SHARED = "detail-name-is-shared"
     GRAIN_NOT_PUBLISHED = "grain-not-published"
     MORE_THAN_ONE_PERIOD_NAMED = "more-than-one-period-named"
+    PERIOD_RANGE_RUNS_BACKWARDS = "period-range-runs-backwards"
 
 
 def unbound(reason: UnboundReason, particulars: str) -> Unbound:
