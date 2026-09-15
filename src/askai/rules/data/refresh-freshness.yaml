@@ -1,0 +1,52 @@
+# Refresh -- how stale the served copy may be, and how much of a rejection is reported.
+#
+# Statuses are the catalogue's (docs/RULES.md v2.1): every rule here is `proposed`,
+# because nobody holds the standing to agree one (FR-72a).
+#
+# Both constants below are read through `rules().value(...)` rather than written into
+# `refresh/`. The staleness threshold decides the word a reader sees on every answer's
+# freshness block and on `GET /api/health`, so it is a reader-affecting constant and
+# AD-11 puts it in a file a steward can edit without a deployment. The example budget
+# decides how much of a data defect a steward is shown before they have to go to the
+# log, which is the difference between a report they can act on and a number.
+area: REFRESH
+about: >-
+  What the engine considers a stale copy of the published layer, and how many worked
+  examples a refresh report carries for each class of thing ingest refused.
+
+rules:
+  - id: R-REFRESH-STALE-AFTER
+    statement: >-
+      The read model is stale once this many hours have passed since the last refresh
+      that succeeded. A refresh that failed does not move the clock: the engine is still
+      serving what the last successful one left, and that is what the reader is told.
+      A copy that was never refreshed is stale, not fresh-by-default.
+    status: proposed
+    kind: constant
+    sources:
+      - "docs/PRD.md NFR-7"
+      - "docs/ARCHITECTURE-SPINE.md AD-21"
+    values:
+      stale_after_hours: 26
+    note: >-
+      Publication is a daily operation, so a threshold of exactly 24 hours would report
+      staleness every day for as long as the job's own run time. 26 hours is one daily
+      cycle plus two hours of slack: a single missed run is visible, a late one is not
+      an alarm.
+
+  - id: R-REFRESH-REJECTION-EXAMPLES
+    statement: >-
+      Every class of rejection a refresh reports carries a count and at most this many
+      worked example rows. The count is never truncated; only the examples are, and the
+      report says so, because a steward acts on the examples and audits on the count.
+    status: proposed
+    kind: constant
+    sources:
+      - "docs/PRD.md FR-110"
+      - "docs/ARCHITECTURE-SPINE.md AD-15"
+    values:
+      examples_per_rejection: 5
+    note: >-
+      Five is enough to show that a rejection class has a shape -- the five duplicated
+      country codes in the current export are all five of them -- while keeping the
+      persisted report a bounded artefact rather than a second copy of the defect.
