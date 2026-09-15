@@ -1,0 +1,4 @@
+"""QuerySpec -> ValidatedSpec.
+
+Purity: pure.
+"""

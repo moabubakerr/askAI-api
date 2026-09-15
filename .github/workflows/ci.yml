@@ -1,0 +1,50 @@
+name: CI
+
+# Every gate fails the build — none of them warns, and every one is runnable
+# locally with the identical invocation (see AGENTS.md, "Running and verifying").
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gates:
+    name: gates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.12.14"
+          enable-cache: true
+
+      - name: Install the pinned interpreter
+        run: uv python install
+
+      # --locked installs exactly what uv.lock pins and fails if the lockfile is
+      # stale, so CI and local agree rather than each resolving for itself.
+      - name: Install the pinned toolchain
+        run: uv sync --locked --all-extras
+
+      - name: Dependency contracts (AD-2)
+        run: uv run lint-imports
+
+      - name: Types
+        run: uv run mypy --strict src/askai tests
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Tests
+        run: uv run pytest
+
+      - name: Corpus
+        run: uv run python tests/corpus_runner.py

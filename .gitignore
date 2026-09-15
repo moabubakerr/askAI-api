@@ -1,3 +1,13 @@
 _bmad
 _bmad-output
 .claude
+
+# Tooling output — never checked in. `uv.lock` is deliberately NOT here: it is a
+# pin, not a derivation.
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.import_linter_cache/

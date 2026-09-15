@@ -2,12 +2,30 @@
 name = "askai-api"
 version = "0.1.0"
 description = "Ask AI — answer engine over Qatar national indicator data"
-requires-python = ">=3.11"          # target is 3.13 (spine, Stack); 3.11 kept so the
-                                    # domain layer runs on the current dev machine
-dependencies = []                   # domain/ has none, and that is the point
+requires-python = ">=3.13"
+# Pinned exactly, not banded — the spine's version policy. FastAPI is pre-1.0
+# and ships breaking minors, so it is reviewed on a cadence rather than tracked.
+dependencies = [
+    "fastapi==0.141.1",
+    "pydantic==2.13.5",
+    "httpx==0.28.1",
+    "uvicorn==0.53.0",
+    "PyJWT==2.14.0",
+    "PyYAML==6.0.3",
+]
 
 [project.optional-dependencies]
-dev = ["pytest", "ruff", "mypy", "import-linter"]
+dev = [
+    "pytest==9.1.1",
+    "ruff==0.16.7",
+    "mypy==2.3.1",
+    "import-linter==2.15",
+    "types-PyYAML==6.0.12.20260906",
+]
+
+[tool.uv]
+# uv.lock is revision 3; an older uv cannot read what CI pins.
+required-version = ">=0.12.14"
 
 [build-system]
 requires = ["hatchling"]
@@ -22,12 +40,22 @@ testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py311"
+target-version = "py313"
+
+[tool.ruff.lint]
+# ruff's own defaults, plus E501 so the declared line-length is actually enforced.
+extend-select = ["E501"]
+
+[tool.ruff.lint.isort]
+# tests/ is not a package, so the corpus runner is imported by bare module name.
+known-first-party = ["askai", "corpus_runner"]
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.13"
 strict = true
-files = ["src/askai/domain"]        # AD-2: domain/ is pure, so it is checked strictly first
+# tests/ is checked too: the corpus runner is a gate, not a helper.
+files = ["src/askai", "tests"]
+mypy_path = ["tests"]
 
 # ---------------------------------------------------------------- AD-2
 # The dependency contract, enforced from the first commit. A violation
@@ -43,7 +71,7 @@ forbidden_modules = [
     "askai.compile", "askai.validate", "askai.execute", "askai.assemble",
     "askai.narrate", "askai.respond", "askai.adapters", "askai.ports",
     "askai.rules", "askai.messages", "askai.api", "askai.refresh",
-    "askai.observability",
+    "askai.observability", "askai.config",
 ]
 
 [[tool.importlinter.contracts]]

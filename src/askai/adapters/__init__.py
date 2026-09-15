@@ -1,0 +1,4 @@
+"""Adapters.
+
+Purity: IO.
+"""
