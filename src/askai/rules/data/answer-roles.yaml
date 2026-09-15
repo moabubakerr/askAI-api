@@ -1,0 +1,61 @@
+# What each element's role decides -- which lens shows it, and at which precision it is
+# written.
+#
+# AD-23 puts the role -> lens mapping in `rules/` on purpose: the lens is a view over one
+# answer, so which elements a lens shows is a reviewable table rather than a request
+# parameter, and brevity is changed by editing this file rather than by deploying. AD-18
+# adds the second decision this table owns -- the display mode is a property of the
+# element's *position*, decided once, never chosen per composer -- and a position is
+# exactly what a role is. Both lists therefore live here and nowhere else; a literal in
+# `assemble/` naming a mode or a lens would make this file decorative.
+area: ROLE
+about: >-
+  The job an element does in the answer, and the two things that follow from it: which
+  lens shows the element, and whether its figures are written at headline or at evidence
+  precision.
+
+rules:
+  - id: R-ROLE-LENS-MAPPING
+    statement: >-
+      Which elements a lens shows is decided by the element's role and by nothing else.
+      The executive lens carries the answer, its basis and its provenance in short form;
+      explore adds depth over the same bound answer. A role named by neither lens would
+      be invisible in both, so every role is named by at least one.
+    status: proposed
+    kind: table
+    sources:
+      - "docs/ARCHITECTURE-SPINE.md AD-23"
+      - "docs/PRD.md FR-59, FR-59a, FR-59b, FR-59c, FR-59d"
+    values:
+      executive_roles: ["headline", "delta", "scope", "note"]
+      explore_roles:
+        ["headline", "series", "delta", "evidence", "analysis", "commentary", "scope", "note"]
+    note: >-
+      `scope` is in both lists, and that is the clause with teeth: FR-59b says brevity
+      may remove detail and may not remove what makes the figure defensible, so the
+      element stating which grain, period and country scope were used survives the
+      shortest rendering the engine offers. Dropping it from `executive_roles` is the
+      one edit here that a reviewer should refuse.
+
+  - id: R-ROLE-FORMAT-MODE
+    statement: >-
+      The display mode a figure is written at is decided by the role of the element it
+      sits in. Roles listed under headline take the display rounding rule; roles listed
+      under evidence preserve the published precision; roles listed as carrying no
+      figure have no mode, and asking for one is an error rather than a default.
+    status: proposed
+    kind: table
+    sources:
+      - "docs/ARCHITECTURE-SPINE.md AD-18"
+      - "docs/PRD.md FR-47, FR-48"
+    values:
+      headline_roles: ["headline", "delta"]
+      evidence_roles: ["series", "evidence"]
+      unfigured_roles: ["analysis", "commentary", "scope", "note"]
+    note: >-
+      The three lists partition the roles: a role in none of them would leave the mode
+      to whichever composer got there first, and a role in two of them would render one
+      published row two ways on one card, which is the F-004 defect AD-18 exists to end.
+      The loader cannot check a partition across three clauses, so `assemble/` checks it
+      on every read and refuses to answer rather than guessing -- which means a role
+      added to this file without a mode fails loudly on the first answer.

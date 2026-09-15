@@ -64,6 +64,27 @@ messages:
   answer.value: "{detail} was {value} {unit} in {period}."
   answer.value_for_country: "{detail} in {country} was {value} {unit} in {period}."
 
+  # ------------------------------------------------- what the answer did (FR-56, AD-23)
+  #
+  # The scope element: which grain, which country scope and which period the answer
+  # used -- "monthly, National, April 2026". Composed from these ids rather than dumped
+  # from the spec, because the spec block is the machine's half and this is the
+  # reader's, and it is shown in both lenses so brevity can never remove what makes the
+  # figure defensible.
+  #
+  # `scope.national` is above, with the field labels, because it is the same phrase.
+  # The separator is an id of its own: which mark separates a list, and whether it is
+  # followed by a space, is a per-language editorial decision like every other.
+
+  scope.statement: "{grain}, {scope}, {period}"
+  scope.named: "compared with {countries}"
+  scope.benchmarks: "compared with the declared benchmark countries"
+  scope.list_separator: ", "
+
+  grain.monthly: "monthly"
+  grain.quarterly: "quarterly"
+  grain.yearly: "yearly"
+
   # ------------------------------------------------------ clarifications and refusals
 
   clarify.which_indicator: "Which indicator do you mean: {options}?"

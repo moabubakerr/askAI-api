@@ -87,6 +87,25 @@ messages:
   answer.value: "بلغ {detail} {value} {unit} في {period}."
   answer.value_for_country: "بلغ {detail} في {country} {value} {unit} في {period}."
 
+  # ------------------------------------------------- what the answer did (FR-56, AD-23)
+  #
+  # The scope element -- which grain, which country scope and which period the answer
+  # used. The separator is the Arabic comma U+060C and it is an id here rather than a
+  # constant in code for the same reason the thousands mark is: which mark separates a
+  # list is a per-language editorial decision, and the English one reaching an Arabic
+  # sentence is exactly the drift the two files exist to prevent.
+  #
+  # `scope.national` is above, with the field labels, because it is the same phrase.
+
+  scope.statement: "{grain}، {scope}، {period}"
+  scope.named: "مقارنةً بـ{countries}"
+  scope.benchmarks: "مقارنةً بدول المقارنة المعتمدة"
+  scope.list_separator: "، "
+
+  grain.monthly: "شهري"
+  grain.quarterly: "ربع سنوي"
+  grain.yearly: "سنوي"
+
   # ------------------------------------------------------ clarifications and refusals
 
   clarify.which_indicator: "أي مؤشر تقصد: {options}؟"
