@@ -1,0 +1,409 @@
+"""The one place a ``QuerySpec`` is constructed.
+
+Purity: pure; asks the catalogue port for names and nothing else.
+
+AD-1: a frozen spec is produced **exactly once per answerable question, before any data
+access**, and no layer past ``compile/`` may set, widen or reinterpret a field. Both
+halves are structural here rather than promised. The spec is built in exactly one
+function, and the only thing this module can reach is ``CataloguePort`` -- a port with no
+method that returns a value, a row or a period that exists in the data. A binder that
+wanted to peek at the newest row has nothing to peek with.
+
+AD-19: every field walks one ladder -- **named-in-question, inherited-from-history, rule
+default, ``Unbound``** -- and exactly one binder owns each field's final value. The
+ladder is stated as data in ``R-BIND-PRECEDENCE`` and walked here in that order; the
+account of which rung each field came off leaves with the spec, on ``CompiledQuestion``.
+
+FR-4 and FR-5, which are the same decision seen from two sides: a grain the question
+names wins over everything, **including the grain of the most recent row**; a question
+naming no grain uses the detail's **declared default**, which is why the grain comes off
+the catalogue and the newest row is not reachable from here at all. FR-6: a named grain
+the detail does not publish leaves the period ``Unbound`` with that as its reason -- no
+adjacent grain is ever substituted.
+
+AD-17: ``today`` arrives on ``CompileInput``. Nothing here reads a clock, so the same
+question, history and ``today`` compile to the same spec on every run.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from datetime import date
+
+from askai.compile.binding import (
+    Binding,
+    BoundBy,
+    CompiledQuestion,
+    Precedence,
+    SpecField,
+    UnboundReason,
+    unbound,
+)
+from askai.compile.lexicon import (
+    benchmark_words,
+    default_country_scope,
+    default_measure,
+    default_operation,
+    default_period_is_latest,
+    grain_words,
+    latest_words,
+    measure_words,
+    month_numbers,
+    quarter_numbers,
+    readings_for_latest,
+)
+from askai.compile.question import Question, Span
+from askai.domain.period import Grain, Period, PeriodFormatError
+from askai.domain.scope import CountryScope, DeclaredBenchmarks, Named
+from askai.domain.spec import (
+    Bound,
+    Exact,
+    FieldState,
+    LastN,
+    Latest,
+    Measure,
+    Operation,
+    PeriodSpec,
+    QuerySpec,
+    Unbound,
+    period_field,
+)
+from askai.ports.catalogue import CataloguePort
+
+__all__ = ["CompileInput", "compile_question"]
+
+
+@dataclass(frozen=True, slots=True)
+class CompileInput:
+    """Everything compiling a question depends on, stated rather than reached for.
+
+    ``today`` is a field because AD-17 makes determinism a gate: a clock read inside
+    pure code would mean the same question compiled differently tomorrow, and the corpus
+    entry that pins a date would have nothing to pin it to.
+
+    ``history`` is the reader's earlier questions, oldest first. It is an *input* to
+    compiling, never a store another layer reads (AD-19): a follow-up overrides only the
+    fields its own question names, and everything else inherits unchanged.
+    """
+
+    question: str
+    today: date
+    history: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True, slots=True)
+class _Resolved[T]:
+    """One field's value and the rung of the ladder it came off."""
+
+    state: FieldState[T]
+    precedence: Precedence
+    bound_by: BoundBy | None
+
+    def binding(self, field: SpecField) -> Binding:
+        return Binding(field=field, precedence=self.precedence, bound_by=self.bound_by)
+
+
+def _from_reader[T](state: FieldState[T]) -> _Resolved[T]:
+    """The reader said it in this question."""
+    return _Resolved(
+        state=state, precedence=Precedence.NAMED_IN_QUESTION, bound_by=BoundBy.READER
+    )
+
+
+def _from_history[T](state: FieldState[T]) -> _Resolved[T]:
+    """The reader said it in an earlier turn, and this question did not override it."""
+    return _Resolved(
+        state=state, precedence=Precedence.INHERITED_FROM_HISTORY, bound_by=BoundBy.READER
+    )
+
+
+def _from_rules[T](value: T) -> _Resolved[T]:
+    """Nobody said it, and a rule in ``rules/`` says what happens then."""
+    return _Resolved(
+        state=Bound(value), precedence=Precedence.RULE_DEFAULT, bound_by=BoundBy.RULE
+    )
+
+
+def _not_bound[T](state: Unbound) -> _Resolved[T]:
+    """Nobody said it and no rule covers it: the answer is a clarification or a refusal."""
+    return _Resolved(state=state, precedence=Precedence.UNBOUND, bound_by=None)
+
+
+def _inherited[T](earlier: CompiledQuestion | None, field: SpecField) -> _Resolved[T] | None:
+    """What an earlier turn bound *field* to, if it bound it to anything.
+
+    An earlier ``Unbound`` is not inherited: carrying forward "the reader was not
+    specific enough" would answer this question with the previous one's ambiguity.
+    """
+    if earlier is None:
+        return None
+    state = earlier.state_of(field)
+    if isinstance(state, Unbound):
+        return None
+    inherited: FieldState[T] = state  # type: ignore[assignment]
+    return _from_history(inherited)
+
+
+# ------------------------------------------------------------------------------- detail
+
+
+def _bind_detail(
+    question: Question, earlier: CompiledQuestion | None, catalogue: CataloguePort
+) -> tuple[_Resolved[str], Span | None]:
+    """The detail, by exact normalised-name lookup, and the span its name occupied.
+
+    Epic 1 resolution is this and nothing else. A name published by two details is
+    refused rather than chosen between -- choosing is what a similarity score does, and
+    AD-25 puts that behind structural discrimination in Epic 2.
+    """
+    for span in question.spans():
+        found = catalogue.details_named(span.text)
+        if not found:
+            continue
+        if len(found) == 1:
+            return _from_reader(Bound(found[0])), span
+        return _not_bound(unbound(UnboundReason.DETAIL_NAME_IS_SHARED, ", ".join(found))), span
+
+    carried: _Resolved[str] | None = _inherited(earlier, SpecField.DETAIL)
+    if carried is not None:
+        return carried, None
+    return _not_bound(unbound(UnboundReason.NO_DETAIL_NAMED, " ".join(question.words))), None
+
+
+# ------------------------------------------------------------------------------- period
+
+
+def _explicit_periods(question: Question) -> tuple[Period, ...]:
+    """Every published period spelling the raw words carry -- ``2025``, ``2025-Q1``, ``2025-04``.
+
+    Read off the raw words because the fold collapses punctuation, and asked of
+    ``Period`` because ``Period`` is the one thing that decides what a published period
+    spelling is.
+    """
+    found: list[Period] = []
+    for word in question.raw_words:
+        try:
+            parsed = Period(word)
+        except PeriodFormatError:
+            continue
+        if parsed not in found:
+            found.append(parsed)
+    return tuple(found)
+
+
+def _periods_named(question: Question, *, excluding: Span | None) -> tuple[Period, ...]:
+    """The periods the question named outright, in the order it named them.
+
+    A month or quarter named in words is a period only alongside a year: "April" on its
+    own names no year, and picking one would be compile inventing a period.
+    """
+    explicit = _explicit_periods(question)
+    dated = tuple(found for found in explicit if found.grain is not Grain.YEARLY)
+    if dated:
+        return dated
+
+    years = tuple(found.start.year for found in explicit if found.grain is Grain.YEARLY)
+    if not years:
+        return ()
+
+    month = question.numbered(month_numbers(), excluding=excluding)
+    if month is not None:
+        return tuple(Period(f"{year:04d}-{month[0]:02d}") for year in years)
+    quarter = question.numbered(quarter_numbers(), excluding=excluding)
+    if quarter is not None:
+        return tuple(Period(f"{year:04d}-Q{quarter[0]}") for year in years)
+    return tuple(Period(f"{year:04d}") for year in years)
+
+
+def _named_grain(question: Question, *, excluding: Span | None) -> Grain | None:
+    """The interval the question named in words, if it named one (FR-4)."""
+    found = question.names_one_of(grain_words(), excluding=excluding)
+    return None if found is None else found[0]
+
+
+def _latest_at(interval: Grain | None) -> PeriodSpec:
+    """"The latest reading", at *interval* when one is known.
+
+    ``Latest`` carries no interval, so a known one is expressed as the last *n* readings
+    at it -- ``n`` being ``R-BIND-GRAIN-FROM-DECLARED-DEFAULT``'s ``readings``. Both
+    forms need the data to resolve, so both leave the field ``Deferred`` (AD-1).
+    """
+    if interval is None:
+        return Latest()
+    return LastN(n=readings_for_latest(), grain=interval)
+
+
+def _unpublished(catalogue: CataloguePort, detail_id: str | None, interval: Grain) -> bool:
+    """Does the bound detail publish at *interval*? FR-6: if not, it is stated, not swapped."""
+    if detail_id is None:
+        return False
+    published = catalogue.published_grains(detail_id)
+    return bool(published) and interval not in published
+
+
+def _refuse_interval(catalogue: CataloguePort, detail_id: str, interval: Grain) -> Unbound:
+    published = ", ".join(sorted(catalogue.published_grains(detail_id)))
+    return unbound(UnboundReason.GRAIN_NOT_PUBLISHED, f"{interval.value}; published: {published}")
+
+
+def _bind_period(
+    question: Question,
+    earlier: CompiledQuestion | None,
+    catalogue: CataloguePort,
+    detail_id: str | None,
+    *,
+    excluding: Span | None,
+) -> _Resolved[PeriodSpec]:
+    """The period, by AD-19's ladder, with FR-4 and FR-6 applied to whatever named a grain."""
+    named = _periods_named(question, excluding=excluding)
+    if len(named) > 1:
+        spelt = ", ".join(str(found) for found in named)
+        return _not_bound(unbound(UnboundReason.MORE_THAN_ONE_PERIOD_NAMED, spelt))
+
+    # A period names its own interval, and that interval is one the reader named.
+    interval = named[0].grain if named else _named_grain(question, excluding=excluding)
+    if interval is not None and _unpublished(catalogue, detail_id, interval):
+        assert detail_id is not None  # _unpublished is False without a bound detail
+        return _not_bound(_refuse_interval(catalogue, detail_id, interval))
+
+    if named:
+        return _from_reader(period_field(Exact(named[0])))
+
+    if question.names(latest_words(), excluding=excluding) is not None:
+        at = interval if interval is not None else _declared(catalogue, detail_id)
+        return _from_reader(period_field(_latest_at(at)))
+    if interval is not None:
+        # A grain named with no period is "the latest, at that grain" -- and it outranks
+        # whatever an earlier turn carried, which is FR-4's "wins over every signal".
+        return _from_reader(period_field(_latest_at(interval)))
+
+    carried: _Resolved[PeriodSpec] | None = _inherited(earlier, SpecField.PERIOD)
+    if carried is not None:
+        return carried
+    if not default_period_is_latest():  # pragma: no cover -- one member today
+        raise ValueError("R-BIND-PERIODLESS-IS-LATEST names a default this binder cannot build")
+    latest = period_field(_latest_at(_declared(catalogue, detail_id)))
+    return _Resolved(
+        state=latest, precedence=Precedence.RULE_DEFAULT, bound_by=BoundBy.RULE
+    )
+
+
+def _declared(catalogue: CataloguePort, detail_id: str | None) -> Grain | None:
+    """The detail's *declared* default interval -- never the interval of its newest row."""
+    return None if detail_id is None else catalogue.default_grain(detail_id)
+
+
+# ------------------------------------------------------------------------ country scope
+
+
+def _bind_country_scope(
+    question: Question, earlier: CompiledQuestion | None, catalogue: CataloguePort
+) -> _Resolved[CountryScope]:
+    """The scope, which is a query shape and never a country filter value (AD-5).
+
+    The home country is in no published row and so in no catalogue of countries: naming
+    it matches nothing here and falls through to the national default. That is the whole
+    mechanism -- there is no name to special-case and no list to keep in step.
+    """
+    named: list[str] = []
+    for span in question.spans():
+        found = catalogue.country_named(span.text)
+        if found is not None and found not in named:
+            named.append(found)
+    if named:
+        return _from_reader(Bound(Named(countries=frozenset(named))))
+    if question.names(benchmark_words()) is not None:
+        return _from_reader(Bound(DeclaredBenchmarks()))
+
+    carried: _Resolved[CountryScope] | None = _inherited(earlier, SpecField.COUNTRY_SCOPE)
+    if carried is not None:
+        return carried
+    return _from_rules(default_country_scope())
+
+
+# ------------------------------------------------------------------ measure and operation
+
+
+def _bind_measure(
+    question: Question, earlier: CompiledQuestion | None, *, excluding: Span | None
+) -> _Resolved[Measure]:
+    """The measure. A measure word inside the detail's own published name does not count."""
+    found = question.names_one_of(measure_words(), excluding=excluding)
+    if found is not None:
+        return _from_reader(Bound(found[0]))
+    carried: _Resolved[Measure] | None = _inherited(earlier, SpecField.MEASURE)
+    if carried is not None:
+        return carried
+    return _from_rules(default_measure())
+
+
+def _bind_operation(earlier: CompiledQuestion | None) -> _Resolved[Operation]:
+    """The operation, which in this epic is always the rule default.
+
+    Operation classification is one of the four bounded model call-sites (AD-22) and this
+    epic makes no model call, so nothing here classifies: the field is bound by a rule,
+    it says so, and the epic that adds the classifier replaces a named default rather
+    than an assumption.
+    """
+    carried: _Resolved[Operation] | None = _inherited(earlier, SpecField.OPERATION)
+    if carried is not None:
+        return carried
+    return _from_rules(default_operation())
+
+
+# --------------------------------------------------------------------------- the binder
+
+
+def compile_question(request: CompileInput, catalogue: CataloguePort) -> CompiledQuestion:
+    """Bind every field once, then freeze the spec. The only ``QuerySpec`` construction.
+
+    History is compiled first, by this same function, so a follow-up inherits what the
+    earlier turn actually bound rather than a second reading of the earlier words.
+    """
+    earlier = _earlier_turn(request, catalogue)
+    question = Question.parse(request.question)
+
+    detail, span = _bind_detail(question, earlier, catalogue)
+    detail_id = detail.state.value if isinstance(detail.state, Bound) else None
+    period = _bind_period(question, earlier, catalogue, detail_id, excluding=span)
+    scope = _bind_country_scope(question, earlier, catalogue)
+    measure = _bind_measure(question, earlier, excluding=span)
+    operation = _bind_operation(earlier)
+
+    spec = QuerySpec(
+        detail=detail.state,
+        period=period.state,
+        country_scope=scope.state,
+        measure=measure.state,
+        operation=operation.state,
+        today=request.today,
+    )
+    return CompiledQuestion(
+        spec=spec,
+        bindings=(
+            detail.binding(SpecField.DETAIL),
+            period.binding(SpecField.PERIOD),
+            scope.binding(SpecField.COUNTRY_SCOPE),
+            measure.binding(SpecField.MEASURE),
+            operation.binding(SpecField.OPERATION),
+        ),
+    )
+
+
+def _earlier_turn(request: CompileInput, catalogue: CataloguePort) -> CompiledQuestion | None:
+    """The most recent turn, compiled the same way, or ``None`` when this is the first.
+
+    Compiled rather than remembered: history is an input, and reconstructing it through
+    the one binder is what stops a second, weaker reading of an earlier question growing
+    somewhere else.
+    """
+    if not request.history:
+        return None
+    return compile_question(
+        CompileInput(
+            question=request.history[-1],
+            today=request.today,
+            history=request.history[:-1],
+        ),
+        catalogue,
+    )

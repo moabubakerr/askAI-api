@@ -1,0 +1,323 @@
+# Binding -- how each QuerySpec field reaches its final value, and what decides when the
+# reader did not say.
+#
+# AD-19 fixes the precedence: named-in-question, then inherited-from-history, then the
+# rule default below, then Unbound. The precedence is here rather than in code because
+# the last two steps are decisions a reviewer is entitled to change without a deploy:
+# what "no period named" means, and which scope a question with no country is about.
+#
+# The word tables are here for the same reason and one more -- they are bilingual, and a
+# word list living in code is a word list Arabic gets added to last. Every phrase is
+# written in the engine's normal form (askai.domain.normalise), because that is the form
+# the question is folded to before it is compared; tests/test_compile.py asserts it.
+area: BIND
+about: >-
+  How a question becomes a frozen QuerySpec: the precedence each field is bound by, the
+  defaults that apply when the reader named nothing, and the bilingual words that count
+  as naming a period, a grain, a measure or a country scope.
+
+rules:
+  - id: R-BIND-PRECEDENCE
+    statement: >-
+      Every QuerySpec field is bound by the same precedence, in this order: what the
+      question named, then what the history carried forward, then the rule default,
+      then Unbound with a stated reason. Exactly one binder owns each field's final
+      value, and the precedence resolves before the spec is constructed.
+    status: proposed
+    kind: constant
+    sources:
+      - "docs/ARCHITECTURE-SPINE.md AD-19"
+      - "docs/ARCHITECTURE-SPINE.md AD-1"
+    values:
+      order:
+        - named-in-question
+        - inherited-from-history
+        - rule-default
+        - unbound
+    note: >-
+      The order is data so that the four steps can be read in one place and cited in a
+      review; the code walks these steps in this order and the test asserts the two
+      agree, rather than the order being asserted twice.
+
+  - id: R-BIND-DEFAULT-COUNTRY-SCOPE
+    statement: >-
+      A question naming no country is about the national series, which is a distinct
+      query shape and never a country filter value. Naming the home country is naming no
+      country: it appears in none of the published rows, so it resolves to this default
+      rather than to a named set.
+    status: proposed
+    kind: constant
+    sources:
+      - "docs/ARCHITECTURE-SPINE.md AD-5"
+      - "docs/PRD.md FR-10, FR-11b"
+    values:
+      scope: national
+    note: >-
+      The benchmark configuration names the home country in all 21 declared sets while
+      the data names it in none of 8,127 rows, so a scope built by looking the country
+      up by name retrieves every benchmark but it.
+
+  - id: R-BIND-DEFAULT-MEASURE
+    statement: >-
+      A question naming no measure is asking for the actual value -- never a target and
+      never a baseline, which are different published columns and different claims.
+    status: proposed
+    kind: constant
+    sources:
+      - "docs/PRD.md FR-15"
+      - "docs/RULES.md R-101"
+    values:
+      measure: actual
+
+  - id: R-BIND-DEFAULT-OPERATION
+    statement: >-
+      A question whose operation nothing has classified is a request for a value. In
+      this epic nothing classifies one, because operation classification is a bounded
+      model call-site and this epic makes no model call.
+    status: proposed
+    kind: constant
+    sources:
+      - "docs/ARCHITECTURE-SPINE.md AD-22"
+      - "docs/PRD.md FR-15"
+    values:
+      operation: value
+    note: >-
+      Stated as a default rather than left implicit so that the day the classifier
+      arrives, what it replaces is a named rule and not an assumption in a binder.
+
+  - id: R-BIND-PERIODLESS-IS-LATEST
+    statement: >-
+      A question naming no period is about the latest reading, which compile leaves
+      deferred for execute to resolve against the published data. It is never bound to a
+      period compile picked, and never left unbound as though the reader was unclear.
+    status: proposed
+    kind: constant
+    sources:
+      - "docs/ARCHITECTURE-SPINE.md AD-1"
+      - "docs/PRD.md FR-8"
+    values:
+      period: latest
+
+  - id: R-BIND-GRAIN-FROM-DECLARED-DEFAULT
+    statement: >-
+      When no grain is named, the bound detail's declared default grain decides, never
+      the grain of its most recent row. "Latest at a grain" is the last one reading at
+      that grain, so a period-less question at a known grain is a deferred request for
+      that many readings rather than an ungrained latest.
+    status: proposed
+    kind: constant
+    sources:
+      - "docs/PRD.md FR-5"
+      - "docs/RULES.md R-83"
+    values:
+      readings: 1
+    note: >-
+      Inflation's latest actual is 2026-04 monthly, 2026-Q1 quarterly and 2025 yearly --
+      all true, all different. Whichever row happens to be newest is the one signal that
+      must not decide, which is why the count is stated here and the grain comes from
+      the catalogue rather than from the data.
+
+  - id: R-BIND-UNPUBLISHED-GRAIN-IS-STATED
+    statement: >-
+      When the grain the question named is not published for the bound detail, the
+      period is left unbound with that as its stated reason. No adjacent grain is
+      substituted, and a quarter is never answered with the year that contains it.
+    status: proposed
+    kind: code
+    sources:
+      - "docs/PRD.md FR-6"
+      - "docs/RULES.md R-81"
+    catalogue: ["R-81"]
+    note: >-
+      90 of 289 details publish at more than one grain, so substitution would be
+      invisible far more often than it would be wrong-looking.
+
+  - id: R-BIND-LATEST-WORDS
+    statement: >-
+      The words that name the latest reading rather than a period. A question carrying
+      one of these has named its period, and the field is deferred rather than defaulted.
+    status: proposed
+    kind: table
+    sources:
+      - "docs/PRD.md FR-8"
+      - "corpus/epic-1.yaml e1-002"
+    values:
+      words:
+        - now
+        - latest
+        - current
+        - currently
+        - today
+        - most recent
+        - الان
+        - حاليا
+        - الحالي
+        - احدث
+        - اليوم
+
+  - id: R-BIND-GRAIN-WORDS
+    statement: >-
+      The words that name a publication interval without naming a period. A grain named
+      this way outranks every other signal, including the grain of the most recent row
+      and the grain a follow-up inherited.
+    status: proposed
+    kind: table
+    sources:
+      - "docs/PRD.md FR-4"
+      - "corpus/epic-7.yaml e7-001"
+    values:
+      monthly_words:
+        - monthly
+        - month
+        - per month
+        - شهري
+        - شهريا
+        - الشهري
+        - وشهريا
+        - وشهري
+      quarterly_words:
+        - quarterly
+        - per quarter
+        - ربعي
+        - ربع سنوي
+        - الربعي
+        - وربعي
+        - وربع سنوي
+      yearly_words:
+        - yearly
+        - annual
+        - annually
+        - per year
+        - سنوي
+        - سنويا
+        - السنوي
+        - وسنويا
+        - وسنوي
+    note: >-
+      The bare word "quarter" is deliberately absent: it is how a quarter of a year is
+      named ("the first quarter of 2026"), and reading it as an interval would turn a
+      named period into a grain.
+
+      The forms beginning with the Arabic conjunction are here because an Arabic
+      follow-up is written as one word -- "وشهرياً" is the whole of "and monthly?" -- and
+      the fold does not split a clitic off a word. They are listed rather than stripped
+      because stripping a leading letter is a second normalisation in all but name, and
+      there is exactly one of those (AD-26).
+
+  - id: R-BIND-MEASURE-WORDS
+    statement: >-
+      The words that name a measure. A word inside the detail's own name never counts --
+      an indicator called Growth is not a question about change -- so the span the detail
+      bound from is excluded before these are read.
+    status: proposed
+    kind: table
+    sources:
+      - "docs/PRD.md FR-15"
+      - "docs/ARCHITECTURE-SPINE.md AD-4"
+    values:
+      actual_words:
+        - actual
+        - الفعلي
+        - القيمه الفعليه
+      target_words:
+        - target
+        - targets
+        - المستهدف
+        - الهدف
+      baseline_words:
+        - baseline
+        - خط الاساس
+        - الاساس
+      change_words:
+        - change
+        - growth
+        - التغير
+        - النمو
+
+  - id: R-BIND-BENCHMARK-WORDS
+    statement: >-
+      The words that ask for whatever benchmark set the detail itself declares, rather
+      than for a country the reader named. A named country always outranks these,
+      because it is the more specific thing the reader said.
+    status: proposed
+    kind: table
+    sources:
+      - "docs/ARCHITECTURE-SPINE.md AD-5"
+      - "docs/PRD.md FR-9"
+    values:
+      words:
+        - benchmark
+        - benchmarks
+        - peers
+        - peer countries
+        - comparators
+        - الدول المقارنه
+        - الدول المرجعيه
+
+  - id: R-BIND-MONTH-NAMES
+    statement: >-
+      The month a reader names in words, in both languages, mapped to its number. A
+      month name with a year is a monthly period the question named outright.
+    status: proposed
+    kind: table
+    sources:
+      - "corpus/epic-1.yaml e1-001, e1-004"
+      - "docs/DATA-CONTRACT.md period forms"
+    values:
+      months:
+        january: 1
+        jan: 1
+        february: 2
+        feb: 2
+        march: 3
+        mar: 3
+        april: 4
+        apr: 4
+        may: 5
+        june: 6
+        jun: 6
+        july: 7
+        jul: 7
+        august: 8
+        aug: 8
+        september: 9
+        sep: 9
+        sept: 9
+        october: 10
+        oct: 10
+        november: 11
+        nov: 11
+        december: 12
+        dec: 12
+        يناير: 1
+        فبراير: 2
+        مارس: 3
+        ابريل: 4
+        مايو: 5
+        يونيو: 6
+        يوليو: 7
+        اغسطس: 8
+        سبتمبر: 9
+        اكتوبر: 10
+        نوفمبر: 11
+        ديسمبر: 12
+
+  - id: R-BIND-QUARTER-WORDS
+    statement: >-
+      The quarter a reader names in words, in both languages, mapped to its number. A
+      quarter phrase with a year is a quarterly period the question named outright.
+    status: proposed
+    kind: table
+    sources:
+      - "corpus/epic-7.yaml e7-001"
+      - "docs/DATA-CONTRACT.md period forms"
+    values:
+      quarters:
+        first quarter: 1
+        second quarter: 2
+        third quarter: 3
+        fourth quarter: 4
+        الربع الاول: 1
+        الربع الثاني: 2
+        الربع الثالث: 3
+        الربع الرابع: 4
