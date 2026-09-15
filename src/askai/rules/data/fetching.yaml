@@ -1,0 +1,87 @@
+# Fetching -- what execute/ is allowed to select, and which rows may be "the latest".
+#
+# The latest-value *definition* lives in latest-value.yaml (R-LATEST-MOST-RECENT-ACTUAL).
+# What is here is the part that only bites once there are rows in front of you: where the
+# "at or before today" line is drawn on a period that is not a day, what a placeholder is,
+# and the two things the fetch may never do -- decide a grain, or return a figure it
+# cannot name a row for.
+#
+# Every rule here is `proposed`: docs/RULES.md v2.1 records 187 proposed, 1 rejected and
+# 0 agreed, and nobody holds the standing to agree one (FR-72a).
+area: FETCH
+about: >-
+  How a deferred period becomes the row that is fetched: which published rows are
+  eligible to be the latest reading, where the boundary against today falls, and the
+  limits on what an exact-key fetch may return.
+
+rules:
+  - id: R-FETCH-LATEST-IS-A-COMPLETED-PERIOD
+    statement: >-
+      A row is eligible to be the latest reading only when the period it covers has
+      ended at or before today. A period still running has not finished being measured,
+      and a period beginning after today is the future; neither is a reading that
+      happened.
+    status: proposed
+    kind: constant
+    sources:
+      - "docs/PRD.md FR-8"
+      - "docs/DATA-CONTRACT.md FACT 5"
+      - "docs/ARCHITECTURE-SPINE.md AD-1"
+    values:
+      boundary: period-end
+      future_rows_eligible: false
+    note: >-
+      The boundary is stated as data because a period is not a day and the two sensible
+      lines -- the period's first day and its last -- give different answers on real
+      rows. Measured on this export against 2026-09-30: 322 of 8,127 rows end after it,
+      42 of those carry an Actual, and most of those are zero. Taking the period's start
+      instead would admit 60 of them, including 33 of the placeholder Actuals.
+
+  - id: R-FETCH-PLACEHOLDER-IS-NEVER-THE-LATEST
+    statement: >-
+      A row whose value column holds no published text is a placeholder, not a reading.
+      It is passed over when the latest reading is resolved, and it is never served as a
+      value that happens to be blank.
+    status: proposed
+    kind: constant
+    sources:
+      - "docs/PRD.md FR-8"
+      - "docs/DATA-CONTRACT.md FACT 5"
+    values:
+      placeholder_rows_eligible: false
+    note: >-
+      "Publishes no text" is the engine's one emptiness predicate
+      (askai.domain.text.is_published_text), not a second reading of what empty means --
+      the export spells absence as a blank cell, a bare dash and an empty rich-text
+      wrapper, and a fetch that agreed with only one of those would serve the others.
+
+  - id: R-FETCH-GRAIN-IS-BOUND-BEFORE-THE-FETCH
+    statement: >-
+      The fetch never decides a grain. A period-less question is bound to a grain in
+      compile, from the detail's declared default, and the fetch answers at whatever
+      grain the bound request carries. When the request carries none, the grain is
+      settled by the published tie-break rule and never by which row happens to be
+      newest.
+    status: proposed
+    kind: code
+    sources:
+      - "docs/PRD.md FR-5"
+      - "docs/ARCHITECTURE-SPINE.md AD-19"
+      - "docs/RULES.md R-83"
+    catalogue: ["R-83"]
+    note: >-
+      FR-5's defect is the newest row's grain overruling the declared one, and AD-19's
+      is a second binder for a field compile already owns. Both arrive the same way --
+      execute looking at the data to decide what grain the question was about -- so the
+      fetch reads no declared grain of its own and derives none from the datapoints.
+
+  - id: R-FETCH-KEY-IS-DETAIL-PERIOD-COUNTRY
+    statement: >-
+      A value is read only by exact key on the detail, the period and the country, with
+      the blank country as the national marker. Nothing scores, ranks or approximates a
+      row, and a figure that cannot name the row it came from does not exist.
+    status: proposed
+    kind: code
+    sources:
+      - "docs/ARCHITECTURE-SPINE.md AD-3"
+      - "docs/PRD.md FR-15"
