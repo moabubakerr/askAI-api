@@ -1,0 +1,70 @@
+# The semantic index -- the constants that decide what a search returns.
+#
+# AD-13 fixes the *mechanism* (exact brute-force cosine, in process, swapped by
+# reference) and that is code, not data. What lives here is everything a reader can
+# feel: how wide the vector is, how the fallback vectoriser cuts text into features,
+# and how many candidates a generation stage is allowed to hand on.
+#
+# No relevance floor is declared here, and its absence is deliberate: AD-30 requires a
+# floor to be *derived* from a labelled set and recorded with the separation it was
+# derived from. A number chosen by feel today would be indistinguishable from one that
+# was measured, which is the thing AD-30 exists to prevent.
+area: INDEX
+about: >-
+  The shape of the vectors the index holds, the way the shipped character-trigram
+  vectoriser turns text into them, and how many candidates a search may return.
+
+rules:
+  - id: R-INDEX-VECTOR-WIDTH
+    statement: >-
+      Every vector in a collection has the same width, is float32, and is L2-normalised
+      at build time so that cosine similarity is a plain dot product at query time.
+    status: proposed
+    kind: constant
+    sources:
+      - "docs/ARCHITECTURE-SPINE.md AD-13"
+      - "_bmad-output/planning-artifacts/epics.md Story 2.1"
+    values:
+      dimensions: 256
+    note: >-
+      256 is the width of the shipped character-trigram vectoriser, not a claim about an
+      embedding model. AD-13 sizes the estate at 768 dimensions for a real model; because
+      the model is a deferred decision, the width is read from here and an index records
+      the width and the vectoriser identity it was built with, so changing either is a
+      rebuild rather than a migration.
+
+  - id: R-INDEX-CHARACTER-TRIGRAM-FALLBACK
+    statement: >-
+      Until a candidate embedding model is measured against the finding-42 and F-014
+      cases and beats it, the semantic stage is the character-trigram vectoriser, over
+      the engine's one normalised form, with word boundaries kept as padding.
+    status: proposed
+    kind: constant
+    sources:
+      - "_bmad-output/planning-artifacts/epics.md Story 2.1"
+      - "docs/ARCHITECTURE-SPINE.md AD-26"
+    values:
+      trigram_size: 3
+      pad_boundaries: true
+    note: >-
+      The stated fallback of Story 2.1, shipped as the working implementation rather than
+      as a placeholder. It sits behind the same port an embedding runtime would, and the
+      index file records which vectoriser built it, so a model arriving later cannot be
+      queried against vectors it did not produce.
+
+  - id: R-INDEX-CANDIDATE-LIMIT
+    statement: >-
+      A search over one collection returns at most this many candidates, ordered by
+      score and then by id so that the same question returns the same list on every run.
+    status: proposed
+    kind: constant
+    sources:
+      - "docs/ARCHITECTURE-SPINE.md AD-25"
+      - "docs/ARCHITECTURE-SPINE.md AD-17"
+    values:
+      candidates: 10
+    note: >-
+      AD-25 stage 1 yields approximately ten candidates for the deterministic
+      discrimination stage to cut down. The tie-break on id is what makes the list
+      reproducible when two surfaces score identically, which hashed trigrams make
+      commonplace.
