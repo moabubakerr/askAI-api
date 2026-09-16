@@ -185,3 +185,29 @@ only, never `git add -A` while other agents are writing.
   §5 carries a dated note saying so. It needs the catalogue's owner, not a find-and-replace.
 
 `_bmad-output/implementation-artifacts/deferred-work.md` carries the longer ledger.
+
+### Deployed and verified on the VM — 2026-09-16
+
+It runs there. `POST /api/ask` returned `Inflation was 2.6 % in April 2026.` with a
+resolving `source_ref`, `resolved_period` 2026-04 against a `today` of 2026-09-16 — so
+FR-8's "most recent actual at or before today" is working on real data, not the most
+recent row — and `stale: false` after a refresh of 8,985 rows in 0.65s.
+
+**The preflight passes on that filesystem**: WAL active with both sidecars, a reader
+unblocked by a writer, an index file retired while its generation was still served, and a
+row surviving a full close and reopen. The atomic-refresh design holds where it will run.
+
+The sequence, which is also the deployment order:
+
+```
+export RUNTIME_NETWORK=kap_shared_network      # where vllm lives
+export ASKAI_EXPORT_DIR=~/askAI-api/data       # the export ROOT, not data/cms
+docker compose run --rm askai-api python -m askai.adapters.store provision
+docker compose run --rm askai-api python -m askai.refresh /data
+docker compose up -d askai-api                 # localhost:17900
+```
+
+Three bugs surfaced in the first hour there, none of them visible from a developer
+machine: no operator-facing way to create the estate, a compose mount that would have
+silently dropped the loose export files, and a serving entry point that did not exist.
+Deploy early on anything else built here.
