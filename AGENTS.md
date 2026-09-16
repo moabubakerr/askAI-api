@@ -116,3 +116,72 @@ environment; both take a settings value from `src/askai/config/model.py`.
   returns text, and it can still be truncated at the token budget.
 - The embedding width is not discovered by probing. It is half of the index identity, so
   a guessed value would be written into an index file and compared at every later load.
+
+## Where the build is — handoff, 2026-09-16
+
+20 stories, 22 commits, 1,399 tests, all five gates green at every commit. Epic 1 is 16 of 18;
+Epic 2 has 2.1, 2.2 and 2.13; Epic 3 has 3.1; Epic 4 has 4.1. Nothing is in flight.
+
+`POST /api/ask` works end to end: a question naming an indicator exactly returns a real figure with
+its unit, period, scope and source reference, in English or Arabic, plus one audit record. No model
+is involved anywhere yet.
+
+### The house rules that trip every new agent
+
+All of these are enforced by tests that scan the whole tree. They fail the build, and they are
+load-bearing rather than stylistic:
+
+- **One `normalise()`**, in `domain/`. The names `norm`, `normalise`, `normalize`, `normalise_text`,
+  `normalize_text`, `_normalise`, `_normalize`, `fold_text`, `normal_form` are banned anywhere under
+  `src/askai/` — a second implementation is finding 121's Arabic half returning.
+- **The home country's name is a banned literal** anywhere under `src/askai/`, docstrings and
+  comments included. National scope is the *absence* of a country. `domain/scope.py` has the
+  phrasing to copy; `rules/countries.py` has a fieldless `HomeCountry` that cannot become a filter.
+- **No `os.environ` / `os.getenv` outside `src/askai/config/`.**
+- **No module-level mutable collector** anywhere — no list, dict, set, `defaultdict`, `deque` or
+  `Counter` at module scope. Degradations travel on the result value.
+- **No reader-affecting constant as a code literal** in `compile/`, `execute/` or `assemble/`. Use
+  `rules().value(...)`. An AST scan watches those three packages.
+- **No reader-facing string outside `messages/`**, and no Arabic-script literal over one character
+  outside the message YAML.
+- **No composer builds a numeric string** except through `assemble/format.py`, and no module in
+  `assemble/`, `narrate/` or `respond/` may name a `FormatMode` — use `Placement.mode_for(role)`.
+- **A module writes only tables it owns** per `TABLE_OWNERS` in `adapters/store/provision.py`.
+- **A model-client import on the answer path fails a scan.** Reach the model through `ModelPort`.
+- ruff has `BLE`/`E722` on, broad-except permitted only under `adapters/**`.
+
+### How the work has been running, and it works
+
+One agent per story, launched in parallel, each **fenced to its own files** — its own package and
+its own new test file, never an existing one. No agent may touch `pyproject.toml` or `uv.lock`; a
+four-way lockfile conflict costs more than it saves, so an agent needing a dependency stops and
+asks. Stories are taken straight from `_bmad-output/planning-artifacts/epics.md` — the acceptance
+criteria are the spec, with no separate spec file. Commit each story as it lands, explicit paths
+only, never `git add -A` while other agents are writing.
+
+### Next, in priority order
+
+1. **Stories 2.3 + 2.4 + 2.5 batched** — the resolution ladder. Story 2.13 measured trigram
+   retrieval at **21.4% recall@1 on paraphrases**, and found that where a wrong candidate outranked
+   the right one its median score was 0.831 against a derived floor of 0.838. No threshold separates
+   right from wrong, so the discriminator is demonstrated necessary rather than assumed.
+2. **1.18** foreclosure tests.
+3. **A review pass** — 18 of the 20 stories shipped without the adversarial review that caught
+   `Percent - Percent` returning the wrong unit on a fully tested, fully typed function.
+4. Breadth: Epics 3, 4, 5.
+
+### Open decisions that need a person
+
+- **`agreed_by` is UNRECORDED.** All 187 non-rejected rules are agreed as of 2026-09-16, but no
+  approver was named. Story 10.2 has nothing to record until someone is.
+- **Analyst prose has no table.** Ingest counts 1,031 analyses and stores none, because Story 1.8
+  says load them and Story 1.6 creates no table for them. Epic 6 cannot start.
+- **21 details publish text, not numbers** (`"Tier 1"`, `"ناشئة"`). They answer *absent* today.
+  `detail.value_type_id` is the natural fix.
+- **Three documents disagree with the code** — the spine's response `spec` block lacks
+  `spec_version`, R-174's Arabic plural rule is wrong from 100 upward, and AD-13 says vectors live
+  in the read model while AD-20 and Story 2.1 say a separate file.
+- **`docs/RULES.md`** still shows `proposed` on every rule and argues the pre-agreement position;
+  §5 carries a dated note saying so. It needs the catalogue's owner, not a find-and-replace.
+
+`_bmad-output/implementation-artifacts/deferred-work.md` carries the longer ledger.
