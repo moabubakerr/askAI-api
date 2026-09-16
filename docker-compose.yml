@@ -18,7 +18,13 @@ services:
     volumes:
       # The published export, read-only. Mounted rather than baked: FR-108 requires
       # republished content to reach readers with no code change and no deployment.
-      - ${ASKAI_EXPORT_DIR:-./data/cms}:/data:ro
+      #
+      # This is the `data/` directory, NOT `data/cms/`. The export ships as it is laid
+      # out: the CMS tables under `cms/`, and the loose files -- Articles, Champions,
+      # Sectors, General Entities -- directly above them. Mounting the `cms/`
+      # subdirectory alone hides the loose files, and ingest then has no entity groups
+      # and no articles while still reporting a successful refresh of everything else.
+      - ${ASKAI_EXPORT_DIR:-./data}:/data:ro
       # The three databases. A named volume is local disk; a bind mount to a network
       # share would break WAL and with it the guarantee that a reader is never blocked
       # by a refresh.
