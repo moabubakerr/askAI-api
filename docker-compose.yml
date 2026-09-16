@@ -1,0 +1,68 @@
+# The engine beside the runtimes it talks to, on the target VM.
+#
+#   docker compose up -d askai-api
+#   docker compose run --rm askai-api python -m askai.adapters.store.preflight
+#   docker compose run --rm askai-api python -m askai.refresh /data
+#
+# `vllm` already runs on that machine and is NOT managed here — joining its network is
+# what makes the hostname resolve. Set RUNTIME_NETWORK to whichever network it is on:
+#   docker inspect -f '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}' vllm
+
+services:
+  askai-api:
+    image: askai-api:local
+    build: .
+    restart: unless-stopped
+    ports:
+      - "17900:8000"
+    volumes:
+      # The published export, read-only. Mounted rather than baked: FR-108 requires
+      # republished content to reach readers with no code change and no deployment.
+      - ${ASKAI_EXPORT_DIR:-./data/cms}:/data:ro
+      # The three databases. A named volume is local disk; a bind mount to a network
+      # share would break WAL and with it the guarantee that a reader is never blocked
+      # by a refresh.
+      - askai-databases:/var/lib/askai
+    environment:
+      ASKAI_DATABASE_DIR: /var/lib/askai
+
+      # The chat runtime. The served name is `qwen72b` and the weights are
+      # Qwen2.5-32B-Instruct — the number in the name is wrong and the name is right.
+      # vLLM rejects a request whose `model` does not match what it serves.
+      ASKAI_MODEL_BASE_URL: http://vllm:8000/v1
+      ASKAI_MODEL_NAME: qwen72b
+
+      # The embedding runtime. Dimensions has no default anywhere, on purpose: it is
+      # half the index identity and is written into every generation file.
+      ASKAI_EMBEDDING_BASE_URL: http://tei:80/v1
+      ASKAI_EMBEDDING_MODEL: BAAI/bge-m3
+      ASKAI_EMBEDDING_DIMENSIONS: "1024"
+      # TEI caps a client batch at 32. Other runtimes allow more; this is the strict one.
+      ASKAI_EMBEDDING_MAX_BATCH: "32"
+    networks:
+      - runtimes
+
+  # The embedding service. Runs on CPU deliberately: vLLM holds ~130 GB of the H200 and
+  # only ~13 GB is free, while 22 cores are idle. The workload is 1,101 short surfaces
+  # per index build and one question per request.
+  tei:
+    image: ghcr.io/huggingface/text-embeddings-inference:cpu-latest
+    restart: unless-stopped
+    command: ["--model-id", "BAAI/bge-m3"]
+    ports:
+      - "17800:80"
+    volumes:
+      - tei-weights:/data
+    networks:
+      - runtimes
+
+volumes:
+  askai-databases:
+  tei-weights:
+
+networks:
+  runtimes:
+    # vLLM is already running and is not managed by this file. Point this at its network
+    # so `vllm` resolves; `docker network ls` and the inspect command above will name it.
+    external: true
+    name: ${RUNTIME_NETWORK:-bridge}

@@ -1,0 +1,21 @@
+# The engine is developed on Windows and runs on Linux. Without this, files land in the
+# image with CRLF line endings: Python tolerates that, a container entrypoint does not —
+# `#!/bin/sh\r` fails with "no such file or directory", which names neither the file nor
+# the cause.
+#
+# Everything text is normalised to LF in the repository and checked out as LF.
+* text=auto eol=lf
+
+# Binary, and must not be touched.
+*.xlsx binary
+*.png  binary
+*.jpg  binary
+*.pdf  binary
+*.onnx binary
+
+# The lockfile is a pin. Keep it byte-identical across platforms.
+uv.lock text eol=lf
+
+# Linguist and diff hints: generated or data, not authored source.
+data/**      linguist-generated=true
+uv.lock      linguist-generated=true

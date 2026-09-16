@@ -1,0 +1,33 @@
+# The build context is source plus the lockfile. Everything else is either rebuilt in the
+# image, mounted at run time, or has no business in a runtime artifact.
+
+.git
+.github
+.venv
+**/__pycache__
+**/*.py[cod]
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.import_linter_cache
+
+# The published export is MOUNTED, never baked. FR-108 requires republished content to
+# reach readers with no code change and no deployment; an export inside the image makes a
+# data refresh into an image rebuild.
+data
+
+# Tests, the corpus and the labelled set are gates, not runtime. They run in CI and on a
+# developer machine, against the same source this image installs.
+tests
+corpus
+labelled
+scripts
+
+# Planning and process.
+docs
+sessions
+_bmad
+_bmad-output
+.claude
+*.md
+!README.md
