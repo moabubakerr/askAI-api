@@ -213,14 +213,14 @@ messages:
   # arriving without its count leaves a reader unable to tell a complete small group from
   # a truncated large one, and the published groups range from 1 indicator to 23.
 
-  group.holds:
+  sentence.group_holds:
     one: "{group} holds {counted}."
     other: "{group} holds {counted}."
 
   group.members: "{group}: {names}"
   group.list_separator: ", "
 
-  group.entry:
+  sentence.group_entry:
     one: "{name} ({counted})"
     other: "{name} ({counted})"
 
@@ -237,11 +237,11 @@ messages:
   group.ambiguous: "\"{name}\" could mean {readings}. Which did you mean?"
   group.reading_separator: ", or "
 
-  group.reading_classification:
+  sentence.group_reading_classification:
     one: "the category {name}, with {counted}"
     other: "the category {name}, with {counted}"
 
-  group.reading_entity:
+  sentence.group_reading_entity:
     one: "the group {name} inside {classification}, with {counted}"
     other: "the group {name} inside {classification}, with {counted}"
 
@@ -290,23 +290,23 @@ messages:
   # a written list of features: a list drifts from the truth the moment an indicator is
   # added, and it drifts silently.
 
-  capability.holds:
+  sentence.capability_holds:
     one: "I answer from {counted} in the published catalogue."
     other: "I answer from {counted} in the published catalogue."
 
-  capability.with_data:
+  sentence.capability_with_data:
     one: "{counted} carries published figures, so I can give values, series and change for it."
     other: "{counted} carry published figures, so I can give values, series and change for them."
 
-  capability.categories:
+  sentence.capability_categories:
     one: "The catalogue is divided into {counted}."
     other: "The catalogue is divided into {counted}."
 
-  capability.groups:
+  sentence.capability_groups:
     one: "Those hold {counted} you can ask about by name."
     other: "Those hold {counted} you can ask about by name."
 
-  capability.countries:
+  sentence.capability_countries:
     one: "{counted} carries figures for more than one country, so comparison reaches that far."
     other: "{counted} carry figures for more than one country, so comparison reaches that far."
 

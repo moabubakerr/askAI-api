@@ -1,0 +1,84 @@
+# How a question about a group of the catalogue is answered.
+#
+# The published catalogue divides all 189 indicators into 7 classifications and 22
+# entities, and every indicator carries exactly one of each. Which of the two levels a
+# reader meant, how big the answer they are about to get is, and what a category answer
+# looks like are all reader-affecting decisions -- so they are here rather than in
+# `assemble/meta/`, and a reviewer changes an answer's shape by editing this file.
+#
+# Status is `proposed` on every rule below. These were written with Epic 5 and nobody has
+# yet agreed them; `agreed` would be this file asserting an agreement that was never
+# given, which is exactly what FR-72a exists to prevent.
+area: GROUP
+about: >-
+  Answering a question about a group of the published catalogue: which level a name
+  binds to, how a category is summarised, and what the answer states about its own size.
+
+rules:
+  - id: R-GROUP-CONTAINER-ANSWERED-AT-CLASSIFICATION
+    statement: >-
+      A classification divided into exactly one entity whose name mirrors the
+      classification's own is answered at classification level. The entity adds no
+      information a reader could act on, and naming both levels would present one group
+      twice under two names. This is a real one-to-one, never a missing entity, so the
+      answer states a group rather than stating that grouping is unavailable.
+    status: proposed
+    kind: table
+    sources:
+      - "_bmad-output/planning-artifacts/epics.md Story 5.1"
+      - "data/cms/P01_Published_Indicators, measured 2026-09-16"
+    values:
+      container_classifications: ["DiversificationTargets", "NationalIndicators"]
+    note: >-
+      Measured, not chosen: `DiversificationTargets` holds 12 indicators under the single
+      entity `Economic Diversification Targets`, and `NationalIndicators` holds 8 under
+      `National Economic Indicators`. Every other classification divides into two or more.
+      A refresh that splits one of these into real entities is a one-line edit here, and
+      the answer changes without a deployment.
+
+  - id: R-GROUP-CATEGORY-ANSWERED-BY-ITS-GROUPS
+    statement: >-
+      A question naming a classification is answered with the groups inside it and their
+      counts, not with the names of every indicator it holds. `Sectors` holds 105
+      indicators across 8 entities, and 105 names is not an answer a reader can scan; the
+      level above the list is what the question was asking for.
+    status: proposed
+    kind: switch
+    sources:
+      - "docs/RULES.md R-165"
+      - "_bmad-output/planning-artifacts/epics.md Story 5.2"
+    values:
+      summarise_category_by_its_groups: true
+    note: >-
+      The catalogue's R-165. Turning this off returns the full membership of a
+      classification, which is defensible for the smallest of them and unreadable for
+      `Sectors`; it is a switch rather than a size threshold because a threshold would
+      make the answer's *shape* depend on a number nobody would remember was there.
+
+  - id: R-GROUP-SIZE-IS-STATED
+    statement: >-
+      Every group answer states the group's size, so the reader can see the scope of what
+      they were given. The published entities range from 1 indicator to 23, so a list
+      arriving without its count leaves a reader unable to tell a complete small group
+      from a truncated large one.
+    status: proposed
+    kind: switch
+    sources:
+      - "_bmad-output/planning-artifacts/epics.md Story 5.2"
+      - "docs/PRD.md FR-30"
+    values:
+      state_group_size: true
+
+  - id: R-GROUP-AMBIGUOUS-NAME-IS-CLARIFIED
+    statement: >-
+      A name that is published at both levels of the group layer is clarified by naming
+      both readings with their sizes; it is never resolved by preferring a level. The two
+      readings differ by as much as 98 indicators, so a preference would be wrong silently
+      and at scale, which is the defect FR-2 and AD-25 both exist to stop.
+    status: proposed
+    kind: switch
+    sources:
+      - "docs/PRD.md FR-2, FR-30"
+      - "docs/ARCHITECTURE-SPINE.md AD-25"
+    values:
+      clarify_rather_than_prefer_a_level: true

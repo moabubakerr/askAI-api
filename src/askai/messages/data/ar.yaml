@@ -260,7 +260,7 @@ messages:
 
   # ------------------------------------------------------------------- group answers
 
-  group.holds:
+  sentence.group_holds:
     zero: "لا تضم {group} أي مؤشر."
     one: "تضم {group} {counted}."
     two: "تضم {group} {counted}."
@@ -271,7 +271,7 @@ messages:
   group.members: "{group}: {names}"
   group.list_separator: "، "
 
-  group.entry:
+  sentence.group_entry:
     zero: "{name} ({counted})"
     one: "{name} ({counted})"
     two: "{name} ({counted})"
@@ -287,7 +287,7 @@ messages:
   group.ambiguous: "قد يعني «{name}» {readings}. أيهما تقصد؟"
   group.reading_separator: "، أو "
 
-  group.reading_classification:
+  sentence.group_reading_classification:
     zero: "الفئة {name}، وتضم {counted}"
     one: "الفئة {name}، وتضم {counted}"
     two: "الفئة {name}، وتضم {counted}"
@@ -295,7 +295,7 @@ messages:
     many: "الفئة {name}، وتضم {counted}"
     other: "الفئة {name}، وتضم {counted}"
 
-  group.reading_entity:
+  sentence.group_reading_entity:
     zero: "المجموعة {name} ضمن {classification}، وتضم {counted}"
     one: "المجموعة {name} ضمن {classification}، وتضم {counted}"
     two: "المجموعة {name} ضمن {classification}، وتضم {counted}"
@@ -333,7 +333,7 @@ messages:
 
   # ---------------------------------------------------- what the engine can do (FR-32)
 
-  capability.holds:
+  sentence.capability_holds:
     zero: "لا أجد أي مؤشر في الدليل المنشور."
     one: "أجيب اعتمادًا على {counted} في الدليل المنشور."
     two: "أجيب اعتمادًا على {counted} في الدليل المنشور."
@@ -341,7 +341,7 @@ messages:
     many: "أجيب اعتمادًا على {counted} في الدليل المنشور."
     other: "أجيب اعتمادًا على {counted} في الدليل المنشور."
 
-  capability.with_data:
+  sentence.capability_with_data:
     zero: "لا يحمل أي مؤشر أرقامًا منشورة."
     one: "يحمل {counted} أرقامًا منشورة، فأستطيع تقديم القيم والسلاسل والتغير لها."
     two: "يحمل {counted} أرقامًا منشورة، فأستطيع تقديم القيم والسلاسل والتغير لها."
@@ -349,7 +349,7 @@ messages:
     many: "يحمل {counted} أرقامًا منشورة، فأستطيع تقديم القيم والسلاسل والتغير لها."
     other: "يحمل {counted} أرقامًا منشورة، فأستطيع تقديم القيم والسلاسل والتغير لها."
 
-  capability.categories:
+  sentence.capability_categories:
     zero: "لا ينقسم الدليل إلى أي فئة."
     one: "ينقسم الدليل إلى {counted}."
     two: "ينقسم الدليل إلى {counted}."
@@ -357,7 +357,7 @@ messages:
     many: "ينقسم الدليل إلى {counted}."
     other: "ينقسم الدليل إلى {counted}."
 
-  capability.groups:
+  sentence.capability_groups:
     zero: "ولا تضم هذه الفئات أي مجموعة."
     one: "وتضم هذه الفئات {counted} يمكنك السؤال عنها بالاسم."
     two: "وتضم هذه الفئات {counted} يمكنك السؤال عنهما بالاسم."
@@ -365,7 +365,7 @@ messages:
     many: "وتضم هذه الفئات {counted} يمكنك السؤال عنها بالاسم."
     other: "وتضم هذه الفئات {counted} يمكنك السؤال عنها بالاسم."
 
-  capability.countries:
+  sentence.capability_countries:
     zero: "لا توجد سلسلة تحمل أرقامًا لأكثر من دولة."
     one: "تحمل {counted} أرقامًا لأكثر من دولة، وإلى هذا الحد تصل المقارنة."
     two: "تحمل {counted} أرقامًا لأكثر من دولة، وإلى هذا الحد تصل المقارنة."

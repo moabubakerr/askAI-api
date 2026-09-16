@@ -140,3 +140,195 @@
     Epic 5 / Story 5.9 — name the residual honestly. This is the one refusal in the corpus
     that exists because a vocabulary was published without any data behind it, the same shape
     as P10 and P11 being empty files. Measured on 2026-09-15 against P01 and P13.
+
+# ---------------------------------------------------------------------------------------
+# Added with the Epic 5 build, 2026-09-16. Everything below was measured against `data/`
+# on that date and asserted in `tests/test_meta.py` against the real ingest, not a fixture.
+#
+# Two entries (e5-015, e5-017) are for stories blocked on a read-model table that does not
+# exist; each says so in its `why`. They are written now on purpose: they are the
+# acceptance criteria their stories state, and an entry written after the table would be
+# written to match whatever was built.
+
+- id: e5-010
+  spec_version: 1
+  question:
+    en: What indicators are in Sectors?
+    ar: ما هي المؤشرات ضمن القطاعات؟
+  today: 2026-09-16
+  operation: list
+  measure: null
+  why: >-
+    Epic 5 / Story 5.2 and the catalogue's R-165. `Sectors` is the *classification*: 105
+    indicators across 8 entities — Transportation and Storage (23), Agriculture, Livestock
+    and Fisheries (16), Financial and Insurance Activities (15), Health and Social Services
+    (15), Education Sector (13), Manufacturing (9), Tourism (7), Information and
+    Communication Technology (7). The answer is the 8 groups with their counts, not 105
+    names nobody can scan. An implementation returning the membership passes the count
+    assertion and fails this one, which is the point of the entry.
+
+- id: e5-011
+  spec_version: 1
+  question:
+    en: How many indicators are in transportation?
+    ar: كم عدد المؤشرات في النقل؟
+  today: 2026-09-16
+  operation: count
+  measure: null
+  expected: clarification
+  why: >-
+    Epic 5 / Story 5.2, FR-2 and AD-25. Where one word reads at both levels of the group
+    layer the engine names both readings with their sizes and picks neither. The sizes are
+    what makes the clarification useful rather than pedantic: the two readings of a sector
+    name differ by up to 98 indicators, and a reader shown "105 or 23?" can answer
+    instantly. Recorded as a clarification, not a refusal — the data can answer, the
+    question has not yet said which question it is.
+
+- id: e5-012
+  spec_version: 1
+  question:
+    en: What periods are available for inflation?
+    ar: ما هي الفترات المتاحة لمعدل التضخم؟
+  today: 2026-09-16
+  operation: list
+  measure: null
+  why: >-
+    Epic 5 / Story 5.3 and FR-4. 90 of the 289 published details publish at more than one
+    grain, and the answer states each grain's span separately. A merged calendar is true of
+    neither: a detail publishing monthly recently and yearly historically would be reported
+    as one continuous span, and a reader asking for a month inside the yearly stretch gets
+    nothing after being told the data was there.
+
+- id: e5-013
+  spec_version: 1
+  question:
+    en: What periods are available for a detail that publishes no data?
+    ar: ما هي الفترات المتاحة لسلسلة لا تنشر أي بيانات؟
+  today: 2026-09-16
+  operation: list
+  measure: null
+  why: >-
+    Epic 5 / Story 5.3. 28 of the 289 published details carry no data points at all. The
+    answer states that the detail is published and carries no data — a distinct statement
+    from "no such detail", which is what the reader would otherwise be told. The two reach
+    a reader as different sentences and are different element classes (`absent` against a
+    refusal), so an implementation collapsing them fails this entry rather than passing it
+    with a plausible message.
+
+- id: e5-014
+  spec_version: 1
+  question:
+    en: What does sector contribution to GDP mean?
+    ar: ماذا تعني مساهمة القطاع في الناتج المحلي الإجمالي؟
+  today: 2026-09-16
+  operation: definition
+  measure: null
+  expected: answer
+  why: >-
+    An **answer**, not a refusal: the engine answers with an element of class `absent`
+    carrying the statement that no definition is published, which is content rather than a
+    missing element. A refusal would say the published data cannot answer the question, and
+    it can — it answers that nothing is published.
+    Epic 5 / Story 5.7 — the `-` case the story requires an entry for. 88 of 289 published
+    details carry `-` as their English definition and 89 carry it in Arabic, against 143
+    distinct English definitions in all. The answer states that no definition is published;
+    it does not render the hyphen, and it does not substitute the other language's text.
+    Note where this is actually enforced today: FR-64's ingest normalisation already drops
+    a `-` before it reaches the read model, and `R-META-PLACEHOLDER-IS-NOT-A-DEFINITION` is
+    the second line for a spelling the ingest does not recognise.
+
+- id: e5-015
+  spec_version: 1
+  question:
+    en: What is real GDP made up of?
+    ar: مم يتكون الناتج المحلي الإجمالي الحقيقي؟
+  today: 2026-09-16
+  operation: list
+  measure: null
+  why: >-
+    **Blocked.** The read model has no sub-indicator membership table: `P07a` carries 113
+    memberships over 110 distinct details for 24 indicators, and the ingest of Story 1.8
+    materialises none of them. Story 5.8 cannot be built until a table exists, which is a
+    schema change with an owner. The entry is written now because it is the story's own
+    acceptance criterion, and an entry written after the table would be written to match
+    whatever was built.
+    Epic 5 / Story 5.8, and the entry the story asks for by name: one that **would pass
+    under a sibling implementation and fail under the correct one**. Components come from
+    the declared sub-indicator membership at the detail level. Two indicators sharing a
+    group are siblings and are never parts of each other, so an implementation that
+    answered from the group layer would return this indicator's group-mates and satisfy
+    every count in the answer while being wrong about what the words mean. Membership is
+    many-to-many — 3 details belong to more than one chart — so it is its own entity and
+    never a field on a detail.
+
+- id: e5-016
+  spec_version: 1
+  question:
+    en: What share of the total does each component account for?
+    ar: ما نسبة كل مكون من الإجمالي؟
+  today: 2026-09-16
+  operation: list
+  measure: actual
+  why: >-
+    Epic 5 / Story 5.9, and the accounting contract the story requires an entry for: the
+    stated total, the stated parts and the stated residual are mutually consistent and
+    individually sourced. The residual is classed `derived` with its inputs named, it is
+    not called "other" unless a published component is named that way, and the published
+    parts are never adjusted to make them sum. Where the parts exceed the total there is no
+    remainder to name and the inconsistency is reported instead. The arithmetic is built
+    and tested; its input is blocked with e5-015.
+
+- id: e5-017
+  spec_version: 1
+  question:
+    en: Can you chart inflation over the last five years?
+    ar: هل يمكنك رسم معدل التضخم خلال السنوات الخمس الماضية؟
+  today: 2026-09-16
+  operation: series
+  measure: actual
+  why: >-
+    **Blocked on its input.** The read model has no chart table: `INDICATOR ||--||
+    CHART_CONFIG` is one per indicator, 189/189, published in `P07` with the alternate
+    views split into `P07b`, and the ingest materialises neither. Until it does, every
+    answer's `chartable` block states unavailable — which is the correct answer for an
+    engine holding no configuration, and is what `chartable_for(rule_set, None, ...)`
+    returns today.
+    Epic 5 / Story 5.10 and recorded failure F-035. The block states availability, the
+    default view and the named alternate views, all read from the published configuration.
+    The direction of the check is the whole point: the client renders what it is offered,
+    so the engine offers only what the configuration declares — never a view it could
+    compute but the configuration does not name.
+
+- id: e5-018
+  spec_version: 1
+  question:
+    en: What are the national indicators?
+    ar: ما هي المؤشرات الوطنية؟
+  today: 2026-09-16
+  operation: list
+  measure: null
+  why: >-
+    Epic 5 / Story 5.1, the degenerate container case. `NationalIndicators` holds 8
+    indicators under the single entity `National Economic Indicators`, and
+    `DiversificationTargets` holds 12 under `Economic Diversification Targets`. Each is a
+    real 1:1 and not an absent entity, so the answer is given at classification level and
+    says why — naming both levels would show one group twice under two names. Both are
+    listed in `R-GROUP-CONTAINER-ANSWERED-AT-CLASSIFICATION`, so an export that splits
+    either into real entities is a one-line data edit rather than a code change.
+
+- id: e5-019
+  spec_version: 1
+  question:
+    en: Which entities publish indicators?
+    ar: ما هي الجهات التي تنشر مؤشرات؟
+  today: 2026-09-16
+  operation: count
+  measure: null
+  why: >-
+    Epic 5 / Story 5.1, and the entry that records a correction. The story says "7
+    classifications and 20 entities"; the export has **22**, and so does the ingest report
+    AGENTS.md already carries from Story 1.8. Eight under Sectors, four each under
+    SpecialEntities and Enablers, two each under Drivers and SpecialProjects, one each
+    under the two container classifications. Asserting the story's 20 would have made the
+    ingest's own measured figure a test failure, so the data wins and this entry is where
+    the disagreement is written down.

@@ -1,0 +1,116 @@
+# Definitions, capability and components -- the three metadata answers and their limits.
+#
+# Each of these is a place where the published data says less than it appears to, and the
+# rule is what stops the engine filling the gap:
+#
+#  * 88 of the 289 published details carry `-` as their English definition and 89 carry it
+#    in Arabic. Rendering `-` as a definition would be the engine presenting a placeholder
+#    as published content.
+#  * the capability answer is counted from the read model rather than written down, so it
+#    cannot claim reach the data does not have -- including the reach it *would* claim by
+#    naming a filter that filters nothing.
+#  * a set of shares that does not sum to its whole has a remainder, and the remainder is
+#    named rather than absorbed.
+area: META
+about: >-
+  The three catalogue-metadata answers and the honesty constraints on each: published
+  definitions, the grounded capability answer, and the residual of a set of shares.
+
+rules:
+  - id: R-META-PLACEHOLDER-IS-NOT-A-DEFINITION
+    statement: >-
+      A published definition whose whole content is one of the placeholder spellings below
+      is treated as no definition published. The engine states that none is published; it
+      does not render the placeholder, and it does not substitute the other language's
+      definition or generate one.
+    status: proposed
+    kind: table
+    sources:
+      - "docs/PRD.md FR-33, FR-60, FR-64"
+      - "data/cms/P02_Published_IndicatorDetails, measured 2026-09-16"
+    values:
+      placeholder_spellings: ["-", "--", "---", "n/a", "na", "tbd", "none", "null"]
+    note: >-
+      Measured 2026-09-16: 88 English and 89 Arabic definitions are literally `-`, against
+      143 distinct English definitions in all. Comparison is made under the engine's single
+      text fold, so a placeholder with surrounding whitespace or a different dash is the
+      same placeholder. The list is data because the next export will spell one a new way.
+
+  - id: R-META-CAPABILITY-IS-COUNTED-NOT-DECLARED
+    statement: >-
+      The answer to "what can you do" is computed from the loaded read model's own counts
+      at the moment it is asked. The engine holds no written list of its capabilities,
+      because a written list drifts from the truth the moment an indicator is added or a
+      refresh removes one, and it drifts silently.
+    status: proposed
+    kind: switch
+    sources:
+      - "docs/PRD.md FR-32, FR-77"
+      - "_bmad-output/planning-artifacts/epics.md Story 5.6 (F-007)"
+    values:
+      count_the_read_model: true
+
+  - id: R-META-CAPABILITY-STATES-WHAT-IS-NOT-HELD
+    statement: >-
+      The capability answer names what the loaded data cannot support as well as what it
+      can. An answer listing only strengths reads as a complete account of the engine's
+      reach, and a reader who then asks for the missing thing has been misled by an answer
+      that was true in every clause.
+    status: proposed
+    kind: switch
+    sources:
+      - "docs/PRD.md FR-32"
+      - "docs/ARCHITECTURE-SPINE.md AD-15"
+    values:
+      state_the_gaps: true
+    note: >-
+      Two gaps are structural today and both are recorded in AGENTS.md: the read model has
+      no table for analyst prose (ingest counts 1,031 analyses and stores none, so Epic 6
+      cannot start) and none for articles. Neither is counted and neither is claimed.
+
+  - id: R-META-CONFIDENTIAL-FILTER-IS-NOT-CLAIMED
+    statement: >-
+      The capability answer does not claim to be withholding confidential indicators. The
+      priority-type vocabulary defines `Confidential` and no published indicator carries
+      it, so claiming the filter would describe an exclusion that never happens and imply
+      a body of withheld data that does not exist.
+    status: proposed
+    kind: switch
+    sources:
+      - "docs/PRD.md FR-50"
+      - "data/cms/P13_Ref_IndicatorPriorityTypes and P01, measured 2026-09-16"
+    values:
+      claim_a_confidential_filter: false
+    note: >-
+      Measured 2026-09-16 over the 189 published indicators: 105 `Priority`, 84 with no
+      priority type at all, 0 `Confidential`. The read model's CHECK constraint still
+      refuses a confidential row, and that stays -- this rule is about what the answer
+      says, not about what the store accepts.
+
+  - id: R-META-RESIDUAL-IS-NAMED-NOT-ABSORBED
+    statement: >-
+      When published components are shares and do not sum to their whole, the unaccounted
+      remainder is stated as its own part. It is never dropped, and the published parts are
+      never adjusted to make them sum. A set of parts silently reconciled to its total is
+      indistinguishable from a complete one, which is the whole of the accounting defect.
+    status: proposed
+    kind: switch
+    sources:
+      - "docs/PRD.md FR-37c, FR-45"
+      - "_bmad-output/planning-artifacts/epics.md Story 5.9"
+    values:
+      state_the_remainder: true
+
+  - id: R-META-RESIDUAL-IS-NOT-CALLED-OTHER
+    statement: >-
+      The remainder is called "other" only when the published data names a component that
+      way. Otherwise it is named for what it is -- the part of the whole the published
+      components do not account for -- because "other" asserts that the remainder is a
+      residual category of the same kind as the parts, which nothing published says.
+    status: proposed
+    kind: switch
+    sources:
+      - "docs/PRD.md FR-37c"
+      - "_bmad-output/planning-artifacts/epics.md Story 5.9"
+    values:
+      name_the_remainder_other: false

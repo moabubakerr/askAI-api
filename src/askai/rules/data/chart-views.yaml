@@ -1,0 +1,63 @@
+# Whether an answer can be charted, and under which views.
+#
+# AD-11, quoted by Story 5.10: "when chart behaviour needs tuning, the configuration
+# mapping lives in `rules/`, not in composer code." So the composer holds no view name and
+# no chart type; it reads the published chart configuration and checks it against this
+# file.
+#
+# The one thing this file cannot do is *add* a view. Every clause below narrows what the
+# published configuration already declares -- recorded failure F-035 was a client offered a
+# view the configuration did not support, and a rule file that could widen the set would be
+# the same defect with a reviewer's signature on it.
+area: CHART
+about: >-
+  Reading the published chart configuration into the answer's `chartable` block: which
+  view codes a client may be offered, and when no chart is offered at all.
+
+rules:
+  - id: R-CHART-VIEWS-COME-FROM-THE-PUBLISHED-CONFIGURATION
+    statement: >-
+      The views an answer offers are the ones the published chart configuration declares
+      for that indicator, and no others. A view the configuration does not name is not
+      offered even when the engine could compute it, because the client will render it and
+      the published configuration is the statement of what may be rendered.
+    status: proposed
+    kind: switch
+    sources:
+      - "docs/PRD.md FR-37d"
+      - "_bmad-output/planning-artifacts/epics.md Story 5.10 (F-035)"
+    values:
+      offer_only_declared_views: true
+
+  - id: R-CHART-KNOWN-VIEW-CODES
+    statement: >-
+      The published alternate-view codes this build knows how to name. A configuration
+      declaring a code that is not here is reported as an unknown view and is not offered:
+      an unrecognised code passed through to a client is a view nobody has checked the
+      engine can actually produce a series for.
+    status: proposed
+    kind: table
+    sources:
+      - "data/cms/P15_Ref_AlternateViews, measured 2026-09-16"
+      - "data/cms/P07b_Published_Charts_AlternateViews_Split, measured 2026-09-16"
+    values:
+      view_codes: ["mom", "mompp", "yoy", "yoypp", "qoq", "qoqpp"]
+    note: >-
+      These are the published change bases, which is why the list looks like the change
+      columns on a datapoint row: a chart's alternate view is the same movement the row
+      publishes, drawn. It is a table rather than a derivation from the datapoint columns
+      because the two are published independently and are allowed to differ.
+
+  - id: R-CHART-A-SINGLE-FIGURE-IS-NOT-A-CHART
+    statement: >-
+      An answer carrying one figure is not chartable, whatever the indicator's published
+      chart configuration declares. The configuration describes how the indicator's series
+      is drawn; a single value has no series, and offering a chart for one produces an
+      empty canvas the client has already committed to showing.
+    status: proposed
+    kind: switch
+    sources:
+      - "docs/PRD.md FR-37d"
+      - "_bmad-output/planning-artifacts/epics.md Story 5.10"
+    values:
+      chart_a_single_figure: false

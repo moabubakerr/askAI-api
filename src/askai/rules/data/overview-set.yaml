@@ -1,0 +1,85 @@
+# The executive overview -- which indicators it covers, and at which periods.
+#
+# FR-31 and AD-11 together: the set is read from the published catalogue, never chosen by
+# the engine and never hardcoded, and it is reviewable and changeable by the people who
+# own the data. That is what makes the answer defensible when a Council member asks why
+# these eight and not eight others.
+#
+# What lives here is therefore *which published classification carries the set*, not the
+# set. Editing `classification` below points the overview at a different reviewed group;
+# it cannot be edited to list eight indicators of someone's choosing, because there is no
+# clause that takes indicator names.
+area: OVERVIEW
+about: >-
+  The broad "what is the latest" answer: which published classification carries the
+  curated set, that each member is shown at its own latest period, and how many are
+  fetched at once.
+
+rules:
+  - id: R-OVERVIEW-SET-IS-A-PUBLISHED-CLASSIFICATION
+    statement: >-
+      The executive overview covers the members of one published classification, named
+      here. The engine never selects the set and never holds a list of indicator names;
+      a change to what the overview covers is a change the data's owners make in the
+      catalogue, and this clause only says which of their groups to read.
+    status: proposed
+    kind: constant
+    sources:
+      - "docs/PRD.md FR-31, FR-31a"
+      - "docs/ARCHITECTURE-SPINE.md AD-11"
+      - "docs/RULES.md R-164"
+    values:
+      classification: "NationalIndicators"
+    note: >-
+      Measured 2026-09-16: `NationalIndicators` holds exactly 8 published indicators --
+      FDI Stock, Real GDP, Total Exports, Gross National Income, Inflation, Government
+      Revenues, Trade Balance and Public Debt as a Percentage of GDP. The count is not
+      written here on purpose. An expected size in this file would be a second statement
+      of the catalogue's membership, free to disagree with it after the next refresh.
+
+  - id: R-OVERVIEW-EACH-MEMBER-AT-ITS-OWN-LATEST
+    statement: >-
+      Every member of the overview is shown at its own latest published period, with that
+      period stated beside its name, and no common period is forced across the set. One
+      member's period is never presented as covering the others.
+    status: proposed
+    kind: switch
+    sources:
+      - "docs/PRD.md FR-24, FR-31a"
+      - "docs/RULES.md R-171"
+    values:
+      force_a_common_period: false
+    note: >-
+      Measured: Gross National Income stops at 2023 while Government Revenues reaches
+      2026-Q1. Forcing one period would either drop members or misdate them, and a
+      briefing that silently misdates a figure is worse than one that gives fewer. R-171
+      is the other half -- a name and its period are written together, never as two lists
+      a reader has to pair positionally.
+
+  - id: R-OVERVIEW-FAN-OUT-BOUND
+    statement: >-
+      The overview's per-member fetches run concurrently within this bound, so the answer
+      costs roughly the slowest fetch rather than the sum of them. The bound is stated
+      rather than unlimited: an unbounded fan-out over a growing classification is a
+      load characteristic nobody declared.
+    status: proposed
+    kind: constant
+    sources:
+      - "docs/PRD.md NFR-2"
+      - "_bmad-output/planning-artifacts/epics.md Story 5.5"
+    values:
+      max_concurrent_fetches: 8
+
+  - id: R-OVERVIEW-IS-A-SHORT-READ
+    statement: >-
+      The overview is a briefing and not an inventory: one figure per member, its period,
+      and nothing else. Recorded failure F-021 was a technically correct answer a tester
+      rejected with "I did not ask for all of this", so length is a correctness property
+      of this answer rather than a presentation preference.
+    status: proposed
+    kind: switch
+    sources:
+      - "docs/PRD.md FR-107"
+      - "_bmad-output/planning-artifacts/epics.md Story 5.5 (F-021)"
+    values:
+      one_figure_per_member: true
