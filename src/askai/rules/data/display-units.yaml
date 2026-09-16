@@ -25,8 +25,12 @@ rules:
       - "finding 106, read at main.py:2878"
     catalogue: ["R-173"]
     values:
-      rank_units: ["Rank"]
+      rank_units: ["Rank", "الترتيب"]
     note: >-
-      One spelling today, because one is what the published catalogue carries. It is a
-      table rather than a constant so a second spelling arriving in the export is a data
-      edit a reviewer makes, not a deploy.
+      Two spellings, because a unit is published in both languages and the formatter is
+      handed whichever one matches the reader: `adapters/readmodel/catalogue.py` sets
+      `unit` from `unit_en` or `unit_ar` by language, so a list carrying only the English
+      form recognises a rank for an English reader and not for an Arabic one. The export
+      maps `Rank` to `الترتيب` on all 10 rank details and on nothing else, so the pair is
+      unambiguous. It is a table rather than a constant so a further spelling arriving in
+      the export is a data edit a reviewer makes, not a deploy.

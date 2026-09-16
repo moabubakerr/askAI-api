@@ -198,10 +198,14 @@ rules:
         - quarterly
         - per quarter
         - ربعي
+        - ربعيا
         - ربع سنوي
+        - ربع سنويا
         - الربعي
         - وربعي
+        - وربعيا
         - وربع سنوي
+        - وربع سنويا
       yearly_words:
         - yearly
         - annual

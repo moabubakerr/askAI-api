@@ -57,4 +57,11 @@ rules:
       - "finding 60"
     catalogue: ["R-101"]
     values:
-      silent_units: ["NA"]
+      silent_units: ["NA", "غير متاح"]
+    note: >-
+      Both published spellings, because a unit is published in both languages and the
+      formatter matches on whichever one the reader's language selected
+      (`adapters/readmodel/catalogue.py` sets `unit` from `unit_en` or `unit_ar`). With
+      the English form alone the placeholder is silent for an English reader and is shown
+      to an Arabic one as though it were the unit -- a figure labelled "not available".
+      The export maps `NA` to `غير متاح` on all 54 such details and on nothing else.

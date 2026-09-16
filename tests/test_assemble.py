@@ -212,7 +212,16 @@ def test_the_formatter_holds_no_constant_of_its_own() -> None:
     """
     rule_set = rules()
     assert rule_set.value("R-DISPLAY-RANK-IS-AN-INTEGER-ORDINAL", "decimals") == 0
-    assert rule_set.value("R-DISPLAY-RANK-UNIT-SPELLINGS", "rank_units") == ("Rank",)
+    # Membership, not the exact tuple. The clause is a *table* of published spellings --
+    # its own note says a further spelling arriving in the export is a data edit rather
+    # than a deploy -- so pinning the whole tuple made the table unextendable and, until
+    # 2026-09-16, pinned it to the English half of a bilingual catalogue: `rank_units`
+    # carried only "Rank" while `catalogue.py` hands the formatter `unit_ar` for an
+    # Arabic reader, so no rank was recognised as one in Arabic. What this test is for is
+    # that the formatter's numbers are reachable by rule id and clause name; which
+    # spellings the table holds is the data's business.
+    spellings = rule_set.value("R-DISPLAY-RANK-UNIT-SPELLINGS", "rank_units")
+    assert isinstance(spellings, tuple) and "Rank" in spellings
     assert isinstance(
         rule_set.value("R-DISPLAY-DECIMALS-FROM-PUBLISHED-FORMAT", "fallback_decimals"), int
     )
