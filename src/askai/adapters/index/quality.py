@@ -42,6 +42,7 @@ from askai.adapters.index.evaluation import (
     evaluate,
     percentile,
 )
+from askai.adapters.index.facts import detail_facts
 from askai.adapters.index.floors import CUT_RULE, FLOOR_RULE, derivation_criterion
 from askai.adapters.index.generation import load_generation
 from askai.adapters.index.labelled import LabelKind, LabelledSet, load_labelled_set
@@ -100,7 +101,15 @@ def report_for(
     so a failed run leaves the evidence behind rather than deleting it.
     """
     depth = candidate_limit() if limit is None else limit
-    path = build_generation(workspace, {Collection.NAMES: name_rows(export)}, source)
+    # The facts are built even though this harness measures *generation* alone: a
+    # generation without them is a different file shape, and measuring one shape while
+    # shipping another is how a harness stops describing the thing it is run against.
+    path = build_generation(
+        workspace,
+        {Collection.NAMES: name_rows(export)},
+        source,
+        facts=detail_facts(export),
+    )
     report = evaluate(NamesIndex(load_generation(path, source)), labelled, limit=depth)
     high_share, false_negative_budget, false_positive_budget = derivation_criterion()
     return Measured(

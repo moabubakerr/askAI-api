@@ -52,6 +52,15 @@ from askai.compile.lexicon import (
 )
 from askai.compile.periods import PeriodRefusal, grain_of, implied_grain, period_named
 from askai.compile.question import Question, Span
+from askai.compile.resolve import (
+    Disambiguation,
+    QuestionSignals,
+    Refusal,
+    Resolution,
+    Resolved,
+    resolve,
+    window_for,
+)
 from askai.domain.period import Grain
 from askai.domain.scope import CountryScope, DeclaredBenchmarks, Named
 from askai.domain.spec import (
@@ -67,6 +76,7 @@ from askai.domain.spec import (
     period_field,
 )
 from askai.ports.catalogue import CataloguePort
+from askai.ports.resolution import CandidatePort
 
 __all__ = ["CompileInput", "compile_question"]
 
@@ -146,13 +156,30 @@ def _inherited[T](earlier: CompiledQuestion | None, field: SpecField) -> _Resolv
 
 
 def _bind_detail(
-    question: Question, earlier: CompiledQuestion | None, catalogue: CataloguePort
+    question: Question,
+    earlier: CompiledQuestion | None,
+    catalogue: CataloguePort,
+    resolution: Resolution | None,
 ) -> tuple[_Resolved[str], Span | None]:
-    """The detail, by exact normalised-name lookup, and the span its name occupied.
+    """The detail, and the span its name occupied if the reader typed one.
 
-    Epic 1 resolution is this and nothing else. A name published by two details is
-    refused rather than chosen between -- choosing is what a similarity score does, and
-    AD-25 puts that behind structural discrimination in Epic 2.
+    Two rungs, in this order, and the order is the whole design.
+
+    **Exact normalised-name lookup first.** It is Epic 1's only rung and it stays first
+    because it is the cheapest and the most reliable: measured at 96% recall@1 over the
+    labelled set, against 21.4% for paraphrases through the index. A reader who typed a
+    published name has already told us which detail they mean, and running a similarity
+    search over that would be replacing certainty with a ranking.
+
+    **Then AD-25's ladder**, for the reader who paraphrased -- which, with 257 of 320
+    published names ambiguous, is most readers. It arrives here already resolved: the
+    caller ran it, because ``compile/`` may not reach an adapter and the port that
+    produces candidates is one. What reaches this function is a value.
+
+    A name published by two details still refuses rather than choosing, and that is
+    unchanged: an exactly typed ambiguous name is an ambiguity the reader created and the
+    engine cannot resolve for them. The difference is that the ladder's own disambiguation
+    now has somewhere to go instead of being flattened into the same refusal.
     """
     for span in question.spans():
         found = catalogue.details_named(span.text)
@@ -162,10 +189,50 @@ def _bind_detail(
             return _from_reader(Bound(found[0])), span
         return _not_bound(unbound(UnboundReason.DETAIL_NAME_IS_SHARED, ", ".join(found))), span
 
+    # The reader named no published detail exactly. AD-25's ladder is the next rung, and
+    # it is consulted before history: a follow-up that names a *new* subject is a new
+    # question about that subject, and inheriting the earlier detail would answer the
+    # previous question with this one's words.
+    if isinstance(resolution, Resolved):
+        return (
+            _Resolved(
+                state=Bound(resolution.detail_id),
+                precedence=Precedence.NAMED_IN_QUESTION,
+                # FR-14's axis: the reader's words chose it, but a semantic match is what
+                # read them. `SEMANTIC` has been in `BoundBy` since Epic 1 for this rung.
+                bound_by=BoundBy.SEMANTIC,
+            ),
+            None,
+        )
+
     carried: _Resolved[str] | None = _inherited(earlier, SpecField.DETAIL)
     if carried is not None:
         return carried, None
-    return _not_bound(unbound(UnboundReason.NO_DETAIL_NAMED, " ".join(question.words))), None
+    return _not_bound(_unresolved(question, resolution)), None
+
+
+def _unresolved(question: Question, resolution: Resolution | None) -> Unbound:
+    """Why no detail bound -- taken from the ladder when it ran, so the cause is specific.
+
+    *"Several indicators match and I cannot tell which you mean"* and *"I hold nothing
+    like that"* are different facts about the world and a reader acts on them differently
+    (AD-15). Flattening both into ``NO_DETAIL_NAMED`` is what this avoids; Story 2.7
+    phrases the six refusals from these causes and Story 2.11 puts the closed question.
+    """
+    match resolution:
+        case Disambiguation(candidates=candidates):
+            return unbound(
+                UnboundReason.SEVERAL_INDICATORS_MATCH,
+                ", ".join(offered.surface for offered in candidates),
+            )
+        case Refusal(cause=cause, vetoed_by=vetoed_by):
+            particulars = ", ".join(signal.value for signal in vetoed_by)
+            return unbound(
+                UnboundReason.NO_INDICATOR_RESOLVED,
+                f"{cause.value}{f'; ruled out by {particulars}' if particulars else ''}",
+            )
+        case _:
+            return unbound(UnboundReason.NO_DETAIL_NAMED, " ".join(question.words))
 
 
 # ------------------------------------------------------------------------------- period
@@ -323,16 +390,31 @@ def _bind_operation(earlier: CompiledQuestion | None) -> _Resolved[Operation]:
 # --------------------------------------------------------------------------- the binder
 
 
-def compile_question(request: CompileInput, catalogue: CataloguePort) -> CompiledQuestion:
+def compile_question(
+    request: CompileInput,
+    catalogue: CataloguePort,
+    candidates: CandidatePort | None = None,
+) -> CompiledQuestion:
     """Bind every field once, then freeze the spec. The only ``QuerySpec`` construction.
 
     History is compiled first, by this same function, so a follow-up inherits what the
     earlier turn actually bound rather than a second reading of the earlier words.
+
+    *candidates* of ``None`` compiles with exact normalised-name lookup alone -- Epic 1's
+    behaviour exactly, and the reason every existing caller and every corpus entry keeps
+    compiling to the spec it did. It is an argument rather than a field on ``CompileInput``
+    because it is a *port*, and the input is a value a test can write down.
+
+    The ladder runs **before** the binders, not inside one, because AD-25 stage 2 uses
+    signals the compiler has already extracted and the period binder is what extracts
+    them. That ordering is resolved below: the period is read first for its grain and
+    span, resolution consumes them, and the detail binds from the result.
     """
     earlier = _earlier_turn(request, catalogue)
     question = Question.parse(request.question)
 
-    detail, span = _bind_detail(question, earlier, catalogue)
+    resolution = _resolve(request, question, catalogue, candidates)
+    detail, span = _bind_detail(question, earlier, catalogue, resolution)
     detail_id = detail.state.value if isinstance(detail.state, Bound) else None
     period = _bind_period(question, earlier, catalogue, detail_id, request.today, excluding=span)
     scope = _bind_country_scope(question, earlier, catalogue)
@@ -356,6 +438,66 @@ def compile_question(request: CompileInput, catalogue: CataloguePort) -> Compile
             measure.binding(SpecField.MEASURE),
             operation.binding(SpecField.OPERATION),
         ),
+        resolution=resolution,
+    )
+
+
+def _resolve(
+    request: CompileInput,
+    question: Question,
+    catalogue: CataloguePort,
+    candidates: CandidatePort | None,
+) -> Resolution | None:
+    """Run AD-25's ladder, or ``None`` when no candidate port was supplied.
+
+    Skipped entirely when the reader typed a published name exactly: that rung has already
+    won, a search would not change the answer, and doing the work anyway would make every
+    exactly-named question pay for a stage it does not use.
+
+    The signals handed to stage 2 are read off the *same* ``Question`` the binders read,
+    through the same period parser, so stage 2 discriminates on what the period binder
+    will actually bind rather than on a second reading of the words.
+    """
+    if candidates is None:
+        return None
+    if any(catalogue.details_named(span.text) for span in question.spans()):
+        return None
+    return resolve(
+        request.question,
+        candidates,
+        _question_signals(question, request.today, catalogue),
+    )
+
+
+def _question_signals(
+    question: Question, today: date, catalogue: CataloguePort
+) -> QuestionSignals:
+    """What the other binders have already extracted, as stage 2 reads it.
+
+    Read through ``compile.periods`` and ``CataloguePort`` -- the same two things the
+    period and country binders use -- so this cannot become a second parser that disagrees
+    with the first about what the reader said (AD-25).
+    """
+    named = period_named(question, today, excluding=None)
+    if isinstance(named, PeriodRefusal):
+        # A period the reader spelled and the engine refused. The refusal is the period
+        # binder's to state; resolution proceeds with no period signal rather than
+        # inventing one, so the reader still learns *which indicator* they meant.
+        return QuestionSignals(countries=_named_countries(question, catalogue))
+    grain = grain_of(named) if named is not None else _named_grain(question, excluding=None)
+    return QuestionSignals(
+        grain=grain,
+        window=window_for(named),
+        countries=_named_countries(question, catalogue),
+    )
+
+
+def _named_countries(question: Question, catalogue: CataloguePort) -> frozenset[str]:
+    """The countries the reader named, resolved by the same lookup the scope binder uses."""
+    return frozenset(
+        found
+        for span in question.spans()
+        if (found := catalogue.country_named(span.text)) is not None
     )
 
 

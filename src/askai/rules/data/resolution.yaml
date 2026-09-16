@@ -1,0 +1,416 @@
+# The resolution ladder -- AD-25's three stages, and every constant a reader can feel.
+#
+# Story 2.3 strips vocabulary before scoring, Story 2.4 discriminates on structural
+# signals, Story 2.5 decides. None of those is allowed a number in code: `compile/` is one
+# of the three packages `tests/test_rules.py` scans for a literal, and a threshold that
+# decides whether a reader is answered or asked a question is the definition of a
+# reader-affecting constant (AD-11).
+#
+# Everything here is either reviewed vocabulary or a reviewed decision. Where a value was
+# derived from a measurement, the measurement and the labelled set it came from are
+# recorded with it, exactly as `names-floor.yaml` records the floor's.
+area: RESOLVE
+about: >-
+  How a question's subject is separated from the words that frame it, which candidates a
+  question may reach at all, the structural signals that tell those candidates apart
+  before any model is called, and the margin at which resolving becomes disambiguating.
+
+rules:
+  - id: R-RESOLVE-REQUEST-VOCABULARY
+    statement: >-
+      The interrogative, politeness and function words that frame a request are removed
+      before candidate generation scores anything; the vocabulary is bilingual and
+      structural, and it contains no word that can appear inside a published indicator
+      name.
+    status: agreed
+    kind: table
+    sources:
+      - "_bmad-output/planning-artifacts/epics.md Story 2.3"
+      - "docs/RULES.md R-159"
+      - "labelled/names"
+    values:
+      words:
+        # English interrogatives, copulas and determiners.
+        - what
+        - whats
+        - which
+        - who
+        - whom
+        - whose
+        - where
+        - when
+        - why
+        - how
+        - is
+        - are
+        - was
+        - were
+        - do
+        - does
+        - did
+        - can
+        - could
+        - would
+        - should
+        - please
+        - tell
+        - show
+        - give
+        - me
+        - us
+        - my
+        - our
+        - i
+        - you
+        - your
+        - a
+        - an
+        - the
+        - of
+        - in
+        # Quoted: YAML 1.1 reads a bare `on` as the boolean true, and a framing word that
+        # silently becomes `True` fails the clause's type check rather than stripping.
+        - "on"
+        - at
+        - to
+        - for
+        - by
+        - with
+        - and
+        - or
+        - as
+        - that
+        - this
+        - these
+        - those
+        - it
+        - its
+        - there
+        - here
+        # Arabic interrogatives, prepositions and demonstratives, in the engine's fold.
+        - ما
+        - ماذا
+        - كم
+        - كيف
+        - متي
+        - اين
+        - لماذا
+        - اي
+        - هل
+        - هو
+        - هي
+        - في
+        - علي
+        - الي
+        - عن
+        - مع
+        - و
+        - او
+        - هذا
+        - هذه
+        - ذلك
+        - التي
+        - الذي
+        - من
+        - اظهر
+        - اعطني
+        - اخبرني
+        - ارني
+    note: >-
+      Measured, not assumed. Over the 164 positive pairs of `names-v1`, removing this
+      vocabulary before scoring moved recall@10 from 85.4% to 89.0% overall, paraphrase
+      recall@10 from 47.6% to 57.1% and synonym recall@10 from 90.0% to 100.0%, while
+      leaving exact (96.0%), typo (94.4%), partial (100%) and ambiguous (100%) recall@1
+      unchanged. Raising the ceiling is the whole job of stage 1: recall@10 bounds
+      everything discrimination could possibly get right.
+
+      **No content noun is in this list, and the omission is load-bearing.** An earlier
+      vocabulary included `number`, `value` and `level`; it broke the labelled case
+      `ambig-en-003`, because the export publishes a detail named *Number of Jobs in the
+      Sector* and stripping `number` and `the` from the question took away the name the
+      reader had typed. R-158 licenses removing the words that say *when* a question is
+      about, never the words that say *what*. Every entry above is checked against the
+      published surfaces for that property by `tests/test_resolve.py`.
+
+      One case moved the other way: `para-ar-005` fell from rank 1 into the top ten when
+      the Arabic preposition `من` was removed. It is recorded rather than tuned away,
+      because a candidate that is still in the top ten is a candidate stage 2 can recover,
+      and tuning stage 1 for rank-one accuracy is how the two stages collapse into the one
+      scoring pass AD-25 forbids.
+
+  - id: R-RESOLVE-PERIOD-VOCABULARY-IS-STRIPPED
+    statement: >-
+      Period vocabulary is removed from a question before candidate generation scores it,
+      and it is removed from the same reviewed lists the period binder reads, never from a
+      second copy maintained beside them.
+    status: agreed
+    kind: switch
+    sources:
+      - "_bmad-output/planning-artifacts/epics.md Story 2.3"
+      - "docs/RULES.md R-158"
+      - "docs/RULES.md R-162"
+    values:
+      strip_period_vocabulary: true
+      strip_bare_numbers: true
+    note: >-
+      R-158: *a period phrase changes when a question asks about, never what*. So
+      *"inflation over the last 5 years"* must reach Inflation Rate, and must not rank a
+      workforce-nationalisation indicator on the span words alone.
+
+      The lists are `R-BIND-LATEST-WORDS`, `R-BIND-GRAIN-WORDS`, `R-BIND-PERIOD-NOUNS`,
+      `R-BIND-RELATIVE-PERIOD-WORDS`, `R-BIND-PERIOD-RANGE-WORDS`, `R-BIND-COUNT-WORDS`,
+      `R-BIND-MONTH-NAMES` and `R-BIND-QUARTER-WORDS` -- the same ones
+      `compile/lexicon.py` already serves to the binder, read through the same door.
+      R-162 requires the reviewed vocabulary to be consulted on *every* resolution rather
+      than only after a service fails, and reading it through one door is what makes that
+      structural rather than remembered.
+
+      `strip_bare_numbers` removes a token that is entirely digits. A year, a count and a
+      quarter number are period content by construction, and no published indicator name
+      in this export is a bare number.
+
+  - id: R-RESOLVE-CONTENT-NGRAM-GATE
+    statement: >-
+      A candidate is admitted only if it shares a content character n-gram of at least the
+      declared length with the question's subject; the gate is structural and is never a
+      score threshold.
+    status: agreed
+    kind: constant
+    sources:
+      - "_bmad-output/planning-artifacts/epics.md Story 2.3"
+      - "docs/ARCHITECTURE-SPINE.md AD-30"
+      - "labelled/names"
+    values:
+      minimum_ngram: 4
+      # The generic measure nouns that do not count as *content* for the gate. Every one
+      # is a word two unrelated indicators routinely share, with the number of published
+      # surfaces carrying it: number 70, total 63, index 39, value 27, rate 10, level 8,
+      # ratio 1, count 1, and in Arabic مؤشر 79, نسبه 56, اجمالي 54, عدد 44, معدل 6.
+      gate_stopwords:
+        - rate
+        - rates
+        - index
+        - total
+        - number
+        - value
+        - values
+        - level
+        - levels
+        - ratio
+        - count
+        - percentage
+        - percent
+        - معدل
+        - نسبه
+        - النسبه
+        - عدد
+        - العدد
+        - مؤشر
+        - المؤشر
+        - اجمالي
+        - الاجمالي
+        - قيمه
+        - القيمه
+        - مستوي
+        - المستوي
+    note: >-
+      Structural rather than a threshold, and that is the entire point. Story 2.13
+      measured the two score distributions overlapping across most of their range: where a
+      wrong candidate outranked the right one its median score was 0.831 against a derived
+      floor of 0.838. A number cannot separate them. A shared run of four characters can
+      say something a score cannot -- that the candidate and the question are talking about
+      the same thing at all.
+
+      **Why there is a second list, and why it is not the stripping list.** The story's
+      wording is *"a content n-gram of at least 4 characters, excluding framing words"*,
+      and its worked counter-example is that *"Obesity Rate"* must not be admitted for
+      *"what is the unemployment rate"* merely because both contain "rate". Four
+      characters alone does not achieve that: `rate` is itself exactly four characters, so
+      the two surfaces share a run and the gate would admit. What the example actually
+      requires is that a *generic measure noun* does not count as content.
+
+      That is a different list from `R-RESOLVE-REQUEST-VOCABULARY` and must stay
+      different. These words are **not stripped before scoring** -- the export publishes
+      *Number of Jobs in the Sector*, *Occupancy Rate of Hotels* and *Consumer Price
+      Index*, and removing their nouns from the question would take away the reader's own
+      name for the thing, which is the failure recorded on that rule. They are removed
+      only when deciding whether the candidate and the question share *content*, which is
+      a question about subject matter rather than about phrasing.
+
+      The consequence is the one the story asks for: *unemployment rate* and *obesity
+      rate* share nothing once `rate` is set aside, so the gate refuses; *unemployment
+      rate* and *unemployment* share `unemploy`, so it admits.
+
+  - id: R-RESOLVE-SIGNALS
+    statement: >-
+      Discrimination applies the reviewed structural signals in the declared way: a signal
+      marked as a veto removes a candidate that contradicts it, and a signal marked as
+      evidence contributes its weight to the surviving candidates' ordering.
+    status: agreed
+    kind: constant
+    sources:
+      - "_bmad-output/planning-artifacts/epics.md Story 2.4"
+      - "docs/ARCHITECTURE-SPINE.md AD-25"
+    values:
+      # A veto is not a heavy weight. FR-6 and Story 2.4 both say a detail that does not
+      # publish the named grain is *out*, not merely ranked lower, and a weight -- however
+      # large -- can always be outvoted by enough of the others.
+      grain_is_a_veto: true
+      period_coverage_is_a_veto: true
+      # Evidence weights, as whole-number percentages: a rule clause carries no fraction.
+      entity_weight_percent: 40
+      country_weight_percent: 30
+      unit_shape_weight_percent: 20
+      content_overlap_weight_percent: 10
+    note: >-
+      The two vetoes are the two signals where the published layer gives a definite
+      negative. A detail that publishes no yearly row cannot answer a question about a
+      year, and a detail that publishes nothing at all inside the span the reader named
+      cannot chart it; both are statements about coverage, which the catalogue knows
+      exactly, so ranking them down instead of removing them would leave a candidate that
+      is certainly wrong available to be picked.
+
+      The four weighted signals are graded by how specific the evidence is. A named sector
+      is the most specific thing a reader can add -- it is what separates the eight details
+      published as *Sector Contribution To GDP* -- so it carries the most. A named country
+      is next and is rarer than it looks: only 21 of 289 details declare a benchmark set,
+      so this signal is silent on the other 268 rather than counting against them. Unit
+      shape separates *how much* from *what share* from *where do we rank*. Content overlap
+      carries the least, because it is the signal stage 1 has already used and the one
+      Story 2.13 measured as unable to carry the distinction on its own.
+
+      The weights are a reviewed starting point and are declared to be that. They were not
+      derived from a labelled set, because `names-v1` labels question-to-detail pairs and
+      carries no labels for *which signal* should have decided one; deriving them needs a
+      set that does, and until it exists a graded ordering that can be argued with beats a
+      number presented as measured.
+
+  - id: R-RESOLVE-AMBIGUITY-MARGIN
+    statement: >-
+      Exactly one candidate binds only when it leads the next survivor by at least the
+      declared margin; survivors within the margin of the leader are named in a
+      disambiguation rather than chosen between.
+    status: agreed
+    kind: constant
+    sources:
+      - "_bmad-output/planning-artifacts/epics.md Story 2.5"
+      - "docs/PRD.md FR-2"
+      - "labelled/names"
+    values:
+      margin_percent: 15
+      maximum_offered: 5
+      labelled_set: names-v1
+    note: >-
+      FR-2 requires this to be a rule rather than a code constant, and requires the value
+      to carry the labelled-set version it was derived from. It carries `names-v1`.
+
+      The margin is expressed against the leader's own discrimination score rather than as
+      an absolute, because the score is a sum of weights whose range depends on how many
+      signals the question actually supplied: a question naming a sector, a country and a
+      unit shape produces larger numbers throughout than a bare name, and an absolute
+      margin would disambiguate freely on the first and never on the second.
+
+      Fifteen per cent is the reviewed starting point, and the direction of its error is
+      chosen deliberately. Too small a margin returns a confident answer about an
+      indicator the reader did not ask for; too large a margin asks a question the reader
+      could have been spared. With 257 of 320 published names ambiguous, the second is the
+      cheaper mistake, and *refusing well is the product*.
+
+      `maximum_offered` caps a disambiguation at five named candidates. Eight details are
+      published as *Sector Contribution To GDP*, and a question offering all eight has
+      restated the problem rather than helped: the reader is asked to scan a list as long
+      as the ambiguity itself. Five is the point at which a closed question stays a
+      question, and a tie wider than five is reported as such rather than truncated
+      silently.
+
+  - id: R-RESOLVE-UNIT-SHAPES
+    statement: >-
+      Each published unit maps to one reviewed unit shape, and each shape has a bilingual
+      question vocabulary that names it; a unit the table does not name has unknown shape
+      and the signal is silent for it.
+    status: agreed
+    kind: table
+    sources:
+      - "_bmad-output/planning-artifacts/epics.md Story 2.4"
+      - "data/cms/P02_Published_IndicatorDetails"
+    values:
+      # The units actually in use in the published export, by the shape each expresses.
+      # Read off `P02.UnitEN`, not invented: a unit absent from the export is absent here,
+      # and `tests/test_resolve.py` asserts that against the corpus.
+      share_units:
+        - "%"
+      rank_units:
+        - "Rank"
+      index_units:
+        - "Index Points"
+      duration_units:
+        - "months"
+        - "Hours"
+        - "season"
+      amount_units:
+        - "QAR"
+        - "bn QAR"
+        - "m QAR"
+        - "k QAR"
+        - "USD"
+        - "m USD"
+        - "bn"
+        - "m"
+        - "k"
+        - "Count"
+        - "companies"
+        - "Company"
+        - "employee"
+        - "jobs"
+        - "project"
+        - "MT"
+        - "m MT"
+        - "MT/ha"
+        - "M3/MT"
+        - "million ton-km"
+        - "square meters"
+      # What a reader says when they are asking for each shape. Bilingual (R-159).
+      share_words:
+        - percent
+        - percentage
+        - share
+        - proportion
+        - ratio
+        - نسبه
+        - النسبه
+        - حصه
+        - الحصه
+      rank_words:
+        - rank
+        - ranking
+        - ranked
+        - position
+        - ترتيب
+        - الترتيب
+        - مرتبه
+        - المرتبه
+      amount_words:
+        - total
+        - amount
+        - size
+        - volume
+        - many
+        - much
+        - اجمالي
+        - الاجمالي
+        - حجم
+        - الحجم
+        - كميه
+    note: >-
+      The unit table is keyed on the published unit name because that is what the export
+      carries and what a reviewer can check. Fifty-four details publish the unit `NA` and
+      map to no shape at all; the signal is silent for them, which is correct -- a detail
+      whose unit the publisher did not record cannot be ruled in or out by its unit.
+
+      The question vocabulary is deliberately *not* the mirror image of the unit table.
+      These are the words a reader uses, and several obvious candidates are **left out** on
+      purpose: `rate`, `number`, `count`, `value` and `معدل` all appear inside published
+      surfaces, so a question naming one of them is often naming the indicator rather than
+      asking for a shape. Including them would make the signal fire on the reader's own
+      name for the thing. The same reasoning keeps every one of them out of
+      `R-RESOLVE-REQUEST-VOCABULARY`, where stripping them would be worse still.

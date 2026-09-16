@@ -22,10 +22,11 @@ from askai.rules.loader import (
     load_rules,
     rules,
 )
-from askai.rules.schema import Rule, RuleFile, RuleKind, RuleStatus, RuleValue
+from askai.rules.schema import PER_CENT, Rule, RuleFile, RuleKind, RuleStatus, RuleValue
 
 __all__ = [
     "DATA_DIR",
+    "PER_CENT",
     "LoadedRule",
     "Rule",
     "RuleFile",

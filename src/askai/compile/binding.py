@@ -25,6 +25,7 @@ from __future__ import annotations
 from dataclasses import dataclass, fields
 from enum import StrEnum
 
+from askai.compile.resolve.decide import Resolution
 from askai.domain.spec import Bound, Deferred, FieldState, QuerySpec, Unbound
 
 __all__ = [
@@ -85,6 +86,20 @@ class UnboundReason(StrEnum):
 
     NO_DETAIL_NAMED = "no-detail-named"
     DETAIL_NAME_IS_SHARED = "detail-name-is-shared"
+
+    #: AD-25's ladder ran and several candidates survived discrimination without one
+    #: leading by the reviewed margin. Distinct from ``DETAIL_NAME_IS_SHARED``, which is
+    #: an *exactly typed* name published by two details: there the reader used a name the
+    #: catalogue genuinely shares, here they described something several indicators could
+    #: answer. Story 2.11 puts a closed question from the first and Story 2.7 phrases the
+    #: second, and they are not the same question.
+    SEVERAL_INDICATORS_MATCH = "several-indicators-match"
+
+    #: AD-25's ladder ran and bound nothing -- either nothing resembled the question, or
+    #: every candidate that did was ruled out by a structural signal. The particulars
+    #: carry which, because *"I hold nothing like that"* and *"that indicator does not
+    #: publish yearly figures"* are different things to be told (FR-38).
+    NO_INDICATOR_RESOLVED = "no-indicator-resolved"
     GRAIN_NOT_PUBLISHED = "grain-not-published"
     MORE_THAN_ONE_PERIOD_NAMED = "more-than-one-period-named"
     PERIOD_RANGE_RUNS_BACKWARDS = "period-range-runs-backwards"
@@ -124,6 +139,17 @@ class CompiledQuestion:
 
     spec: QuerySpec
     bindings: tuple[Binding, ...]
+
+    #: What AD-25's ladder decided, when it ran. ``None`` when no candidate port was
+    #: supplied -- Epic 1's path, and every test that compiles without an index.
+    #:
+    #: Carried beside the spec rather than folded into it, for the reason the bindings
+    #: are: the spec is the *answer*, and a disambiguation is not an answer. A reader who
+    #: must be asked which of four indicators they meant has a spec whose detail is
+    #: ``Unbound``, and the four candidates to offer them live here. Story 2.7 phrases the
+    #: refusals from this and Story 2.11 puts the closed question; both need the
+    #: candidates, and neither could recover them from an ``Unbound`` reason string.
+    resolution: Resolution | None = None
 
     def __post_init__(self) -> None:
         owned = [binding.field for binding in self.bindings]

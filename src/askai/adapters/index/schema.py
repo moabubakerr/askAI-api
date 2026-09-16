@@ -35,6 +35,8 @@ from askai.adapters.index.lexical import create_names_lexical_table
 from askai.ports.index import Collection
 
 __all__ = [
+    "FACTS_TABLE",
+    "FACT_PERIODS_TABLE",
     "INDEX_SCHEMA_VERSION",
     "META_TABLE",
     "collection_table",
@@ -51,12 +53,42 @@ __all__ = [
 #: lexical half, and half a hybrid search returning fewer candidates is precisely the
 #: kind of degradation that looks healthy. Older generations are refused at load and
 #: rebuilt, which is what this number is for.
-INDEX_SCHEMA_VERSION: Final = 2
+#:
+#: Version 3 adds ``detail_facts`` (Story 2.4). Same argument, more sharply: a generation
+#: without it produces candidates whose structural facts are all empty, which does not
+#: fail -- every signal simply goes silent and every question disambiguates. A silent
+#: discriminator is the failure mode hardest to notice from the outside, so the file that
+#: lacks the table is refused at load rather than searched.
+INDEX_SCHEMA_VERSION: Final = 3
 
 #: One row, recording what built the file. Read before anything else at load, because a
 #: cosine between two vector spaces is a number with no meaning and this is what makes
 #: it refusable.
 META_TABLE: Final = "index_meta"
+
+#: One row per indicator detail, holding the structural facts AD-25's stage 2
+#: discriminates on (Story 2.4). In the *index* file rather than the read model, and
+#: owned by this package, for three reasons that all point the same way:
+#:
+#: * a candidate and the facts it is discriminated against then come out of the **same
+#:   immutable generation** (AD-13, AD-20), so a candidate scored against one build and
+#:   told apart by another is unrepresentable rather than unlikely;
+#: * the facts are rebuilt by the same job that rebuilds the collection they describe, so
+#:   the two cannot drift;
+#: * ``compile/`` is forbidden to reach an adapter, so the facts have to arrive as values
+#:   on the candidate anyway -- and assembling them at build time is what lets stage 2 be
+#:   pure.
+#:
+#: Nothing here is a value. Every column is a statement about what the catalogue
+#: *publishes* -- which periods exist, which unit, which entity -- and the periods live in
+#: a separate table precisely so that no column here can ever become a figure.
+FACTS_TABLE: Final = "detail_facts"
+
+#: The periods each detail publishes a row for. Coverage, never content: a row here says
+#: a datapoint exists for that period and is silent about what is in it. That is the same
+#: line ``CataloguePort`` draws, drawn again in the storage so that stage 2 cannot acquire
+#: the ability to peek at a figure while deciding which indicator the reader meant.
+FACT_PERIODS_TABLE: Final = "detail_fact_periods"
 
 _TABLE_PREFIX: Final = "vec_"
 
@@ -117,6 +149,7 @@ def create_index_schema(connection: sqlite3.Connection) -> None:
     # AD-14's mandatory scope pre-filter rather than by lexical recall, and ``articles``
     # has no key to filter on at all and is the one path AD-30 gives a derived floor.
     create_names_lexical_table(connection)
+    _create_facts_tables(connection)
     connection.execute(
         f"""
         CREATE TABLE {META_TABLE} (
@@ -129,3 +162,49 @@ def create_index_schema(connection: sqlite3.Connection) -> None:
         """
     )
     connection.execute(f"PRAGMA user_version = {INDEX_SCHEMA_VERSION}")
+
+
+def _create_facts_tables(connection: sqlite3.Connection) -> None:
+    """The two tables holding stage 2's structural facts (Story 2.4).
+
+    Two tables rather than one with a packed period list, because "does this detail
+    publish a row for 2024-Q1" is a membership question asked once per candidate per
+    question, and a delimited string in a column is a parser waiting to disagree with the
+    one in ``domain/period.py`` about what a period is.
+    """
+    connection.execute(
+        f"""
+        CREATE TABLE {FACTS_TABLE} (
+            detail_id       TEXT NOT NULL PRIMARY KEY,
+            indicator_id    TEXT NOT NULL,
+            -- The published unit's name, as published. Classified into a shape by the
+            -- reviewed table in `rules/` at query time rather than here: the shape is a
+            -- reader-affecting decision (AD-11) and baking it into the file would freeze
+            -- one reviewer's reading of it into every generation ever built.
+            unit_name       TEXT NOT NULL,
+            -- The entity the parent indicator belongs to -- a sector, a special entity,
+            -- a project -- already folded by the engine's one `normalise()` (AD-26), in
+            -- both published languages, tab-separated. Folded at build time because the
+            -- comparison is against a folded question and folding 289 entity names on
+            -- every question is work with one possible answer.
+            entity_folded   TEXT NOT NULL,
+            classification  TEXT NOT NULL
+        ) STRICT
+        """
+    )
+    connection.execute(
+        f"""
+        CREATE TABLE {FACT_PERIODS_TABLE} (
+            detail_id    TEXT NOT NULL REFERENCES {FACTS_TABLE}(detail_id),
+            period       TEXT NOT NULL,
+            -- A country id when this is a benchmark row, NULL when it is the national
+            -- one. The same spelling of national scope the read model uses (AD-5), so
+            -- the two files cannot disagree about what a national row is.
+            country_id   TEXT,
+            PRIMARY KEY (detail_id, period, country_id)
+        )
+        """
+    )
+    connection.execute(
+        f"CREATE INDEX {FACT_PERIODS_TABLE}_by_detail ON {FACT_PERIODS_TABLE}(detail_id)"
+    )

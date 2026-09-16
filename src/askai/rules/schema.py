@@ -38,6 +38,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from askai.domain.period import Grain
 
 __all__ = [
+    "PER_CENT",
     "RULE_ID_PATTERN",
     "Rule",
     "RuleFile",
@@ -61,6 +62,16 @@ RULE_ID_PATTERN: Final = re.compile(
 type RuleValue = bool | int | str | tuple[str, ...] | Mapping[str, int]
 
 _GRAIN_NAMES: Final = frozenset(grain.value for grain in Grain)
+
+#: The divisor a whole-number percentage clause is read through.
+#:
+#: ``RuleValue`` carries no floating-point value -- deliberately, so that a reviewer reads
+#: `50` rather than `0.5000000001` -- so every weight and threshold in ``data/`` is written
+#: as a whole percentage and divided on the way out. The divisor lives *here*, beside the
+#: type that forces the convention, rather than in each package that reads one: `compile/`
+#: is scanned for numeric literals (AD-11) and would have to spell it as a magic number,
+#: and three packages each spelling their own is how one of them comes to divide by ten.
+PER_CENT: Final = 100
 
 
 class RuleStatus(StrEnum):

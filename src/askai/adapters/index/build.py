@@ -42,8 +42,15 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Final
 
+from askai.adapters.index.facts import DetailFacts
 from askai.adapters.index.lexical import populate_names_lexical
-from askai.adapters.index.schema import META_TABLE, collection_table, create_index_schema
+from askai.adapters.index.schema import (
+    FACT_PERIODS_TABLE,
+    FACTS_TABLE,
+    META_TABLE,
+    collection_table,
+    create_index_schema,
+)
 from askai.adapters.index.vectors import unit_vector_for
 from askai.ports.index import Collection, IndexRow
 from askai.ports.vectors import VectorSourcePort
@@ -84,11 +91,22 @@ def build_generation(
     source: VectorSourcePort,
     *,
     built_at: str | None = None,
+    facts: Sequence[DetailFacts] = (),
 ) -> Path:
     """Build every collection into a new generation file under *directory*; return its path.
 
     *rows* need not name every collection: a collection with no rows is built empty
     rather than omitted, so searching it returns nothing instead of failing.
+
+    *facts* are the structural facts AD-25's stage 2 discriminates on (Story 2.4),
+    written into the same file and the same transaction as the collection they describe.
+    That is what makes a candidate and the facts telling it apart come out of **one**
+    immutable generation: there is no build in which the vectors are newer than the
+    coverage they will be discriminated against.
+
+    Empty *facts* builds a generation whose discriminator is silent rather than one that
+    fails, which is right for the collections that have no details -- ``articles`` -- and
+    is why the harness can measure generation alone.
 
     *built_at* defaults to now, in UTC, and is an argument so a test can pin it. It is
     recorded in the file and travels with the loaded generation, which is how an answer
@@ -101,7 +119,7 @@ def build_generation(
     stamp = built_at if built_at is not None else datetime.now(UTC).isoformat()
 
     try:
-        _write(working, rows, source, stamp)
+        _write(working, rows, source, stamp, facts)
     except BaseException:
         working.unlink(missing_ok=True)
         raise
@@ -116,6 +134,7 @@ def _write(
     rows: Mapping[Collection, Sequence[IndexRow]],
     source: VectorSourcePort,
     built_at: str,
+    facts: Sequence[DetailFacts],
 ) -> None:
     connection = sqlite3.connect(str(path))
     try:
@@ -127,9 +146,48 @@ def _write(
             # no generation in which the two halves of the hybrid disagree about what the
             # collection holds (Story 2.2).
             populate_names_lexical(connection, rows.get(Collection.NAMES, ()))
+            # And the structural facts, in that same transaction, for the same reason
+            # one step further: a candidate is scored by the vectors above and told apart
+            # by the coverage below, and the two must describe one corpus (Story 2.4).
+            _insert_facts(connection, facts)
             _insert_meta(connection, source, built_at)
     finally:
         connection.close()
+
+
+def _insert_facts(connection: sqlite3.Connection, facts: Sequence[DetailFacts]) -> None:
+    """Write one row per detail and one per published (period, country) key.
+
+    A duplicate detail is an ``IntegrityError`` naming a primary key three layers from
+    where it can be acted on, so it is caught here where the message can name the detail.
+    """
+    for entry in facts:
+        try:
+            connection.execute(
+                f"INSERT INTO {FACTS_TABLE} "
+                "(detail_id, indicator_id, unit_name, entity_folded, classification) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (
+                    entry.detail_id,
+                    entry.indicator_id,
+                    entry.unit_name,
+                    entry.entity_folded,
+                    entry.classification,
+                ),
+            )
+        except sqlite3.IntegrityError as error:
+            raise IndexBuildError(
+                f"facts for detail {entry.detail_id!r} were given twice, or with a value "
+                f"the table refuses: {error}"
+            ) from error
+        connection.executemany(
+            f"INSERT OR IGNORE INTO {FACT_PERIODS_TABLE} (detail_id, period, country_id) "
+            "VALUES (?, ?, ?)",
+            [
+                (entry.detail_id, published.period, published.country_id)
+                for published in entry.periods
+            ],
+        )
 
 
 def _insert_rows(
