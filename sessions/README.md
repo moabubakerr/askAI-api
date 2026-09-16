@@ -1,9 +1,9 @@
 # Parallel session briefs
 
-Five Claude Code sessions, each owning one epic and one package. The fences below are what make
-that safe — two sessions editing the same file is the only failure mode that actually costs time.
+One Claude Code session per epic, each owning one package. The fences are the point: two sessions
+editing one file is the only failure mode that reliably costs time.
 
-Start each one in its own terminal:
+Start each in its own terminal:
 
 ```bash
 cd c:\projects\askAI\askai-api
@@ -12,42 +12,62 @@ claude
 
 Then: **"Read `AGENTS.md` and `sessions/<your-brief>.md`, then begin."**
 
-`AGENTS.md` carries the house rules, the VM facts and the build state. Each brief below carries only
-what is specific to that session. Read both.
+`AGENTS.md` carries the house rules, the VM facts, the deployment order and the build state. Each
+brief carries only what is specific to that session. Read both.
 
-## The split
+## State — 2026-09-16
 
-| Session | Brief | Epic | Owns exclusively |
+**Deployed and answering on the target VM.** `POST /api/ask` returns a real figure with a resolving
+`source_ref`, freshness not stale, one audit record per request. The preflight passes on that
+filesystem, so WAL works and the atomic-refresh design holds where it will actually run.
+
+Roughly 1,780 tests, five gates green. Epics 1–5 substantially built.
+
+## The briefs
+
+| Session | Brief | Epic | State |
 |---|---|---|---|
-| **A** | `session-a-epic-2-resolution.md` | 2 — resolution and refusal | `compile/resolve/`, `adapters/index/` |
-| **B** | `session-b-epic-3-series-and-change.md` | 3 — series, change, targets | `assemble/change/` |
-| **C** | `session-c-epic-4-countries.md` | 4 — comparisons, ranks, spread | `assemble/compare/` |
-| **D** | `session-d-epic-5-groups-and-metadata.md` | 5 — groups, metadata, overview | `assemble/meta/` |
-| **E** | `session-e-review-and-epic-1.md` | 1 — finish and review | `tests/` review additions |
+| **A** | `session-a-epic-2-resolution.md` | 2 — the ladder | **Done.** 2.3/2.4/2.5 landed. |
+| **B** | `session-b-epic-3-series-and-change.md` | 3 — series, change | **Done.** |
+| **C** | `session-c-epic-4-countries.md` | 4 — comparison, ranks | **Done.** |
+| **D** | `session-d-epic-5-groups-and-metadata.md` | 5 — groups, metadata | **Done.** |
+| **E** | `session-e-review-and-epic-1.md` | 1 — finish and review | **Run this.** 20+ stories shipped without review. |
+| **F** | `session-f-epic-6-analyst-and-articles.md` | 6 — analyst, articles | **Blocked** on the analyst table decision. |
+| **G** | `session-g-epic-8-prose-and-guards.md` | 8 — prose, guards | Ready. The four guards need no model. |
+| **H** | `session-h-epic-9-closed-world.md` | 9 — closed world, external | Ready. 9.1/9.3/9.5 are pure type work. |
+| **I** | `session-i-epic-10-governance.md` | 10 — governance | Ready, and newly unblocked: the rules are agreed. |
+| **J** | `session-j-epic-2-refusals.md` | 2 — refusals, tie-break | Ready. With 257/320 names ambiguous, this is the primary path. |
 
-**Session A is the one that matters most.** Epics 3, 4 and 5 can build composers, but until the
-resolution ladder lands nobody can ask them a real question — retrieval gets 21.4% recall@1 on
-paraphrased questions today. If you only run one session, run A.
+Epic 7 (conversation, 8 stories) has no brief **on purpose**. It multiplies the test surface of
+every other path for little standalone value, and it is the epic most likely to destabilise what
+already works. Write one only if someone decides they want it.
 
-## The fences — these are not suggestions
+## Read this before starting a session
 
-- **Nobody edits `pyproject.toml` or `uv.lock`.** A four-way lockfile conflict costs more than any
-  dependency saves. A session needing one stops and asks the human.
-- **Nobody edits another session's package**, and nobody edits an existing test file. New test file
-  per story, named for the story.
-- **Epics 3, 4 and 5 all add composers to `assemble/`.** That is the one real collision point, and
-  the subpackages above are how it is avoided. Do not put a composer directly in `assemble/`.
-- **Shared, append-only, one new file each — never edit another's:** `src/askai/rules/data/*.yaml`
-  (one new file per concern), `corpus/epic-N.yaml` (your epic's file only).
+**Epics 3, 4 and 5 are built but were unreachable.** Every composer — series, change, comparison,
+ranks, definitions, groups, the executive overview — was written and tested against directly
+constructed `QuerySpec`s. Nothing classified the operation from the question, so every question
+compiled to `operation: value` and fell through to the figure. No story owned operation
+classification; AD-22 names it as a model call-site and the story was never written.
+
+That is being fixed. If you are picking up a brief and a composer seems unreachable, check `git log`
+before concluding it is broken.
+
+## The fences
+
+- **Nobody edits `pyproject.toml` or `uv.lock`.** A session needing a dependency stops and asks.
+- **Nobody edits another session's package**, and **nobody edits an existing test file.** One new
+  test file per story, named for it.
 - **`src/askai/messages/data/en.yaml` and `ar.yaml` are genuinely shared.** Adding a message id
-  means editing both, and two sessions doing that at once will conflict. Add ids in one batch at the
-  end of a story rather than as you go, and expect to reconcile. Both files must carry identical ids
-  or startup fails.
+  means editing both, and two sessions doing that at once will conflict. Batch your additions at
+  the end of a story. Both files must carry identical ids or startup fails.
+- **`src/askai/rules/data/`** — one **new** file per concern, never edit an existing one.
+- **`corpus/epic-N.yaml`** — your epic's file only.
 
 ## Committing
 
-Commit each story as it lands, **explicit paths only** — never `git add -A` while other sessions are
-writing. Pull before you commit. All five gates green before any commit:
+Commit each story as it lands, **explicit paths only** — never `git add -A` while another session
+is writing. Pull first. All five gates green before any commit:
 
 ```
 uv run lint-imports
@@ -57,25 +77,26 @@ uv run pytest
 uv run python tests/corpus_runner.py
 ```
 
-If a gate fails in a file you do not own, it belongs to another session. Do not fix it. Say so.
+A gate failing in a file you do not own belongs to another session. Do not fix it. Say so.
 
-## Before you start: generate your epic context
+## Generate your epic context first
 
-Story 1.1's epic context file made Epic 1's first wave fast, because agents stopped re-deriving the
-same background. Each session should generate its own first:
+Cheap, and it stops every agent you spawn re-deriving the same background:
 
-> Read `_bmad-output/planning-artifacts/epics.md` for Epic N and `docs/`, and write
-> `_bmad-output/implementation-artifacts/epic-N-context.md` — goal, stories, requirements,
-> technical decisions, cross-story dependencies. 800–1500 tokens. Follow the shape of
-> `epic-1-context.md`.
+> Read `_bmad-output/planning-artifacts/epics.md` for Epic N and the relevant parts of `docs/`, and
+> write `_bmad-output/implementation-artifacts/epic-N-context.md` — goal, stories, requirements,
+> technical decisions, cross-story dependencies. 800–1500 tokens. Follow `epic-1-context.md`.
 
-Then hand that file to every agent you spawn instead of the raw planning documents.
+Then hand that file to every agent instead of the raw planning documents.
 
-## Decisions blocking work — escalate, do not guess
+## Decisions waiting on a human — escalate, never guess
 
-- **Analyst prose has no table.** Blocks all 14 stories of Epic 6. Story 1.8 says load the 1,031
-  analyses; Story 1.6 creates no table for them. Needs a DDL change and a schema-version bump.
-- **`agreed_by` is unrecorded.** All 187 non-rejected rules are agreed as of 2026-09-16, but nobody
-  is named. Blocks Story 10.2.
-- **Story 2.12** is decision-gated on FR-51 and has no option-specific criteria. Do not start it.
-- **Story 1.7** needs the target VM.
+- **The analyst table.** Blocks all 14 stories of Epic 6. Stories 1.6 and 1.8 contradict each other;
+  1,031 analyses are ingested and stored nowhere. A DDL change and a schema bump.
+- **`agreed_by`.** All 187 non-rejected rules are agreed as of 2026-09-16; nobody is named. Blocks
+  Story 10.2.
+- **Story 2.12.** Decision-gated on FR-51 — three options, 65 of 189 indicators, no option-specific
+  criteria. Do not start it.
+- **Retrieval quality is unmeasured.** BGE-M3 is serving on the VM and the harness is one command
+  (`scripts/measure_embeddings.py`), but nobody has run it. Paraphrased questions currently bind at
+  a measured **21% recall@1** on trigrams. Everything built above retrieval inherits that ceiling.
