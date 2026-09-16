@@ -72,8 +72,9 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
 
 # Serving is the default. The other entry points are available by overriding the command:
 #
-#   ... python -m askai.adapters.store.preflight      the durability check (Story 1.7)
+#   ... python -m askai.adapters.store provision      create the estate (run first)
+#   ... python -m askai.adapters.store               the durability check (Story 1.7)
 #   ... python -m askai.refresh /data                 ingest the mounted export
 #   ... python -m askai.rules                         enumerate the rule catalogue
 #
-CMD ["uvicorn", "askai.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "askai.asgi:build", "--factory", "--host", "0.0.0.0", "--port", "8000"]
