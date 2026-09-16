@@ -125,3 +125,261 @@
     is one of the 65 published indicators (34%) flagged IsActive=False with a blank
     InactiveReason. An inactive indicator needs a designed, stated behaviour; the entry
     exists so the decision is recorded against a real row rather than a hypothetical one.
+
+# ---------------------------------------------------------------------------------------
+# Stories 2.3, 2.4 and 2.5 — the ladder's own mechanics, added 2026-09-16.
+#
+# The seven entries above state what Epic 2 must *answer*; these state how the ladder
+# reaches those answers, and each pins a decision that was measured rather than reasoned
+# about. Numbers quoted came from `uv run python -m askai.adapters.index` and from the
+# ladder measurement recorded on R-RESOLVE-REQUEST-VOCABULARY.
+#
+# **What these assert today, and what they do not.** `tests/corpus_runner.py` compiles
+# each question twice with a `CataloguePort` and **no** `CandidatePort`, so what is gated
+# here is Epic 1's exact normalised-name rung plus the determinism of everything around
+# it. A question whose subject is a paraphrase therefore compiles to an `Unbound` detail:
+# resolution is reached only when the answer path supplies the port.
+#
+# Which rung each entry is about is said in its `why` rather than in a field, because a
+# corpus entry carries the question, the `QuerySpec` it asserts on, and documentation --
+# and there is deliberately no fourth group of keys for an expectation this runner cannot
+# check (`tests/test_answer.py` scans for one).
+#
+# Wiring a candidate port into the runner means building a generation inside a CI gate
+# that needs no index today, which is a decision about the gate rather than about this
+# epic. Until it is taken, the resolution behaviour itself is asserted by
+# `tests/test_resolve.py` against the published corpus, and these entries pin the
+# questions so the two can be compared and wired together later without rewriting them.
+
+- id: e2-008
+  spec_version: 1
+  question:
+    en: Inflation
+    ar: التضخم
+  today: 2026-09-16
+  operation: value
+  measure: actual
+  why: >-
+    Epic 2 / Story 2.3 — the rung that must not regress. Exact normalised-name lookup stays
+    first because it is the cheapest and most reliable: 96.0% recall@1 over the 50 `exact`
+    pairs of names-v1, against 23.8% for paraphrases through the index. `Inflation` is
+    published as exactly one detail name in P02, so the ladder is never consulted and the
+    binding is `named-in-question` by the reader rather than `semantic`.
+
+- id: e2-009
+  spec_version: 1
+  question:
+    en: inflation over the last 5 years
+    ar: التضخم خلال السنوات الخمس الماضية
+  today: 2026-09-16
+  operation: value
+  measure: actual
+  why: >-
+    Epic 2 / Story 2.3 and R-158 — a period phrase changes *when* a question asks about,
+    never *what*. The span words are stripped before candidate generation scores anything,
+    from the binder's own reviewed lists (R-BIND-RELATIVE-PERIOD-WORDS, R-BIND-PERIOD-NOUNS,
+    R-BIND-COUNT-WORDS) rather than a second copy, so the subject is `inflation` and the
+    five-year span cannot rank a workforce-nationalisation indicator on its numbers and
+    span words alone. The period still binds: this entry asserts the two readings of the
+    same words do not interfere.
+
+- id: e2-010
+  spec_version: 1
+  question:
+    en: What is the unemployment rate?
+    ar: ما هو معدل البطالة؟
+  today: 2026-09-16
+  operation: value
+  measure: actual
+  why: >-
+    Epic 2 / Story 2.3's structural gate, stated as the epic states it — *Obesity Rate* is
+    not admitted merely because both contain "rate", and e2-007 above is that very
+    indicator. Four characters alone does not achieve it, because `rate` is itself exactly
+    four characters, so R-RESOLVE-CONTENT-NGRAM-GATE carries a second list of generic
+    measure nouns that do not count as content for the gate. Those words stay in what gets
+    *scored*: the export publishes `Number of Jobs in the Sector` and `Occupancy Rate of
+    Hotels`, and removing their nouns from a question would take away the reader's own name
+    for the thing.
+
+- id: e2-011
+  spec_version: 1
+  question:
+    en: How fast are prices rising?
+    ar: ما مدى سرعة ارتفاع الأسعار؟
+  today: 2026-09-16
+  operation: value
+  measure: actual
+  why: >-
+    Epic 2 / Story 2.3 — the paraphrase class (labelled `para-en-001`), and a harder case
+    than e2-003's "tourists" because no form of the word "inflation" appears at all.
+    Paraphrase recall@1 is 23.8% and recall@10 is 57.1% after stripping, up from 21.4% and
+    47.6%. Recall@10 is the ceiling on everything discrimination could get right, which is
+    why raising it is the whole of stage 1's job.
+
+- id: e2-012
+  spec_version: 1
+  question:
+    en: tourism sector contribution to GDP
+    ar: مساهمة قطاع السياحة في الناتج المحلي الإجمالي
+  today: 2026-09-16
+  operation: value
+  measure: actual
+  why: >-
+    Epic 2 / Story 2.4 — the resolving half of e2-002, which refuses the same question with
+    no sector named. The group-or-sector signal carries the most weight of the four because
+    it is the most specific thing a reader can add, and it is the only thing that separates
+    the eight details. The entity is read off the published export (16 `Sectors`) and folded
+    at build time. It is discounted when it agrees with *every* candidate, which is what
+    makes it discrimination rather than a uniform boost: a question about medical tourism
+    reaches candidates that are all in Tourism, and a signal true of all of them tells none
+    of them apart. Measured: not discounting it cost `exact-ar-021` its rank-one answer.
+
+- id: e2-013
+  spec_version: 1
+  question:
+    en: Number of Jobs in the Sector
+    ar: عدد الوظائف في القطاع
+  today: 2026-09-16
+  operation: value
+  measure: actual
+  expected: clarification
+  why: >-
+    Epic 2 — the entry that pins a defect found by measuring rather than by reasoning. An
+    earlier request vocabulary included the content nouns `number`, `value` and `level`; it
+    stripped `number` and `the` out of this question and broke the case, because those words
+    are the reader's own name for the thing. R-RESOLVE-REQUEST-VOCABULARY now holds no
+    content noun, and `tests/test_resolve.py` asserts over the whole published corpus that
+    no surface strips to nothing. Function words like `of` and `in` are still removed and
+    that is harmless: they occur in nearly every name, so they discriminate nothing.
+
+- id: e2-014
+  spec_version: 1
+  question:
+    en: How much of the economy does not come from oil and gas?
+    ar: ما حجم الاقتصاد غير القائم على النفط والغاز؟
+  today: 2026-09-16
+  operation: value
+  measure: actual
+  why: >-
+    Epic 2 / Story 2.3 — the synonym class (labelled `para-en-003`), where the reader's word
+    and the published word mean the same and share no characters: *non-oil* for
+    *Non-Hydrocarbon*. The class stripping helped most — synonym recall@10 went from 90.0%
+    to 100.0%, and recall@1 after discrimination from 50.0% to 75.0%. It is also why the
+    content-overlap signal is graded rather than binary: requiring a surface to contain
+    *every* run of the subject was measured at 70.1% overall against 74.4%, and halved
+    synonym recall@1. A reader who says "non-oil" shares some of the subject and never all.
+
+- id: e2-015
+  spec_version: 1
+  question:
+    en: Global Cybersecurity Index rank
+    ar: ترتيب مؤشر الأمن السيبراني العالمي
+  today: 2026-09-16
+  operation: value
+  measure: actual
+  expected: clarification
+  why: >-
+    Epic 2 / Story 2.5 and FR-2 — a two-way tie, small enough to put to the reader as a
+    closed question where e2-002's eight-way tie is not. The margin deciding between binding
+    and asking is `R-RESOLVE-AMBIGUITY-MARGIN`, a rule rather than a code constant, carrying
+    the labelled-set version it was derived from (`names-v1`) as FR-2 requires. It is a share
+    of the leader's own score rather than an absolute, because that score is a sum of
+    whichever signals the question supplied: an absolute margin would disambiguate freely on
+    a rich question and never on a bare name.
+
+- id: e2-016
+  spec_version: 1
+  question:
+    en: How much rain fell last year?
+    ar: كم كمية الأمطار التي هطلت العام الماضي؟
+  today: 2026-09-16
+  operation: value
+  measure: actual
+  expected: refusal
+  refusal_reason: >-
+    The published corpus holds no indicator about rainfall at all — P02 publishes no detail
+    about weather, rainfall, road casualties, marriage, crime, sport, prayer, cinema, house
+    prices, exchange rates or elections. The honest result is an empty candidate list and a
+    refusal stating `nothing-matched`.
+  why: >-
+    Epic 2 / Story 2.5 and FR-38 — a case **currently failing**, pinned rather than hidden.
+    Measured over the 22 negative pairs of names-v1, 8 still resolve to a confident answer,
+    and every one is admitted by a coincidental character run inside a *definition*; this
+    question reaches a food-security index through the run `fell`. Restricting the gate to
+    name surfaces was measured and is not the trade it appears to be: it costs 3.6 points of
+    overall recall@10 and 20 points of synonym recall@10, and it *raised* confident wrong
+    answers from 8 to 10 by converting disambiguations into bindings. Story 2.13 already
+    measured that no score threshold separates these distributions, which is why Story 2.7's
+    six distinct refusals are their own work rather than a number in the gate.
+
+- id: e2-017
+  spec_version: 1
+  question:
+    en: asdfghjkl
+    ar: أبجدهوز
+  today: 2026-09-16
+  operation: value
+  measure: actual
+  expected: refusal
+  refusal_reason: >-
+    Nothing in the published corpus shares a content run with the question, so candidate
+    generation returns an empty list and the refusal states `nothing-matched`.
+  why: >-
+    Epic 2 / Story 2.5 — the floor case for the structural gate, and one the engine does get
+    right today (labelled `none-en-013`). It is here because it separates two things a reader
+    must be able to tell apart: *I hold nothing like that* and *several things match*. A
+    refusal that could not distinguish them would be the silent failure AD-15 prevents.
+
+- id: e2-018
+  spec_version: 1
+  question:
+    en: What is it?
+    ar: ما هو؟
+  today: 2026-09-16
+  operation: value
+  measure: actual
+  expected: refusal
+  refusal_reason: >-
+    The question is entirely framing vocabulary and names no subject at all.
+  why: >-
+    Epic 2 / Story 2.3's degenerate case, and the one that would be a silent disaster.
+    Stripping removes every word, and scoring an empty subject would return an arbitrary
+    slice of the collection ordered by nothing — a confident answer about whichever indicator
+    happened to sort first. So the subject is never allowed to become empty: the question as
+    asked is used instead, and the worst case is the behaviour before stripping rather than a
+    candidate list with no relationship to what was asked.
+
+- id: e2-019
+  spec_version: 1
+  question:
+    en: What was inflation in April 2026?
+    ar: كم بلغ معدل التضخم في أبريل 2026؟
+  today: 2026-09-16
+  operation: value
+  measure: actual
+  why: >-
+    Epic 2 / NFR-1 and AD-17 — the same question resolves identically on every run, asserted
+    here by the runner compiling it twice. It matters more in this epic than in Epic 1: the
+    ladder sorts on a discrimination score, and an unstable tie-break would make the same
+    question bind different details on different runs. The order is total — score, then the
+    order stage 1 delivered, then the detail id — and stage 1's order is the middle key
+    deliberately. Falling back on the detail id instead was measured dropping exact recall@1
+    from 96.0% to 80.0% and the overall figure from 73.2% to 63.4%.
+
+- id: e2-020
+  spec_version: 1
+  question:
+    en: Inflation monthly
+    ar: التضخم الشهري
+  today: 2026-09-16
+  operation: value
+  measure: actual
+  why: >-
+    Epic 2 / Story 2.4's grain veto and FR-6, on a detail that does publish monthly so the
+    veto does not fire. `Inflation` publishes Monthly, Quarterly and Yearly per P06. The veto
+    exists for the other case: a detail publishing only yearly rows, asked for monthly, is
+    **out** rather than ranked lower, because a weight — however large — can always be
+    outvoted by enough of the others. It fires only where the catalogue actually records
+    which grains exist; a detail whose periods the export never recorded is not vetoed,
+    because a veto on missing evidence removes candidates for a gap in the export rather
+    than for a mismatch.
