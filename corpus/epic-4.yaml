@@ -125,3 +125,52 @@
     carries `South Korea`; both spellings survive publication (FACT 7). A reader asking for
     South Korea must reach both, and a benchmark set holding both must not list the country
     twice. The alias map is data, not a hard-coded dictionary.
+
+- id: e4-009
+  spec_version: 1
+  question:
+    en: Compare Qatar's inflation with Singapore and Japan in 2026-Q1.
+    ar: قارن معدل التضخم في قطر مع سنغافورة واليابان في الربع الأول من 2026.
+  today: 2026-09-15
+  operation: comparison
+  measure: actual
+  why: >-
+    Epic 4 / Story 4.2 — named countries filter and never expand, as its own answer
+    rather than as a refusal. `Inflation` declares Bahrain, KSA, Kuwait, Oman, Qatar and
+    Singapore; Japan is not among them. The comparison covers Qatar and Singapore, and
+    the answer states that Japan is not a declared benchmark for this indicator. It does
+    not quietly add Japan, and it does not refuse the whole question because one named
+    country was outside the set — the narrowing is stated (FR-57) and the rest is
+    answered.
+
+- id: e4-010
+  spec_version: 1
+  question:
+    en: Compare Qatar's inflation with its FDI stock.
+    ar: قارن معدل التضخم في قطر مع مخزون الاستثمار الأجنبي المباشر.
+  today: 2026-09-15
+  operation: comparison
+  measure: actual
+  why: >-
+    Epic 4 / Story 4.5 — two indicators whose latest periods differ and whose units
+    differ. `Inflation` last publishes at 2026-Q1 (%), `FDI stock` at 2024 (USD). Each
+    figure is shown at its own period and in its own published unit, no alignment is
+    forced (FR-24), and the answer states that the two are not directly comparable
+    (FR-47). This is the case a cross-country composer must not be reused for: the
+    periods are deliberately not common, which is the opposite of Story 4.4.
+
+- id: e4-011
+  spec_version: 1
+  question:
+    en: Which of Qatar's benchmark countries did best on the Global Innovation Index in 2025?
+    ar: أي من الدول المرجعية لقطر كان الأفضل في مؤشر الابتكار العالمي لعام 2025؟
+  today: 2026-09-15
+  operation: extremum
+  measure: actual
+  why: >-
+    Epic 4 / Story 4.6 — "best" is not a synonym for "highest". `Global Innovation Index
+    Rank` publishes polarity `Decrease`, so the best figure is the lowest one: at 2025
+    the rows are UAE 30, KSA 46, Qatar 48, Bahrain 62, Oman 69, Kuwait 73, and the answer
+    is the UAE. An engine assuming higher is better answers Kuwait, which is wrong on
+    every rank in the catalogue — and the published polarity is the only thing that
+    decides it.

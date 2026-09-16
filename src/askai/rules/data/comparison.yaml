@@ -1,0 +1,122 @@
+# The constants a cross-country or cross-indicator comparison applies.
+#
+# Epic 4. Every clause here would otherwise be a literal in `assemble/compare/` -- the
+# unit a spread is expressed in, the polarity spellings that decide what "best" means,
+# the bound on a country fan-out, the point past which an ordinal is written as a
+# numeral. Each is a decision a reader can see in an answer, so each is data.
+#
+# What is deliberately *not* here: which countries a detail declares as benchmarks. That
+# is published configuration (P05), read per detail from the published layer, and a copy
+# of it in a rule file would be a second source of truth that drifts on the first
+# republish.
+area: COMPARE
+about: >-
+  The published constants a comparison applies: how named countries meet a declared
+  benchmark set, the unit a spread over percentages takes, which polarity spelling means
+  higher-is-better, and the bound on a country fan-out.
+
+rules:
+  - id: R-COMPARE-NAMED-COUNTRIES-FILTER-THE-DECLARED-SET
+    statement: >-
+      Countries the reader names filter the detail's declared benchmark set and never
+      widen it. A named country with no declared benchmark row is reported as not
+      declared; it is not fetched, and the set it was named alongside does not grow to
+      accommodate it.
+    status: agreed
+    kind: switch
+    sources:
+      - "docs/PRD.md FR-9"
+      - "recorded failure F-001, a two-country question that returned six"
+    catalogue: ["R-166"]
+    values:
+      named_countries_may_expand: false
+    note: >-
+      A switch rather than a principle because the opposite behaviour is what the
+      predecessor did, and a reviewer changing this file is the only way it comes back.
+
+  - id: R-COMPARE-FAN-OUT-BOUND
+    statement: >-
+      A country set is fetched concurrently, at most this many fetches in flight at
+      once, so a comparison costs roughly the slowest fetch rather than their sum
+      without opening one connection per declared country.
+    status: agreed
+    kind: constant
+    sources:
+      - "docs/PRD.md NFR-2"
+      - "P05: the largest declared benchmark set carries nine countries"
+    values:
+      max_concurrent_fetches: 8
+    note: >-
+      Stated by the selection and respected by whoever performs the fetch. The largest
+      declared set is nine, so this bound is reached by exactly one shape of question
+      today; it is a bound rather than a promise of parallelism.
+
+  - id: R-COMPARE-SPREAD-OVER-PERCENT-IS-POINTS
+    statement: >-
+      The spread between two figures published in percent is expressed in percentage
+      points, never in percent. The spellings below are the published unit strings this
+      applies to, matched on the engine's single text fold.
+    status: agreed
+    kind: table
+    sources:
+      - "docs/PRD.md FR-21, FR-27"
+      - "docs/ARCHITECTURE-SPINE.md AD-4"
+      - "P12 Units: the published catalogue carries `%` and does not carry `pp`"
+    catalogue: ["R-21"]
+    values:
+      percent_units: ["%", "Percent", "Percentage"]
+      points_unit: "pp"
+    note: >-
+      `pp` is not one of the 28 published units, because the data publishes levels and
+      the engine derives the movement. That is why the spelling is here: it is the one
+      unit string the engine supplies rather than carries through.
+
+  - id: R-COMPARE-POLARITY-DECIDES-BEST
+    statement: >-
+      When a superlative is asked as "best" or "worst" rather than "highest" or
+      "lowest", the indicator's published polarity decides the direction. A detail
+      publishing neither spelling has no published direction, and the answer states
+      which direction it used rather than assuming higher is better.
+    status: agreed
+    kind: table
+    sources:
+      - "docs/PRD.md FR-25"
+      - "P12 Polarities: the published vocabulary is Increase and Decrease"
+    values:
+      higher_is_better: ["Increase"]
+      lower_is_better: ["Decrease"]
+    note: >-
+      Two spellings, because two is what the published lookup carries. A third arriving
+      in the export is a data edit here, and until it is made it falls to the unpublished
+      branch -- which states its direction rather than guessing one.
+
+  - id: R-COMPARE-RANK-IS-NEVER-COMPUTED
+    statement: >-
+      A rank is returned only where the indicator publishes one. Ranking reaches 12 of
+      189 indicators, and for the rest the answer states that this indicator does not
+      publish a ranking rather than computing an order over whatever rows were fetched.
+    status: agreed
+    kind: switch
+    sources:
+      - "docs/PRD.md FR-26"
+      - "measured coverage: ranking reaches 12 of 189 indicators"
+    catalogue: ["R-166"]
+    values:
+      ranks_are_computed: false
+
+  - id: R-COMPARE-ORDINAL-NAMED-POSITIONS
+    statement: >-
+      Positions up to and including this one are written as the language's own ordinal
+      word; past it the position is written as a numeral in the language's own form.
+      Both languages author their own list, because an ordinal is a word in Arabic and a
+      suffixed numeral in English and one rule cannot produce both.
+    status: agreed
+    kind: constant
+    sources:
+      - "docs/PRD.md FR-26, FR-62"
+    values:
+      named_positions: 10
+    note: >-
+      Ten covers every position a bound scope reaches today -- the largest declared
+      benchmark set is nine countries. The numeral form past it is a fallback that is
+      correct rather than a gap.
