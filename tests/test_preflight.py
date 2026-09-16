@@ -352,11 +352,32 @@ def test_an_outcome_must_say_what_it_observed() -> None:
         CheckOutcome(check=Check.FREE_SPACE, passed=True, detail="   ")
 
 
-def test_the_default_floor_is_stated_rather_than_implied() -> None:
+def test_the_default_floor_is_stated_rather_than_implied(paths: DatabasePaths) -> None:
     """It is an operational threshold and deliberately not a rule (AD-11 wants rules to
-    be data about a ``QuerySpec``); what it must not be is a number nobody can see."""
+    be data about a ``QuerySpec``); what it must not be is a number nobody can see.
+
+    Driven against ``tmp_path`` like every other test here. An earlier version of this
+    one probed ``Path.cwd()`` -- the repository -- and left two probe files in the root
+    when a connection was not closed. A check that writes into the working tree is one
+    nobody should run from the working tree, and the test should not model that.
+    """
     assert MINIMUM_FREE_BYTES > 0
-    assert preflight(DatabasePaths.beneath(Path.cwd()), minimum_free_bytes=1).ok is not None
+    assert preflight(paths, minimum_free_bytes=1).ok
+
+
+def test_no_probe_file_is_ever_written_outside_the_directory_under_test(
+    paths: DatabasePaths,
+) -> None:
+    """The regression guard for the litter this test file once produced.
+
+    ``preflight`` must confine itself to the directory it was handed, so running it can
+    never leave anything in whatever happens to be the current working directory.
+    """
+    root = Path(__file__).resolve().parent.parent
+    before = {path.name for path in root.iterdir()}
+    assert preflight(paths).ok
+    strays = sorted(name for name in {p.name for p in root.iterdir()} - before)
+    assert not strays, f"preflight wrote into the repository root: {strays}"
 
 
 def _outcome(outcomes: tuple[CheckOutcome, ...], check: Check) -> CheckOutcome:
