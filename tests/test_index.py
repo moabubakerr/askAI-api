@@ -455,7 +455,7 @@ def test_no_numeric_row_is_embedded(built: sqlite3.Connection) -> None:
 def test_the_index_folds_text_with_the_engines_one_normalisation() -> None:
     """The index path and the query path are the same function, not merely the same rule."""
     module = importlib.import_module("askai.adapters.index.vectors")
-    assert getattr(module, "normalise") is normalise
+    assert module.normalise is normalise
 
 
 def test_a_differently_spelled_arabic_query_reaches_the_indexed_surface(

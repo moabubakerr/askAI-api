@@ -92,6 +92,24 @@ messages:
   refusal.not_published: "That is not in the published data, so there is no answer to give."
   refusal.not_supported: "The published data cannot answer that question as asked."
 
+  # ------------------------------------------------------ failures, said as failures
+  #
+  # A component that did not work is never worded as an absence (AD-15, findings 23,
+  # 128 and 150). "There is no answer to give" above is a fact about the published
+  # data; these two are facts about the engine, and a reader who is told the first when
+  # the second happened has been told something false about the data.
+
+  failure.data_unavailable: "The published data could not be read just now, so no figure was produced."
+  failure.external_unavailable: "The external source could not be reached, so nothing from it is included here."
+
+  # ------------------------------------------------------------ the external caveat
+  #
+  # Unconditional on anything external (FR-84, FR-88): there is no external content a
+  # reader is not entitled to be warned about, so this is attached by construction
+  # rather than when someone judges it necessary.
+
+  caveat.external: "This did not come from the approved published data."
+
   # ------------------------------------------------------------------ counted nouns
   #
   # The unit the reader asked in is chosen by the caller, from these ids. There is no
