@@ -1,0 +1,145 @@
+# Partial names -- the reader typed the beginning, or one word, of a published surface.
+#
+# Not the same as an ambiguous name: the fragment here identifies exactly one detail, and
+# the retrieval is only asked not to be distracted by the longer names that contain it.
+# This is the case boundary padding exists for in the shipped vectoriser.
+
+[part-en-001]
+lang: en
+kind: partial
+question: room nights
+expect: e7aece57-5df6-47d6-7ab6-08dec461c23d
+why: Two words out of "Number of Room Nights Sold".
+
+[part-en-002]
+lang: en
+kind: partial
+question: hotel keys
+expect: f0eb3c9f-51ec-486f-7ab4-08dec461c23d
+why: The distinguishing pair out of "Number of Hotel Keys".
+
+[part-en-003]
+lang: en
+kind: partial
+question: medical tourists
+expect: 8f03a937-bb54-423d-1e8e-08de2a61dd8c
+why: Two words out of "Number of Medical Tourists".
+
+[part-en-004]
+lang: en
+kind: partial
+question: crop yield
+expect: 5a060c25-e49a-4286-aeaf-08deb3df601c, 6d594200-9f01-445c-7a4b-08dec461c23d, 12dd0d02-60f7-47da-7aa9-08dec461c23d
+why: The common prefix of three published crop-yield details; the overall one is the most defensible first hit and the two breakdowns are acceptable.
+
+[part-en-005]
+lang: en
+kind: partial
+question: economic complexity
+expect: 7fb2296d-87a4-4954-6a2d-08dea2389ab1
+why: The name less "Index Rank".
+
+[part-en-006]
+lang: en
+kind: partial
+question: network readiness
+expect: 44346def-4945-4b96-04fd-08deda71879d
+why: The name less "Index (NRI) Rank".
+
+[part-en-007]
+lang: en
+kind: partial
+question: food security
+expect: 6c2ec1e3-860f-4b3f-60c6-08debee63662
+why: Two words out of "Global Food Security Index (GFSI) Rank".
+
+[part-en-008]
+lang: en
+kind: partial
+question: corporate bonds
+expect: 475b90c2-8a41-4af4-7ab8-08dec461c23d
+why: Two words out of a twelve-word published name.
+
+[part-en-009]
+lang: en
+kind: partial
+question: fintech
+expect: 8a047c16-e933-48cd-60c9-08debee63662
+why: One word, published as part of "Number of licensed FinTech & InsurTech players", and in a casing the reader will not reproduce.
+
+[part-en-010]
+lang: en
+kind: partial
+question: greenhouses
+expect: 1f9f4a8c-110f-4122-7a98-08dec461c23d, c55ecd3b-24ba-4a68-fd85-08dddd5433de, 6d594200-9f01-445c-7a4b-08dec461c23d
+why: One word shared by three published details about greenhouse production.
+
+[part-en-011]
+lang: en
+kind: partial
+question: strait of hormuz
+expect: ee18a944-4692-412d-8b85-08deb9669260, 70955736-838f-4949-8b84-08deb9669260, ac5700f9-1c20-4a3b-8b86-08deb9669260, 40dbd7f4-b84f-4b89-8b87-08deb9669260, 3f427a5a-752c-4c6a-8b88-08deb9669260, 392121e6-1699-4a56-8b89-08deb9669260
+why: Only the indicator name is typed, and it is carried on six details; the total-volume detail is the best answer and any of the six is defensible.
+
+[part-en-012]
+lang: en
+kind: partial
+question: helium exports
+expect: ba030477-caf3-4c21-8b8e-08deb9669260, 71edf568-fe8d-4eeb-8b8a-08deb9669260, 26975cca-e3a4-4f80-8b8b-08deb9669260, 125a4faf-9af0-4c4e-8b8c-08deb9669260, 0e07d1dd-367c-4a39-8b8d-08deb9669260, a3b8080f-a97b-46ee-8b8f-08deb9669260, 7a5e47bd-9486-4005-8b90-08deb9669260, bad6d404-03b4-49cf-8b91-08deb9669260
+why: The indicator name, whose "Total Helium Exports" detail is the natural answer.
+
+[part-ar-001]
+lang: ar
+kind: partial
+question: الليالي الفندقية
+expect: e7aece57-5df6-47d6-7ab6-08dec461c23d
+why: Two words out of the published Arabic name.
+
+[part-ar-002]
+lang: ar
+kind: partial
+question: الغرف الفندقية
+expect: f0eb3c9f-51ec-486f-7ab4-08dec461c23d
+why: Two words out of a published Arabic name whose detail-name surface is the whole indicator title -- the Arabic label is the short one, so the maximum across surfaces decides this.
+
+[part-ar-003]
+lang: ar
+kind: partial
+question: مؤشر الابتكار
+expect: 0449d68c-23ad-45bf-7ac6-08de049c57c6
+why: Two words out of the Global Innovation Index label.
+
+[part-ar-004]
+lang: ar
+kind: partial
+question: الأمن الغذائي
+expect: 6c2ec1e3-860f-4b3f-60c6-08debee63662
+why: Two words out of the Global Food Security Index name.
+
+[part-ar-005]
+lang: ar
+kind: partial
+question: إنتاجية المحاصيل
+expect: 5a060c25-e49a-4286-aeaf-08deb3df601c, 6d594200-9f01-445c-7a4b-08dec461c23d, 12dd0d02-60f7-47da-7aa9-08dec461c23d
+why: The published Arabic name of the overall crop yield, and the prefix of two others.
+
+[part-ar-006]
+lang: ar
+kind: partial
+question: مضيق هرمز
+expect: ee18a944-4692-412d-8b85-08deb9669260, 70955736-838f-4949-8b84-08deb9669260, ac5700f9-1c20-4a3b-8b86-08deb9669260, 40dbd7f4-b84f-4b89-8b87-08deb9669260, 3f427a5a-752c-4c6a-8b88-08deb9669260, 392121e6-1699-4a56-8b89-08deb9669260
+why: Two words out of حجم التجارة العابرة لمضيق هرمز, one of them fused to a preposition.
+
+[part-ar-007]
+lang: ar
+kind: partial
+question: الهيليوم
+expect: ba030477-caf3-4c21-8b8e-08deb9669260, 5f765bbc-ecc9-4e07-a4ba-08deb9658cc1, 71edf568-fe8d-4eeb-8b8a-08deb9669260, 26975cca-e3a4-4f80-8b8b-08deb9669260, 125a4faf-9af0-4c4e-8b8c-08deb9669260, 0e07d1dd-367c-4a39-8b8d-08deb9669260, a3b8080f-a97b-46ee-8b8f-08deb9669260, 7a5e47bd-9486-4005-8b90-08deb9669260, bad6d404-03b4-49cf-8b91-08deb9669260
+why: One word, carried by the helium export indicator and by the rare-gases share detail. A reader typing it has not said which, and neither can the index.
+
+[part-ar-008]
+lang: ar
+kind: partial
+question: سندات الشركات
+expect: 475b90c2-8a41-4af4-7ab8-08dec461c23d
+why: Two words out of a long published Arabic name.

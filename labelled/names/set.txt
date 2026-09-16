@@ -1,0 +1,33 @@
+# The `names` labelled set -- questions paired with the detail that answers them.
+#
+# AD-30: retrieval carries its own labelled set and its own CI gate, and the `names`
+# ground truth is *free from the findings* -- finding 42's Arabic morphology, F-014's
+# paraphrases and F-003's fifteen GDP candidates are already question -> expected-detail
+# pairs. This file is the set's identity; the pairs live in the sibling `*.cases` files.
+#
+# The version is the whole point of the file. A resolution floor derived from this set
+# records `names-v<version>` beside its value (AD-30), and a floor whose recorded version
+# is not the one here is stale and fails the build. Adding, removing or re-labelling a
+# pair is a version bump, because it moves the distributions the floor was derived from.
+#
+# One hundred and eighty-six questions over the published indicator details -- 110 in
+# English and 76 in Arabic -- each labelled with the detail, or the set of
+# equally-defensible details, that is genuinely the right answer. Twenty-two of them name
+# no detail at all, because the honest answer is that this corpus does not hold one. The
+# negative pairs are not padding: a set with no negatives has nothing to locate a floor
+# against, since every question would have a correct answer somewhere and any threshold
+# above zero would only ever cost recall.
+#
+# Every expected detail id is a `PublishedIndicatorDetailId` in the export under `data/`
+# (read 2026-08-11), and `tests/test_retrieval_quality.py` refuses a pair naming one that
+# is not: a labelled set that has drifted from the corpus measures nothing, and would
+# report its own drift as a retrieval failure.
+#
+# The format is deliberately not YAML. Everything under `src/askai/adapters/index/` is
+# held to the standard library plus this project (NFR-4, asserted in `tests/test_index.py`),
+# and the reader that loads this set lives there. A block per case, `key: value` inside
+# it, `#` for a comment: readable, diffable, and parseable with nothing imported.
+set: names
+version: 1
+built_at: 2026-09-16
+export: data/cms

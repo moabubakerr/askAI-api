@@ -1,0 +1,168 @@
+# Questions whose correct result is nothing at all.
+#
+# AD-30: *"recall alone would reward a system that always returns its nearest neighbour"*.
+# Every question here is about something this corpus does not publish -- not an obscure
+# corner of it, a subject that is simply absent -- so the right answer is an empty
+# candidate list and every hit above the floor is a false one.
+#
+# These twenty-two pairs are the only evidence in the set about where the floor goes. The
+# positives fix how high it may be before recall is lost; these fix how low it may be
+# before nonsense is returned, and without them any floor above zero would look free.
+#
+# Each is checked against the export for the absence it claims: `data/cms/P02` publishes
+# no detail about weather, rainfall, road casualties, marriage, crime, sport, prayer,
+# cinema, house prices, exchange rates or elections.
+
+[none-en-001]
+lang: en
+kind: none
+question: How much rain fell last year?
+expect: 
+why: No meteorological indicator is published.
+
+[none-en-002]
+lang: en
+kind: none
+question: How many road accidents were there?
+expect: 
+why: No traffic or road-safety indicator is published.
+
+[none-en-003]
+lang: en
+kind: none
+question: What is the divorce rate?
+expect: 
+why: No civil-registration indicator is published. The corpus does publish an obesity, a smoking and a diabetes "rate", so a nearest-neighbour retrieval returns one of them.
+
+[none-en-004]
+lang: en
+kind: none
+question: Who won the football league?
+expect: 
+why: No sporting-result indicator is published, only a budget line for sport and youth.
+
+[none-en-005]
+lang: en
+kind: none
+question: What is the price of a cinema ticket?
+expect: 
+why: Cost of Living publishes a recreation and culture basket, not a ticket price; an answer from it would be a plausible, topical, wrong one.
+
+[none-en-006]
+lang: en
+kind: none
+question: What is the exchange rate against the dollar?
+expect: 
+why: The riyal's peg is not a published indicator.
+
+[none-en-007]
+lang: en
+kind: none
+question: When is the next election?
+expect: 
+why: Nothing electoral is published.
+
+[none-en-008]
+lang: en
+kind: none
+question: How much does an apartment cost to buy?
+expect: 
+why: Housing appears as a cost-of-living basket and as credit for private housing, never as a property price.
+
+[none-en-009]
+lang: en
+kind: none
+question: What is the crime rate?
+expect: 
+why: No justice or policing indicator is published.
+
+[none-en-010]
+lang: en
+kind: none
+question: How many mobile phone subscriptions are there?
+expect: 
+why: The ICT indicators count companies, jobs and online services -- never subscriptions. The nearest neighbour is confidently wrong.
+
+[none-en-011]
+lang: en
+kind: none
+question: What is the average temperature in summer?
+expect: 
+why: No climate indicator is published; greenhouse gas emissions are not a temperature.
+
+[none-en-012]
+lang: en
+kind: none
+question: How many books were published this year?
+expect: 
+why: Nothing cultural is published as an indicator.
+
+[none-en-013]
+lang: en
+kind: none
+question: asdfghjkl
+expect: 
+why: Not a question. It folds to something non-empty and vectorises, so the index will score rows against it; the correct result is still nothing.
+
+[none-en-014]
+lang: en
+kind: none
+question: What is the capital of France?
+expect: 
+why: A well-formed question about nothing in the corpus. France is published as a column of the helium export breakdown, which is the trap.
+
+[none-ar-001]
+lang: ar
+kind: none
+question: كم كمية الأمطار التي هطلت؟
+expect: 
+why: No meteorological indicator is published.
+
+[none-ar-002]
+lang: ar
+kind: none
+question: كم عدد حوادث الطرق؟
+expect: 
+why: No road-safety indicator is published.
+
+[none-ar-003]
+lang: ar
+kind: none
+question: ما هو معدل الطلاق؟
+expect: 
+why: Nothing civil is published, and معدل is the first word of three published Arabic names, so the lexical half will find all three.
+
+[none-ar-004]
+lang: ar
+kind: none
+question: متى تبدأ العطلة المدرسية؟
+expect: 
+why: The education indicators count students, teachers and costs; a school calendar is not among them.
+
+[none-ar-005]
+lang: ar
+kind: none
+question: ما هي درجة الحرارة اليوم؟
+expect: 
+why: No climate indicator is published.
+
+[none-ar-006]
+lang: ar
+kind: none
+question: كم سعر تذكرة السينما؟
+expect: 
+why: The Arabic cost-of-living basket for الترفيه والثقافة is not a ticket price.
+
+[none-ar-007]
+lang: ar
+kind: none
+question: من فاز بالدوري؟
+expect: 
+why: No sporting-result indicator is published.
+
+[none-ar-008]
+lang: ar
+kind: none
+question: ما هي مواعيد الصلاة؟
+expect: 
+why: Nothing of the kind is published; the question is common and the corpus is silent.

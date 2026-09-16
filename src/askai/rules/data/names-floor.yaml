@@ -1,0 +1,138 @@
+# The resolution floor for the `names` collection -- derived, and recorded with its
+# derivation.
+#
+# AD-30: *"floors are derived, not chosen ... the derivation is recorded with the value, so
+# that a future change is an argument with evidence rather than a preference."* Everything
+# in this file is therefore either a measurement or the criterion a measurement was judged
+# against. Nothing here was picked because it looked about right.
+#
+# Re-derive by running the harness and writing what it prints:
+#
+#     uv run python -m askai.adapters.index --derive
+#
+# and re-derive it whenever the vector source, the fold, or the published corpus changes.
+# Any of those moves the scoring space, and a threshold from a scoring space that no
+# longer exists is a number that still works and no longer means anything.
+area: NAMES
+about: >-
+  The lowest score a `names` candidate may carry and still be offered to a reader, the
+  relative cut applied against the best hit, and the criterion both were judged
+  sufficient or insufficient against -- each recorded with the labelled set, the vector
+  source and the date it was measured on.
+
+rules:
+  - id: R-NAMES-FLOOR-DERIVATION-CRITERION
+    statement: >-
+      A derived threshold is sufficient only when it discards no more than the declared
+      share of relevant candidates and admits no more than the declared share of
+      irrelevant ones; a derivation failing either is recorded as insufficient and calls
+      for a structural discriminator rather than a different number.
+    status: proposed
+    kind: constant
+    sources:
+      - "docs/ARCHITECTURE-SPINE.md AD-30"
+      - "_bmad-output/planning-artifacts/epics.md Story 2.13"
+    values:
+      maximum_false_negative_percent: 10
+      maximum_false_positive_percent: 10
+      irrelevant_percentile: 95
+    note: >-
+      The criterion is written down *before* a measurement rather than after it, which is
+      the whole difference between deriving a floor and choosing one: a budget agreed in
+      advance can declare a result insufficient, and a budget read off the result cannot.
+      Ten per cent each way is the point at which a floor is doing more good than harm at
+      AD-25's stage 1, where a dropped candidate is an answer the discrimination stage
+      never sees and an admitted one is merely a candidate it has to reject. The
+      percentile is where the irrelevant distribution's upper tail is read for the
+      reported separation; the derived value itself uses every observation, not a
+      percentile.
+
+  - id: R-NAMES-RESOLUTION-FLOOR
+    statement: >-
+      The lowest combined score a names candidate may carry and still be offered, derived
+      from the measured separation between the scores of relevant candidates and the
+      scores returned for questions this corpus answers with nothing, over the labelled
+      set and vector source named in these values.
+    status: proposed
+    kind: constant
+    sources:
+      - "docs/ARCHITECTURE-SPINE.md AD-30"
+      - "_bmad-output/planning-artifacts/epics.md Story 2.13"
+      - "labelled/names"
+    values:
+      floor_percent: 83
+      labelled_set: names-v1
+      vector_source_identity: trigram-blake2b/w3/d256/pad1
+      derived_on: "2026-09-16"
+      separation_percent: 20
+      discards_relevant_percent: 22
+      admits_irrelevant_percent: 0
+      relevant_observations: 140
+      irrelevant_observations: 22
+      sufficient: false
+    note: >-
+      Derived, not chosen: 0.838 is the score at which the survival rate of relevant
+      candidates less that of irrelevant ones is at its maximum over the 162 observations
+      named above, and it is written as 83 because a rule clause carries no fraction and a
+      floor rounded *down* refuses nothing the measurement admitted.
+
+      `sufficient: false`, and that is the finding rather than a defect in the number. At
+      the derived value the floor admits none of the 22 irrelevant scores -- but it
+      discards 22.9% of the relevant ones, against a declared budget of 10%. The reason is
+      visible in a third distribution the harness reports and deliberately excludes from
+      the derivation: for the 22 positive questions where a wrong candidate outranked the
+      right one, that wrong candidate's median score is 0.831 -- within four thousandths of
+      the floor -- and its 95th percentile is 1.245, which is exactly the 95th percentile
+      of the relevant distribution. A wrong answer at the top of the list is, by score,
+      indistinguishable from a right one.
+
+      That is AD-30's structural lesson and finding 126's, generalised: a flat score
+      cannot carry a distinction the index never encoded. The floor is therefore recorded
+      here as evidence and is **not applied** in `namesearch`; what the measurement calls
+      for is Story 2.4's structural discriminator, not a different threshold. The value is
+      kept rather than omitted so that the next derivation is an argument with this one.
+
+      This value belongs to the shipped character-trigram vectoriser and to nothing else.
+      Reading it requires presenting the same vector source
+      (`askai.adapters.index.floors`), because a threshold measured in one scoring space
+      applied in another is the same confident nonsense a cosine across two vector spaces
+      is, and the index already refuses that at load for the same reason.
+
+  - id: R-NAMES-RELATIVE-CUT-AGAINST-BEST-HIT
+    statement: >-
+      The share of the best hit's score a later candidate must reach to be offered
+      alongside it, derived from the measured separation between the ratio-to-best of
+      correct candidates below rank one and that of incorrect ones.
+    status: proposed
+    kind: constant
+    sources:
+      - "docs/ARCHITECTURE-SPINE.md AD-30"
+      - "_bmad-output/planning-artifacts/epics.md Story 2.13"
+      - "labelled/names"
+    values:
+      relative_cut_percent: 74
+      labelled_set: names-v1
+      vector_source_identity: trigram-blake2b/w3/d256/pad1
+      derived_on: "2026-09-16"
+      separation_percent: -3
+      discards_relevant_percent: 16
+      admits_irrelevant_percent: 23
+      relevant_observations: 113
+      irrelevant_observations: 1561
+      sufficient: false
+    note: >-
+      The inherited relative cut -- *a good first suggestion is not followed by two bad
+      ones* -- put through the same derivation as the floor, over 113 correct candidates
+      that ranked below first and the 1,561 incorrect ones they were mixed with.
+
+      It derives to 0.748 and the derivation is insufficient by a wider margin than the
+      floor's: the separation is **negative** (-0.030), meaning the typical correct
+      below-rank-one candidate sits *below* the upper tail of the incorrect ones. Applying
+      it would drop 16.8% of the correct candidates it saw while still admitting 23.7% of
+      the incorrect. A cut that trades one in six right answers for three in four wrong
+      ones is not a cut worth making, so it is recorded and not applied.
+
+      The number is here so that the next vector source is judged against it. A model that
+      moves this separation positive has done something the character-trigram space
+      cannot, and that -- not an overall recall figure -- is the evidence that the second
+      and third suggestions have started to mean something.

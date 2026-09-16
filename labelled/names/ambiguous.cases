@@ -1,0 +1,111 @@
+# Over-general names -- questions that SHOULD be ambiguous, and are labelled as such.
+#
+# The export publishes the same detail name under several indicators: seven details are
+# called "Sector Exports", eight "Sector Contribution To GDP", two "Global Cybersecurity
+# Index (GCI) Rank", and "Japan", "Others" and "India" each name a column of three
+# different export breakdowns. A reader typing one of these has genuinely not said which
+# they mean.
+#
+# They are in the set because they are AD-30's structural lesson in miniature: every
+# member of the expected set scores *identically*, so no floor and no ranking can separate
+# them. Counting them as hits when any member comes back is the honest measurement; a set
+# that labelled one arbitrary member as the answer would report a 1-in-8 accident as a
+# retrieval failure and make the floor look worse than it is.
+
+[ambig-en-001]
+lang: en
+kind: ambiguous
+question: Sector Exports
+expect: 122d47f7-8c5c-48a5-fd90-08dddd5433de, d1cc2d84-2557-4443-ce7b-08de268d1812, 99d78879-ebc5-44fc-6d8d-08de8e443779, 902de7d7-c5ac-444a-7ab1-08dec461c23d, 6306cb7f-91a1-456e-8716-08dee641c19a, ba5871a1-f81c-43c3-c7bd-08de3ade590a, eb07919f-adb5-4e98-7ab0-08dec461c23d
+why: Seven details publish this name or a name beginning with it, under seven sectors.
+
+[ambig-en-002]
+lang: en
+kind: ambiguous
+question: Sector Contribution To GDP
+expect: c4a4da88-830d-4098-87d8-08dea2214fb6, a08d961b-cfd0-4fcf-aead-08deb3df601c, 70e23b54-5476-492a-7a4a-08dec461c23d, d14eadeb-a8bf-4242-92c8-08dec462e127, 89f1fdc0-cf06-4569-d2e8-08ded4dc1597, 1d19eeb1-9bc7-4998-a7a4-08def0866aac, f60a0ecf-94f5-4f69-a7aa-08def0866aac, cf835ee5-5215-4fdf-6f92-08dea8e8edb6
+why: Eight sectors publish a detail of exactly this name; only the English *label* carries the sector, and in two of the eight only the Arabic one does.
+
+[ambig-en-003]
+lang: en
+kind: ambiguous
+question: Number of Jobs in the Sector
+expect: 342a4e73-19b3-46cd-31d3-08ddd8aaca14, f623f0e1-cc8f-4fbf-7a7e-08dec461c23d, dc8a5197-d7d7-458f-7a8f-08dec461c23d, 5ddcfb1b-0cfb-4ce8-7acc-08dec461c23d
+why: Four sectors publish this detail name.
+
+[ambig-en-004]
+lang: en
+kind: ambiguous
+question: Global Cybersecurity Index rank
+expect: dc087d3c-3562-44cc-7a93-08dec461c23d, dcc40483-0957-4f11-7a94-08dec461c23d
+why: Two details carry this exact name, with different ids and different parent indicators. No amount of scoring distinguishes them; only the data can.
+
+[ambig-en-005]
+lang: en
+kind: ambiguous
+question: Total Expenditure
+expect: d096b68f-d333-4cad-f4e7-08decfcf581a, 32a3b554-5c6d-4a02-f4ef-08decfcf581a
+why: Published under both State Budget Performance and Expenditure Breakdown.
+
+[ambig-en-006]
+lang: en
+kind: ambiguous
+question: Salaries
+expect: 95a585e3-80d5-4a16-f4e5-08decfcf581a, 30f32351-c16e-4777-f4ee-08decfcf581a
+why: The same name under two budget indicators.
+
+[ambig-en-007]
+lang: en
+kind: ambiguous
+question: exports to Japan
+expect: b140cdd5-342f-4bc3-a4ad-08deb9658cc1, f635ceca-cf1f-4fb6-a4cb-08deb9658cc1, 26975cca-e3a4-4f80-8b8b-08deb9669260
+why: Japan is a column of the fertilizer, the LNG and the helium export breakdowns. The question names the destination and not the commodity.
+
+[ambig-en-008]
+lang: en
+kind: ambiguous
+question: fertilizers
+expect: e978fbe2-b2c3-42bc-a4bc-08deb9658cc1, 0fed25b6-f1f8-40e0-8b95-08deb9669260, 69a24838-9d3d-4af2-a4aa-08deb9658cc1
+why: A supply share, a price change and an export volume all publish this word as their whole name. Three different questions, one surface.
+
+[ambig-en-009]
+lang: en
+kind: ambiguous
+question: container traffic
+expect: 65b87b3c-f6db-4812-a4bf-08deb9658cc1, 3f427a5a-752c-4c6a-8b88-08deb9669260
+why: The name is a detail of both Vessel Transit Activity and the Strait of Hormuz volume.
+
+[ambig-ar-001]
+lang: ar
+kind: ambiguous
+question: صادرات القطاع
+expect: 122d47f7-8c5c-48a5-fd90-08dddd5433de, d1cc2d84-2557-4443-ce7b-08de268d1812, 99d78879-ebc5-44fc-6d8d-08de8e443779, 902de7d7-c5ac-444a-7ab1-08dec461c23d, 6306cb7f-91a1-456e-8716-08dee641c19a, ba5871a1-f81c-43c3-c7bd-08de3ade590a, eb07919f-adb5-4e98-7ab0-08dec461c23d
+why: The Arabic half of ambig-en-001; two of the seven publish it with no sector at all.
+
+[ambig-ar-002]
+lang: ar
+kind: ambiguous
+question: مساهمة القطاع في الناتج المحلي الإجمالي
+expect: c4a4da88-830d-4098-87d8-08dea2214fb6, a08d961b-cfd0-4fcf-aead-08deb3df601c, 70e23b54-5476-492a-7a4a-08dec461c23d, d14eadeb-a8bf-4242-92c8-08dec462e127, 89f1fdc0-cf06-4569-d2e8-08ded4dc1597, 1d19eeb1-9bc7-4998-a7a4-08def0866aac, f60a0ecf-94f5-4f69-a7aa-08def0866aac, cf835ee5-5215-4fdf-6f92-08dea8e8edb6
+why: Eight sectors, one Arabic name; the sector appears in brackets on some and not others.
+
+[ambig-ar-003]
+lang: ar
+kind: ambiguous
+question: الرواتب
+expect: 95a585e3-80d5-4a16-f4e5-08decfcf581a, 30f32351-c16e-4777-f4ee-08decfcf581a
+why: One word, two budget indicators.
+
+[ambig-ar-004]
+lang: ar
+kind: ambiguous
+question: الأسمدة
+expect: e978fbe2-b2c3-42bc-a4bc-08deb9658cc1, 0fed25b6-f1f8-40e0-8b95-08deb9669260, 69a24838-9d3d-4af2-a4aa-08deb9658cc1
+why: The Arabic half of ambig-en-008.
+
+[ambig-ar-005]
+lang: ar
+kind: ambiguous
+question: اليابان
+expect: b140cdd5-342f-4bc3-a4ad-08deb9658cc1, f635ceca-cf1f-4fb6-a4cb-08deb9658cc1, 26975cca-e3a4-4f80-8b8b-08deb9669260
+why: A country name that is a column of three different export breakdowns.

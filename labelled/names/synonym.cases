@@ -1,0 +1,147 @@
+# Synonyms -- the reader's word and the published word mean the same and share no letters.
+#
+# Measured in the trigram space on this corpus: "hospitality" against "tourism" overlaps
+# by 0%, "non-oil" against "non-hydrocarbon" by 0%. These are the pairs that decide
+# whether the vector half is doing semantic work or spelling work, and they are separated
+# from the paraphrases because a paraphrase can still share a word by luck while these
+# cannot share one at all.
+
+[syn-en-001]
+lang: en
+kind: synonym
+question: non-oil economy
+expect: a8296f0b-92c0-4275-bc89-08de9e09a558, f3de8791-b7fd-4135-6a2f-08dea2389ab1
+why: The published word is "Non-Hydrocarbon". "non-oil" is what every reader writes and shares no trigram with it beyond the hyphen.
+
+[syn-en-002]
+lang: en
+kind: synonym
+question: non-oil exports
+expect: 0effbea5-a853-4a90-6fd0-08dea8e8edb6, d2e4c8ca-3833-48a0-7aae-08dec461c23d
+why: Non-Hydrocarbon Exports, and the Non-Hydrocarbon detail of Total Exports.
+
+[syn-en-003]
+lang: en
+kind: synonym
+question: non-oil government income
+expect: 68631efe-4a3e-4dae-c6b5-08deeafdc6dc, 990d2e5e-83a2-4d42-f4e6-08decfcf581a, da8f1e27-2bd7-4d2f-d2e7-08ded4dc1597, f97dd161-6797-44b3-6fd2-08dea8e8edb6
+why: Two synonyms at once -- "non-oil" for "Non-Hydrocarbon" and "income" for "Revenue" -- over the four published non-hydrocarbon revenue details.
+
+[syn-en-004]
+lang: en
+kind: synonym
+question: hospitality sector contribution to the economy
+expect: cf835ee5-5215-4fdf-6f92-08dea8e8edb6
+why: Sector Contribution to GDP (Tourism). "hospitality" and "tourism" overlap by nothing in a character space; they are the same sector to a reader.
+
+[syn-en-005]
+lang: en
+kind: synonym
+question: how many jobs does hospitality employ
+expect: 342a4e73-19b3-46cd-31d3-08ddd8aaca14
+why: Number of Jobs in the Sector (Tourism).
+
+[syn-en-006]
+lang: en
+kind: synonym
+question: overnight stays sold by hotels
+expect: e7aece57-5df6-47d6-7ab6-08dec461c23d
+why: Number of Room Nights Sold.
+
+[syn-en-007]
+lang: en
+kind: synonym
+question: cost of living
+expect: 2f326c46-ac3d-42a8-a4d0-08deb9658cc1, f29bc176-82b1-46b0-a4d1-08deb9658cc1, 4a02258e-79c1-4911-a4d2-08deb9658cc1, 8f8a357c-0c04-47c9-a4d3-08deb9658cc1, 5fc80a2a-3ba5-4303-a4d4-08deb9658cc1, f003d8db-8721-41e7-a4d5-08deb9658cc1
+why: The indicator name, carried on six details and on no row of its own. Any of the six is a defensible hit; none of them is *the* answer, which is Story 2.4's problem, not 2.2's.
+
+[syn-en-008]
+lang: en
+kind: synonym
+question: joblessness among nationals
+expect: 75ff3875-101c-4078-d135-08de096828d7
+why: The nearest published measurable is Qatari Nationals (Economically Active); the export publishes no unemployment rate, so this pair is deliberately hard rather than unfair.
+
+[syn-en-009]
+lang: en
+kind: synonym
+question: purchasing power eroded by rising prices
+expect: e4293295-fb43-46b0-7ac5-08dec461c23d
+why: Inflation, described entirely by its effect.
+
+[syn-en-010]
+lang: en
+kind: synonym
+question: money coming in from foreign investors
+expect: 55a465e9-e2b2-4196-1692-08de6c80b44a, ae6d8353-8468-4cec-1691-08de6c80b44a, 2f166fa9-7e81-46f6-85e9-08ddb7179f3f
+why: FDI stock, its share-of-GDP twin, and FDI value.
+
+[syn-en-011]
+lang: en
+kind: synonym
+question: shipping connectivity of the ports
+expect: 617e08ea-9571-42d0-6a65-08dea2389ab1
+why: Liner Shipping Connectivity Index Rank.
+
+[syn-en-012]
+lang: en
+kind: synonym
+question: how much cooking oil is stockpiled
+expect: b825d0f0-08ee-4e95-9654-08de66e6ef19
+why: Minimum Reserves -- "Oil", whose Arabic name زيت الطعام says cooking oil while its English name says "Oil". An English question about crude would be the wrong answer and an English match on "Oil" is how it happens.
+
+[syn-ar-001]
+lang: ar
+kind: synonym
+question: الاقتصاد غير النفطي
+expect: a8296f0b-92c0-4275-bc89-08de9e09a558, f3de8791-b7fd-4135-6a2f-08dea2389ab1
+why: The published Arabic is غير الهيدروكربوني. غير النفطي is the ordinary Arabic for it and shares only the word غير.
+
+[syn-ar-002]
+lang: ar
+kind: synonym
+question: الصادرات غير النفطية
+expect: 0effbea5-a853-4a90-6fd0-08dea8e8edb6, d2e4c8ca-3833-48a0-7aae-08dec461c23d
+why: Non-hydrocarbon exports, in the reader's Arabic.
+
+[syn-ar-003]
+lang: ar
+kind: synonym
+question: الإيرادات الحكومية غير النفطية
+expect: 68631efe-4a3e-4dae-c6b5-08deeafdc6dc, 990d2e5e-83a2-4d42-f4e6-08decfcf581a, da8f1e27-2bd7-4d2f-d2e7-08ded4dc1597, f97dd161-6797-44b3-6fd2-08dea8e8edb6
+why: The four non-hydrocarbon revenue details, asked with the ordinary word.
+
+[syn-ar-004]
+lang: ar
+kind: synonym
+question: مساهمة قطاع الضيافة في الاقتصاد
+expect: cf835ee5-5215-4fdf-6f92-08dea8e8edb6
+why: Sector Contribution to GDP (Tourism) -- الضيافة for السياحة.
+
+[syn-ar-005]
+lang: ar
+kind: synonym
+question: عدد وظائف قطاع الضيافة
+expect: 342a4e73-19b3-46cd-31d3-08ddd8aaca14
+why: Number of Jobs in the Sector (Tourism).
+
+[syn-ar-006]
+lang: ar
+kind: synonym
+question: غلاء المعيشة
+expect: 2f326c46-ac3d-42a8-a4d0-08deb9658cc1, f29bc176-82b1-46b0-a4d1-08deb9658cc1, 4a02258e-79c1-4911-a4d2-08deb9658cc1, 8f8a357c-0c04-47c9-a4d3-08deb9658cc1, 5fc80a2a-3ba5-4303-a4d4-08deb9658cc1, f003d8db-8721-41e7-a4d5-08deb9658cc1
+why: The published surface is تكلفة المعيشة; غلاء is the word a reader reaches for.
+
+[syn-ar-007]
+lang: ar
+kind: synonym
+question: الأسرّة في المستشفيات الحكومية
+expect: d15e7d79-d8a6-4496-04fc-08deda71879d
+why: Share of Beds in Public Hospitals. الحكومية is published; the question adds a shadda the fold removes.
+
+[syn-ar-008]
+lang: ar
+kind: synonym
+question: استثمارات الأجانب الوافدة
+expect: 55a465e9-e2b2-4196-1692-08de6c80b44a, ae6d8353-8468-4cec-1691-08de6c80b44a, 2f166fa9-7e81-46f6-85e9-08ddb7179f3f, c47fdfe6-1fc3-4ffb-859a-08ddb7179f3f
+why: Foreign direct investment, named by its effect rather than by the published الاستثمار الأجنبي المباشر.

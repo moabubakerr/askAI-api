@@ -1,0 +1,133 @@
+# Typos and misspellings -- the case the character-trigram space is genuinely good at.
+#
+# Kept as its own kind because it is the one class where the shipped vectoriser should
+# beat a word-level or sentence-level model rather than lose to it. Measured on this
+# corpus, "inflation" against "inflatoin" overlaps 38% in the trigram space; a model that
+# cannot reach these is not an upgrade even if it doubles paraphrase recall, and the
+# reason for keeping the fusion rather than replacing the lexical half wholesale.
+
+[typo-en-001]
+lang: en
+kind: typo
+question: inflatoin
+expect: e4293295-fb43-46b0-7ac5-08dec461c23d
+why: Two characters transposed in the shortest name in the corpus.
+
+[typo-en-002]
+lang: en
+kind: typo
+question: obesety rate
+expect: 6825244a-5e9b-428e-85cf-08ddb7179f3f
+why: One vowel wrong.
+
+[typo-en-003]
+lang: en
+kind: typo
+question: populaton
+expect: 160100bc-528f-4622-bc88-08de9e09a558
+why: A dropped character in a common word.
+
+[typo-en-004]
+lang: en
+kind: typo
+question: hopsital beds
+expect: 966b1cac-bff0-4d5a-7abe-08dec461c23d
+why: A transposition in the distinguishing word.
+
+[typo-en-005]
+lang: en
+kind: typo
+question: occupancy rate of hotles
+expect: 4f2dc17c-83dd-427a-7ab5-08dec461c23d
+why: A transposition at the end of the last word.
+
+[typo-en-006]
+lang: en
+kind: typo
+question: greenhouse gaz emissions
+expect: 6836f2fa-f1c8-4023-7ab2-08dec461c23d
+why: A phonetic misspelling.
+
+[typo-en-007]
+lang: en
+kind: typo
+question: logistics performence index
+expect: b60f7e11-c096-4fab-64ce-08de064080f9
+why: A misspelling inside a long published name.
+
+[typo-en-008]
+lang: en
+kind: typo
+question: watr consumption
+expect: 9cc91459-7e8e-4ec2-870b-08dee641c19a
+why: A dropped vowel.
+
+[typo-en-009]
+lang: en
+kind: typo
+question: gross national incom
+expect: fb801dff-2204-4cbb-7aaf-08dec461c23d
+why: A truncated final word.
+
+[typo-en-010]
+lang: en
+kind: typo
+question: internatonal visitors
+expect: 7bd4d5a6-a5b9-4a63-7ab3-08dec461c23d
+why: A dropped character mid-word.
+
+[typo-en-011]
+lang: en
+kind: typo
+question: smokin rate
+expect: 1367abb3-a507-4b3f-85d0-08ddb7179f3f
+why: A dropped final consonant, which is also how the word is spoken.
+
+[typo-ar-001]
+lang: ar
+kind: typo
+question: التضحم
+expect: e4293295-fb43-46b0-7ac5-08dec461c23d
+why: خ written as ح -- adjacent letters, one dot apart. The published Arabic name is two words long, so a single wrong letter is a large fraction of the whole surface.
+
+[typo-ar-002]
+lang: ar
+kind: typo
+question: معدل السمنه
+expect: 6825244a-5e9b-428e-85cf-08ddb7179f3f
+why: Teh marbuta written as a plain heh -- the single commonest Arabic misspelling there is, and one AD-26's fold is expected to absorb rather than one the vector space must.
+
+[typo-ar-003]
+lang: ar
+kind: typo
+question: عدد الاسره في المستشفيات
+expect: 966b1cac-bff0-4d5a-7abe-08dec461c23d
+why: Alef without its hamza and a teh marbuta as heh, both in one question.
+
+[typo-ar-004]
+lang: ar
+kind: typo
+question: استهلك المياه
+expect: 9cc91459-7e8e-4ec2-870b-08dee641c19a
+why: A dropped alef turns the noun استهلاك into a verb. Finding 42's morphology arriving as a typo rather than as a paraphrase.
+
+[typo-ar-005]
+lang: ar
+kind: typo
+question: معدل اشغال الفنادق
+expect: 4f2dc17c-83dd-427a-7ab5-08dec461c23d
+why: The hamza dropped from إشغال.
+
+[typo-ar-006]
+lang: ar
+kind: typo
+question: الناتج المحلي الاجمالي
+expect: fc6dccb5-e101-48bd-6a30-08dea2389ab1
+why: الإجمالي written without its hamza -- published both ways elsewhere in this very export, which is why the fold decides it and not the reader.
+
+[typo-ar-007]
+lang: ar
+kind: typo
+question: عدد السياح من خارج الدوله
+expect: 7bd4d5a6-a5b9-4a63-7ab3-08dec461c23d
+why: Teh marbuta as heh on the final word.

@@ -1,0 +1,355 @@
+# Exact name matches -- the reader typed a published surface, or all but typed it.
+#
+# These are the cases the lexical half of the hybrid exists for, and the ones any
+# retrieval worth shipping gets right. They are in the set as the control: a change that
+# lifts paraphrase recall while dropping these has moved the failure rather than fixed it.
+
+[exact-en-001]
+lang: en
+kind: exact
+question: Inflation
+expect: e4293295-fb43-46b0-7ac5-08dec461c23d
+why: P02 detail name, typed verbatim.
+
+[exact-en-002]
+lang: en
+kind: exact
+question: Real GDP
+expect: fc6dccb5-e101-48bd-6a30-08dea2389ab1
+why: F-003's shape: fifteen surfaces carry "GDP", and the detail whose own name is exactly "Real GDP" must win over the fourteen that merely contain it.
+
+[exact-en-003]
+lang: en
+kind: exact
+question: Total Population
+expect: 160100bc-528f-4622-bc88-08de9e09a558
+why: P02 detail name, typed verbatim.
+
+[exact-en-004]
+lang: en
+kind: exact
+question: Obesity Rate
+expect: 6825244a-5e9b-428e-85cf-08ddb7179f3f
+why: P02 detail name, typed verbatim.
+
+[exact-en-005]
+lang: en
+kind: exact
+question: Smoking Rate
+expect: 1367abb3-a507-4b3f-85d0-08ddb7179f3f
+why: P02 detail name, typed verbatim.
+
+[exact-en-006]
+lang: en
+kind: exact
+question: Diabetes Rate
+expect: 8e34a69d-9c59-4428-eb81-08ddb722adc5
+why: P02 detail name, typed verbatim.
+
+[exact-en-007]
+lang: en
+kind: exact
+question: Number of Hospital Beds
+expect: 966b1cac-bff0-4d5a-7abe-08dec461c23d
+why: P02 detail name, typed verbatim.
+
+[exact-en-008]
+lang: en
+kind: exact
+question: Number of International Visitors
+expect: 7bd4d5a6-a5b9-4a63-7ab3-08dec461c23d
+why: P02 detail name, typed verbatim.
+
+[exact-en-009]
+lang: en
+kind: exact
+question: Occupancy Rate of Hotels
+expect: 4f2dc17c-83dd-427a-7ab5-08dec461c23d
+why: P02 detail name, typed verbatim.
+
+[exact-en-010]
+lang: en
+kind: exact
+question: Number of Room Nights Sold
+expect: e7aece57-5df6-47d6-7ab6-08dec461c23d
+why: P02 detail name, typed verbatim.
+
+[exact-en-011]
+lang: en
+kind: exact
+question: Gross National Income
+expect: fb801dff-2204-4cbb-7aaf-08dec461c23d
+why: P02 detail name, typed verbatim.
+
+[exact-en-012]
+lang: en
+kind: exact
+question: Water Consumption
+expect: 9cc91459-7e8e-4ec2-870b-08dee641c19a
+why: P02 detail name, typed verbatim.
+
+[exact-en-013]
+lang: en
+kind: exact
+question: Greenhouse Gas Emissions
+expect: 6836f2fa-f1c8-4023-7ab2-08dec461c23d
+why: The detail's own label is the generic "Actual Performance"; only its name carries the subject, so this is also a test that the label surface does not out-score the name.
+
+[exact-en-014]
+lang: en
+kind: exact
+question: Global Innovation Index Rank
+expect: 0449d68c-23ad-45bf-7ac6-08de049c57c6
+why: P02 detail name, typed verbatim; the label drops "Rank".
+
+[exact-en-015]
+lang: en
+kind: exact
+question: Logistics Performance Index (LPI) Rank
+expect: b60f7e11-c096-4fab-64ce-08de064080f9
+why: P02 detail name with its parenthesised abbreviation, typed verbatim.
+
+[exact-en-016]
+lang: en
+kind: exact
+question: Economic Complexity Index Rank
+expect: 7fb2296d-87a4-4954-6a2d-08dea2389ab1
+why: P02 detail name, typed verbatim.
+
+[exact-en-017]
+lang: en
+kind: exact
+question: Network Readiness Index (NRI) Rank
+expect: 44346def-4945-4b96-04fd-08deda71879d
+why: P02 detail name, typed verbatim.
+
+[exact-en-018]
+lang: en
+kind: exact
+question: Public Debt as a Percentage of GDP
+expect: 25c35273-5ea8-477d-a79f-08def0866aac
+why: The published name less its trailing "(%)". Competes against every other GDP surface, which is F-003 again.
+
+[exact-en-019]
+lang: en
+kind: exact
+question: Trade Balance
+expect: 6712d390-77df-46ff-c6b7-08deeafdc6dc
+why: The published English label; the detail name adds "(Goods & Services)".
+
+[exact-en-020]
+lang: en
+kind: exact
+question: Goods Re-export
+expect: 3af3d4b3-bd50-4bb7-7a90-08dec461c23d
+why: P02 detail name, typed verbatim.
+
+[exact-en-021]
+lang: en
+kind: exact
+question: Airport Utilization
+expect: 4f76b2f0-9217-405a-8593-08ddb7179f3f
+why: P02 detail name, typed verbatim.
+
+[exact-en-022]
+lang: en
+kind: exact
+question: Port Utilization
+expect: a57d6ccf-3a1a-48fa-7aaa-08dec461c23d
+why: One character class apart from Airport Utilization; a trigram space finds both and must still rank the right one first.
+
+[exact-en-023]
+lang: en
+kind: exact
+question: Number of Medical Tourists
+expect: 8f03a937-bb54-423d-1e8e-08de2a61dd8c
+why: P02 detail name, typed verbatim.
+
+[exact-en-024]
+lang: en
+kind: exact
+question: Number of ICT Companies
+expect: 364fa699-87c1-4465-eb69-08dddd57848f
+why: P02 detail name, typed verbatim.
+
+[exact-en-025]
+lang: en
+kind: exact
+question: Qatarization Rate for Public Entities
+expect: 9b5ada69-9f88-498f-85d1-08ddb7179f3f
+why: The published name less its trailing "(%)".
+
+[exact-ar-001]
+lang: ar
+kind: exact
+question: التضخم
+expect: e4293295-fb43-46b0-7ac5-08dec461c23d
+why: The published Arabic detail name. Finding 121's case -- two words against a corpus of long English ones.
+
+[exact-ar-002]
+lang: ar
+kind: exact
+question: معدل التضخم
+expect: e4293295-fb43-46b0-7ac5-08dec461c23d
+why: The published Arabic *label* of the same detail, which differs from its name.
+
+[exact-ar-003]
+lang: ar
+kind: exact
+question: الناتج المحلي الإجمالي الحقيقي
+expect: fc6dccb5-e101-48bd-6a30-08dea2389ab1
+why: The published Arabic detail name, and the indicator name of two sibling details.
+
+[exact-ar-004]
+lang: ar
+kind: exact
+question: عدد السكان
+expect: 160100bc-528f-4622-bc88-08de9e09a558
+why: The published Arabic detail name.
+
+[exact-ar-005]
+lang: ar
+kind: exact
+question: معدل السمنة
+expect: 6825244a-5e9b-428e-85cf-08ddb7179f3f
+why: The published Arabic detail name.
+
+[exact-ar-006]
+lang: ar
+kind: exact
+question: معدل التدخين
+expect: 1367abb3-a507-4b3f-85d0-08ddb7179f3f
+why: The published Arabic detail name.
+
+[exact-ar-007]
+lang: ar
+kind: exact
+question: معدل داء السكري
+expect: 8e34a69d-9c59-4428-eb81-08ddb722adc5
+why: The published Arabic detail name.
+
+[exact-ar-008]
+lang: ar
+kind: exact
+question: عدد الأسرة في المستشفيات
+expect: 966b1cac-bff0-4d5a-7abe-08dec461c23d
+why: The published Arabic detail name.
+
+[exact-ar-009]
+lang: ar
+kind: exact
+question: عدد السياح من خارج الدولة
+expect: 7bd4d5a6-a5b9-4a63-7ab3-08dec461c23d
+why: The published Arabic detail name.
+
+[exact-ar-010]
+lang: ar
+kind: exact
+question: معدل إشغال الفنادق
+expect: 4f2dc17c-83dd-427a-7ab5-08dec461c23d
+why: The published Arabic detail name.
+
+[exact-ar-011]
+lang: ar
+kind: exact
+question: عدد الليالي الفندقية المباعة
+expect: e7aece57-5df6-47d6-7ab6-08dec461c23d
+why: The published Arabic detail name.
+
+[exact-ar-012]
+lang: ar
+kind: exact
+question: الدخل القومي الإجمالي
+expect: fb801dff-2204-4cbb-7aaf-08dec461c23d
+why: The published Arabic detail name.
+
+[exact-ar-013]
+lang: ar
+kind: exact
+question: استهلاك المياه
+expect: 9cc91459-7e8e-4ec2-870b-08dee641c19a
+why: The published Arabic detail name.
+
+[exact-ar-014]
+lang: ar
+kind: exact
+question: انبعاثات الغازات الدفيئة
+expect: 6836f2fa-f1c8-4023-7ab2-08dec461c23d
+why: The published Arabic detail name; its Arabic label is the generic "الأداء الفعلي".
+
+[exact-ar-015]
+lang: ar
+kind: exact
+question: تكلفة التصدير
+expect: c9ccb67b-d58d-42c9-8591-08ddb7179f3f
+why: The published Arabic detail name.
+
+[exact-ar-016]
+lang: ar
+kind: exact
+question: تكلفة الاستيراد
+expect: 84bec68c-5603-4855-8592-08ddb7179f3f
+why: Finding 42's morphology: تكلفة الاستيراد and تكلفة التصدير share a root-bearing first word and differ in the second, and confusing them returns the opposite figure.
+
+[exact-ar-017]
+lang: ar
+kind: exact
+question: الوقت المستغرق للتصدير
+expect: d4a431d6-febe-4bd1-eb4b-08ddb722adc5
+why: The published Arabic detail name.
+
+[exact-ar-018]
+lang: ar
+kind: exact
+question: نسبة استغلال المطار
+expect: 4f76b2f0-9217-405a-8593-08ddb7179f3f
+why: The published Arabic detail name.
+
+[exact-ar-019]
+lang: ar
+kind: exact
+question: نسبة استغلال الموانئ
+expect: a57d6ccf-3a1a-48fa-7aaa-08dec461c23d
+why: Differs from the airport surface by one word, and that word is the answer; finding 42's near-pair in Arabic.
+
+[exact-ar-020]
+lang: ar
+kind: exact
+question: إعادة تصدير السلع
+expect: 3af3d4b3-bd50-4bb7-7a90-08dec461c23d
+why: The published Arabic name carries a kasra on السِّلع; the reader types it without. AD-26's fold is what makes these one surface rather than two.
+
+[exact-ar-021]
+lang: ar
+kind: exact
+question: عدد زوار السياحة العلاجية
+expect: 8f03a937-bb54-423d-1e8e-08de2a61dd8c
+why: Published as زوّار with a shadda; typed without. Again the fold, on a question rather than on a surface.
+
+[exact-ar-022]
+lang: ar
+kind: exact
+question: عدد شركات الاتصالات وتكنولوجيا المعلومات
+expect: 364fa699-87c1-4465-eb69-08dddd57848f
+why: The published Arabic detail name.
+
+[exact-ar-023]
+lang: ar
+kind: exact
+question: نسبة التقطير في الجهات العامة
+expect: 9b5ada69-9f88-498f-85d1-08ddb7179f3f
+why: The published Arabic detail name.
+
+[exact-ar-024]
+lang: ar
+kind: exact
+question: الميزان التجاري
+expect: 6712d390-77df-46ff-c6b7-08deeafdc6dc
+why: The published Arabic label; the Arabic name adds "(السلع والخدمات)".
+
+[exact-ar-025]
+lang: ar
+kind: exact
+question: الدين العام نسبة من الناتج المحلي الإجمالي
+expect: 25c35273-5ea8-477d-a79f-08def0866aac
+why: The published Arabic detail name with its brackets dropped, as a reader types it.
