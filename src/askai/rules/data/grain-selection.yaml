@@ -15,7 +15,7 @@ rules:
       Interval discipline. A selection never mixes a year with its own quarters. When
       the reader named an interval and rows exist at it, only those rows are used; when
       rows exist at no such interval, the answer says so and uses what exists.
-    status: proposed
+    status: agreed
     kind: code
     sources:
       - "docs/RULES.md R-81"
@@ -27,7 +27,7 @@ rules:
       A series with no named grain is read at the coarsest interval that carries at
       least the minimum number of readings below -- seven annual rows are not discarded
       because two monthly rows are newer. A single reading is the newest of its kind.
-    status: proposed
+    status: agreed
     kind: constant
     sources:
       - "docs/RULES.md R-82"
@@ -45,7 +45,7 @@ rules:
       Grains are compared separately -- a year and its own quarter are not the same
       reading -- and a tie on end date goes to the coarser grain ("2025" over
       "2025-Q4"), unless the reader named a grain, whose grain outranks the convention.
-    status: proposed
+    status: agreed
     kind: switch
     sources:
       - "docs/RULES.md R-92"
@@ -60,7 +60,7 @@ rules:
       A period-less question about one indicator is about a window expressed in years,
       given per grain below; the fetch expands the window to the indicator's own grain.
       A period-less set fetch uses the quarterly window unless a granularity was named.
-    status: proposed
+    status: agreed
     kind: table
     sources:
       - "docs/RULES.md R-43"

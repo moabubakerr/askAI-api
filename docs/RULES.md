@@ -1,11 +1,13 @@
 ---
 title: "Ask AI — Rule Catalogue"
-status: v2.1 — all three register gaps closed; agreement outstanding
+status: v2.2 — agreed 2026-09-16; per-rule column and §5 pending rewrite
 created: 2026-09-14
-updated: 2026-09-15
+updated: 2026-09-16
 rules: 188
-version: 2.1
-statuses: "proposed 187 · rejected 1 · agreed 0"
+version: 2.2
+statuses: "agreed 187 · rejected 1 · proposed 0"
+agreed_on: 2026-09-16
+agreed_by: "UNRECORDED — see §5 note"
 baseline: "askai-business-logic-spec v1.0 · release 4.6.0, plus findings 154-157 and the 36 uncited findings read at source in 4.7.0+4"
 governs: "the answer engine — see ARCHITECTURE-SPINE.md and prd.md"
 ---
@@ -195,8 +197,23 @@ It cannot agree itself.
 a corpus, and a CI gate. **`agree` requires a person with the standing to agree**, and that person
 has not been named (PRD FR-72a).
 
-**v2 makes the gap visible rather than closing it.** Every rule now carries a status, and **every
-one of them says `proposed`**. That is not an oversight and not a placeholder to be bulk-edited: it
+> **v2.2 note — 2026-09-16. Agreement has since been given: all 187 non-rejected rules are
+> `agreed`.** The 49 rules already encoded as data under `src/askai/rules/data/` carry
+> `status: agreed` and the engine reports `agreed 49 | proposed 0 | rejected 1`. `R-157` remains
+> `rejected` — it exists so it is not re-proposed, not so it fires.
+>
+> **Two things are deliberately not done here.** The per-rule `Status:` column below still reads
+> `proposed` on every rule, and the section that follows still argues the pre-agreement position.
+> Neither was bulk-edited, because this section is an argument rather than a status column and it
+> needs rewriting by whoever owns the catalogue, not find-and-replacing.
+>
+> **`agreed_by` is unrecorded.** Agreement was given verbally and no approver was named, so nothing
+> here claims one. FR-72a asks for a person with standing; until one is recorded, "agreed" states
+> that agreement happened without stating who is accountable for it. The rule schema has no
+> `agreed_by` field yet — adding it is Story 10.2's job, and it now has something real to record.
+
+**v2 made the gap visible rather than closing it.** Every rule carries a status, and at v2.1 **every
+one of them said `proposed`**. That is not an oversight and not a placeholder to be bulk-edited: it
 is the honest state of a catalogue that describes a system accurately and has never been agreed by
 anyone. The twelve Part A principles are flagged as **agreed candidates** because each is already a
 ratified PRD commitment — they are the obvious first batch, and an analyst flagging them is as far

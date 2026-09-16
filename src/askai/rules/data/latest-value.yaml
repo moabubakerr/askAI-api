@@ -13,7 +13,7 @@ rules:
       "Latest" means the most recent actual value at or before today. Future-dated rows
       and placeholder values are never eligible, and a target or a baseline is never
       served as the latest reading.
-    status: proposed
+    status: agreed
     kind: constant
     sources:
       - "docs/PRD.md FR-8"
@@ -31,7 +31,7 @@ rules:
       When the question named no period and no grain and the indicator publishes at more
       than one grain, the answer names the newest reading at the coarser grain as well,
       rather than choosing between them silently.
-    status: proposed
+    status: agreed
     kind: code
     sources:
       - "docs/RULES.md R-83"

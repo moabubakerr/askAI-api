@@ -21,7 +21,7 @@ rules:
       A detail's name and its definition are scored as two separate spaces and combined
       only at the end, with the definition weighted down; they are never concatenated
       into one field and never share a vector.
-    status: proposed
+    status: agreed
     kind: constant
     sources:
       - "_bmad-output/planning-artifacts/epics.md Story 2.2"
@@ -44,7 +44,7 @@ rules:
       A surface's score is the fusion of its FTS5 lexical rank and its embedding cosine
       over the same row, so an exactly typed name, a code and a misspelling are all
       reachable by one search rather than by two systems.
-    status: proposed
+    status: agreed
     kind: constant
     sources:
       - "_bmad-output/planning-artifacts/epics.md Story 2.2"

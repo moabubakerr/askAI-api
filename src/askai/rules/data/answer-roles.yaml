@@ -21,7 +21,7 @@ rules:
       The executive lens carries the answer, its basis and its provenance in short form;
       explore adds depth over the same bound answer. A role named by neither lens would
       be invisible in both, so every role is named by at least one.
-    status: proposed
+    status: agreed
     kind: table
     sources:
       - "docs/ARCHITECTURE-SPINE.md AD-23"
@@ -43,7 +43,7 @@ rules:
       sits in. Roles listed under headline take the display rounding rule; roles listed
       under evidence preserve the published precision; roles listed as carrying no
       figure have no mode, and asking for one is an error rather than a default.
-    status: proposed
+    status: agreed
     kind: table
     sources:
       - "docs/ARCHITECTURE-SPINE.md AD-18"

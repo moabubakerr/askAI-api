@@ -18,7 +18,7 @@ rules:
       rank display rule rather than the published Format field. Matching is on the
       engine's single text fold, so casing and spacing in the published field do not
       decide whether a rank is rounded.
-    status: proposed
+    status: agreed
     kind: table
     sources:
       - "docs/RULES.md R-173"

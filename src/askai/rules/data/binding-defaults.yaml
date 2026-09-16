@@ -23,7 +23,7 @@ rules:
       question named, then what the history carried forward, then the rule default,
       then Unbound with a stated reason. Exactly one binder owns each field's final
       value, and the precedence resolves before the spec is constructed.
-    status: proposed
+    status: agreed
     kind: constant
     sources:
       - "docs/ARCHITECTURE-SPINE.md AD-19"
@@ -45,7 +45,7 @@ rules:
       query shape and never a country filter value. Naming the home country is naming no
       country: it appears in none of the published rows, so it resolves to this default
       rather than to a named set.
-    status: proposed
+    status: agreed
     kind: constant
     sources:
       - "docs/ARCHITECTURE-SPINE.md AD-5"
@@ -61,7 +61,7 @@ rules:
     statement: >-
       A question naming no measure is asking for the actual value -- never a target and
       never a baseline, which are different published columns and different claims.
-    status: proposed
+    status: agreed
     kind: constant
     sources:
       - "docs/PRD.md FR-15"
@@ -74,7 +74,7 @@ rules:
       A question whose operation nothing has classified is a request for a value. In
       this epic nothing classifies one, because operation classification is a bounded
       model call-site and this epic makes no model call.
-    status: proposed
+    status: agreed
     kind: constant
     sources:
       - "docs/ARCHITECTURE-SPINE.md AD-22"
@@ -90,7 +90,7 @@ rules:
       A question naming no period is about the latest reading, which compile leaves
       deferred for execute to resolve against the published data. It is never bound to a
       period compile picked, and never left unbound as though the reader was unclear.
-    status: proposed
+    status: agreed
     kind: constant
     sources:
       - "docs/ARCHITECTURE-SPINE.md AD-1"
@@ -104,7 +104,7 @@ rules:
       the grain of its most recent row. "Latest at a grain" is the last one reading at
       that grain, so a period-less question at a known grain is a deferred request for
       that many readings rather than an ungrained latest.
-    status: proposed
+    status: agreed
     kind: constant
     sources:
       - "docs/PRD.md FR-5"
@@ -122,7 +122,7 @@ rules:
       When the grain the question named is not published for the bound detail, the
       period is left unbound with that as its stated reason. No adjacent grain is
       substituted, and a quarter is never answered with the year that contains it.
-    status: proposed
+    status: agreed
     kind: code
     sources:
       - "docs/PRD.md FR-6"
@@ -136,7 +136,7 @@ rules:
     statement: >-
       The words that name the latest reading rather than a period. A question carrying
       one of these has named its period, and the field is deferred rather than defaulted.
-    status: proposed
+    status: agreed
     kind: table
     sources:
       - "docs/PRD.md FR-8"
@@ -179,7 +179,7 @@ rules:
       The words that name a publication interval without naming a period. A grain named
       this way outranks every other signal, including the grain of the most recent row
       and the grain a follow-up inherited.
-    status: proposed
+    status: agreed
     kind: table
     sources:
       - "docs/PRD.md FR-4"
@@ -228,7 +228,7 @@ rules:
       The words that name a measure. A word inside the detail's own name never counts --
       an indicator called Growth is not a question about change -- so the span the detail
       bound from is excluded before these are read.
-    status: proposed
+    status: agreed
     kind: table
     sources:
       - "docs/PRD.md FR-15"
@@ -258,7 +258,7 @@ rules:
       The words that ask for whatever benchmark set the detail itself declares, rather
       than for a country the reader named. A named country always outranks these,
       because it is the more specific thing the reader said.
-    status: proposed
+    status: agreed
     kind: table
     sources:
       - "docs/ARCHITECTURE-SPINE.md AD-5"
@@ -277,7 +277,7 @@ rules:
     statement: >-
       The month a reader names in words, in both languages, mapped to its number. A
       month name with a year is a monthly period the question named outright.
-    status: proposed
+    status: agreed
     kind: table
     sources:
       - "corpus/epic-1.yaml e1-001, e1-004"
@@ -325,7 +325,7 @@ rules:
     statement: >-
       The quarter a reader names in words, in both languages, mapped to its number. A
       quarter phrase with a year is a quarterly period the question named outright.
-    status: proposed
+    status: agreed
     kind: table
     sources:
       - "corpus/epic-7.yaml e7-001"
@@ -369,7 +369,7 @@ rules:
       Arabic forms -- keyed by the interval each one names. These count as naming a grain
       only inside a period expression: a noun on its own is how an indicator is described,
       and only a relative expression, a span or an ordinal turns one into an interval.
-    status: proposed
+    status: agreed
     kind: table
     sources:
       - "docs/PRD.md FR-4, FR-5"
@@ -417,7 +417,7 @@ rules:
       the past 3 quarters", "العام الماضي". A relative expression names a count and an
       interval, so it binds to the last n periods at that interval and is deferred for
       execute to anchor on the published data; it is never resolved to a period here.
-    status: proposed
+    status: agreed
     kind: table
     sources:
       - "docs/PRD.md FR-7"
@@ -452,7 +452,7 @@ rules:
       The counts a reader writes in words, in both languages, mapped to the number they
       name. A count written in digits is read as the digits it is; a count written in
       words is read here, so "the last five years" and "the last 5 years" are one request.
-    status: proposed
+    status: agreed
     kind: table
     sources:
       - "docs/PRD.md FR-7"
@@ -507,7 +507,7 @@ rules:
       instead. Two periods with a span word between them bind to a range; two periods with
       a comparison word are left unbound, because a comparison of two readings and a run
       of readings across them are different questions.
-    status: proposed
+    status: agreed
     kind: table
     sources:
       - "docs/PRD.md FR-7, FR-16, FR-23"
@@ -562,7 +562,7 @@ rules:
       period containing today, at the grain the reader's own start period names. Today is
       an input to compiling and never a clock read, so an open range compiles to the same
       span on every run and stops being the same span the day after it is asked.
-    status: proposed
+    status: agreed
     kind: constant
     sources:
       - "docs/PRD.md FR-7"
@@ -581,7 +581,7 @@ rules:
       the whole of "and 2025". A period token carrying one of these is read as the period
       it names, so that a question listing two periods in Arabic names two periods, as the
       same question in English does.
-    status: proposed
+    status: agreed
     kind: table
     sources:
       - "docs/PRD.md FR-7, FR-63"

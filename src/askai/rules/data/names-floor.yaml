@@ -27,7 +27,7 @@ rules:
       share of relevant candidates and admits no more than the declared share of
       irrelevant ones; a derivation failing either is recorded as insufficient and calls
       for a structural discriminator rather than a different number.
-    status: proposed
+    status: agreed
     kind: constant
     sources:
       - "docs/ARCHITECTURE-SPINE.md AD-30"
@@ -53,7 +53,7 @@ rules:
       from the measured separation between the scores of relevant candidates and the
       scores returned for questions this corpus answers with nothing, over the labelled
       set and vector source named in these values.
-    status: proposed
+    status: agreed
     kind: constant
     sources:
       - "docs/ARCHITECTURE-SPINE.md AD-30"
@@ -103,7 +103,7 @@ rules:
       The share of the best hit's score a later candidate must reach to be offered
       alongside it, derived from the measured separation between the ratio-to-best of
       correct candidates below rank one and that of incorrect ones.
-    status: proposed
+    status: agreed
     kind: constant
     sources:
       - "docs/ARCHITECTURE-SPINE.md AD-30"

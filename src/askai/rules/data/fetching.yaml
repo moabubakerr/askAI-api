@@ -21,7 +21,7 @@ rules:
       ended at or before today. A period still running has not finished being measured,
       and a period beginning after today is the future; neither is a reading that
       happened.
-    status: proposed
+    status: agreed
     kind: constant
     sources:
       - "docs/PRD.md FR-8"
@@ -42,7 +42,7 @@ rules:
       A row whose value column holds no published text is a placeholder, not a reading.
       It is passed over when the latest reading is resolved, and it is never served as a
       value that happens to be blank.
-    status: proposed
+    status: agreed
     kind: constant
     sources:
       - "docs/PRD.md FR-8"
@@ -62,7 +62,7 @@ rules:
       grain the bound request carries. When the request carries none, the grain is
       settled by the published tie-break rule and never by which row happens to be
       newest.
-    status: proposed
+    status: agreed
     kind: code
     sources:
       - "docs/PRD.md FR-5"
@@ -80,7 +80,7 @@ rules:
       A value is read only by exact key on the detail, the period and the country, with
       the blank country as the national marker. Nothing scores, ranks or approximates a
       row, and a figure that cannot name the row it came from does not exist.
-    status: proposed
+    status: agreed
     kind: code
     sources:
       - "docs/ARCHITECTURE-SPINE.md AD-3"

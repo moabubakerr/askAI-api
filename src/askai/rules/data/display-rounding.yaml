@@ -15,7 +15,7 @@ rules:
       A value is shown with the display decimals the published Format field carries,
       alongside its unit -- never at the precision the row happens to be stored at. A
       Format field carrying no decimal specification falls back to the value below.
-    status: proposed
+    status: agreed
     kind: constant
     sources:
       - "docs/RULES.md R-101"
@@ -34,7 +34,7 @@ rules:
       A rank is an integer ordinal. The display-decimal policy never applies to a rank,
       whatever the published Format field says -- including an empty one. "11.00th" is
       not a thing.
-    status: proposed
+    status: agreed
     kind: constant
     sources:
       - "docs/RULES.md R-173"
@@ -50,7 +50,7 @@ rules:
     statement: >-
       A unit of "NA" is a placeholder the catalogue publishes, not a unit a reader is
       shown; a figure carrying it is rendered with no unit rather than with the word.
-    status: proposed
+    status: agreed
     kind: constant
     sources:
       - "docs/RULES.md R-101"

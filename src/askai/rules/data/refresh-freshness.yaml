@@ -21,7 +21,7 @@ rules:
       that succeeded. A refresh that failed does not move the clock: the engine is still
       serving what the last successful one left, and that is what the reader is told.
       A copy that was never refreshed is stale, not fresh-by-default.
-    status: proposed
+    status: agreed
     kind: constant
     sources:
       - "docs/PRD.md NFR-7"
@@ -39,7 +39,7 @@ rules:
       Every class of rejection a refresh reports carries a count and at most this many
       worked example rows. The count is never truncated; only the examples are, and the
       report says so, because a steward acts on the examples and audits on the count.
-    status: proposed
+    status: agreed
     kind: constant
     sources:
       - "docs/PRD.md FR-110"

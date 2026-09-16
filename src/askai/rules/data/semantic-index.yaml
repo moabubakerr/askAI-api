@@ -19,7 +19,7 @@ rules:
     statement: >-
       Every vector in a collection has the same width, is float32, and is L2-normalised
       at build time so that cosine similarity is a plain dot product at query time.
-    status: proposed
+    status: agreed
     kind: constant
     sources:
       - "docs/ARCHITECTURE-SPINE.md AD-13"
@@ -38,7 +38,7 @@ rules:
       Until a candidate embedding model is measured against the finding-42 and F-014
       cases and beats it, the semantic stage is the character-trigram vectoriser, over
       the engine's one normalised form, with word boundaries kept as padding.
-    status: proposed
+    status: agreed
     kind: constant
     sources:
       - "_bmad-output/planning-artifacts/epics.md Story 2.1"
@@ -56,7 +56,7 @@ rules:
     statement: >-
       A search over one collection returns at most this many candidates, ordered by
       score and then by id so that the same question returns the same list on every run.
-    status: proposed
+    status: agreed
     kind: constant
     sources:
       - "docs/ARCHITECTURE-SPINE.md AD-25"

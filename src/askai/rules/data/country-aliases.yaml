@@ -24,7 +24,7 @@ rules:
       -- the forms the export publishes, in English and Arabic, followed by the spellings
       a reader actually types. A surface form belongs to exactly one group; two groups
       claiming one form is a load failure, not a preference between them.
-    status: proposed
+    status: agreed
     kind: table
     sources:
       - "docs/PRD.md FR-11a"
@@ -93,7 +93,7 @@ rules:
       declared benchmark sets while the published data names it in none of its 8,127
       rows, where the national series is the absence of a country value -- so a filter
       built from its name matches nothing and drops the country from its own comparison.
-    status: proposed
+    status: agreed
     kind: switch
     sources:
       - "docs/ARCHITECTURE-SPINE.md AD-5"
@@ -114,7 +114,7 @@ rules:
       either spelling reaches every row under both, and a benchmark set carrying both
       presents the country once. Collapsing happens at resolution, before any row is
       fetched -- a set de-duplicated after the fetch has already shown the country twice.
-    status: proposed
+    status: agreed
     kind: code
     sources:
       - "docs/PRD.md FR-11a"
@@ -130,7 +130,7 @@ rules:
       the refresh report, and is never quietly dropped or quietly invented as a country.
       An unmapped value is a country the engine cannot answer about, and the steward who
       can add the group is the person the report is written for.
-    status: proposed
+    status: agreed
     kind: code
     sources:
       - "docs/PRD.md FR-110"
