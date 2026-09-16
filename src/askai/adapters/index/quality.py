@@ -35,11 +35,13 @@ from typing import Final, TextIO
 from askai.adapters.index.build import build_generation
 from askai.adapters.index.evaluation import (
     Derivation,
+    LadderReport,
     QualityReport,
     as_percent,
     derive_floor,
     derive_relative_cut,
     evaluate,
+    evaluate_ladder,
     percentile,
 )
 from askai.adapters.index.facts import detail_facts
@@ -48,6 +50,7 @@ from askai.adapters.index.generation import load_generation
 from askai.adapters.index.labelled import LabelKind, LabelledSet, load_labelled_set
 from askai.adapters.index.names import name_rows
 from askai.adapters.index.namesearch import NamesIndex
+from askai.adapters.index.resolution import IndexCandidates
 from askai.adapters.index.tuning import candidate_limit
 from askai.adapters.index.vectors import TrigramVectorSource
 from askai.adapters.readmodel.export import CmsExport
@@ -84,6 +87,12 @@ class Measured:
     floor: Derivation
     cut: Derivation
 
+    #: What AD-25's three stages achieve over the same set. Reported beside the generation
+    #: numbers rather than instead of them, because they answer different questions: the
+    #: first is the ceiling a vector source imposes, the second is what the answer path
+    #: actually returns. A harness reporting only the first describes a path nothing takes.
+    ladder: LadderReport
+
 
 def report_for(
     labelled: LabelledSet,
@@ -110,11 +119,14 @@ def report_for(
         source,
         facts=detail_facts(export),
     )
-    report = evaluate(NamesIndex(load_generation(path, source)), labelled, limit=depth)
+    generation = load_generation(path, source)
+    report = evaluate(NamesIndex(generation), labelled, limit=depth)
+    ladder = evaluate_ladder(IndexCandidates.over(generation), labelled, limit=depth)
     high_share, false_negative_budget, false_positive_budget = derivation_criterion()
     return Measured(
         labelled=labelled,
         report=report,
+        ladder=ladder,
         floor=derive_floor(
             report,
             high_share=high_share,
@@ -177,6 +189,52 @@ def render(measured: Measured, out: TextIO | None = None) -> None:
 
     _derivation("floor", measured.floor, out)
     _derivation("relative cut", measured.cut, out)
+    _say("", out)
+    _ladder(measured.ladder, out)
+
+
+def _ladder(ladder: LadderReport, out: TextIO | None) -> None:
+    """AD-25's three stages over the same set: the ceiling, and what is made of it.
+
+    ``gen@10`` is the ceiling stage 1 imposes on everything downstream. ``disc@1`` is what
+    stage 2 converts it into. Reading them together is the only way to tell a vector source
+    that found the answer from a discriminator that picked it out.
+    """
+    _say("the resolution ladder (AD-25 stages 1-3, no model)", out)
+    _say(f"  {'kind':<12} {'cases':>5}   {'gen@1':>7} {'gen@10':>7}   {'disc@1':>7}", out)
+    _say(
+        f"  {'all':<12} {ladder.counted():>5}   "
+        f"{_percent(ladder.generated_at(1))} {_percent(ladder.generated_at(10))}   "
+        f"{_percent(ladder.discriminated_at(1))}",
+        out,
+    )
+    for kind in LabelKind:
+        if kind is LabelKind.NONE or not ladder.counted(kind):
+            continue
+        _say(
+            f"  {kind.value:<12} {ladder.counted(kind):>5}   "
+            f"{_percent(ladder.generated_at(1, kind))} "
+            f"{_percent(ladder.generated_at(10, kind))}   "
+            f"{_percent(ladder.discriminated_at(1, kind))}",
+            out,
+        )
+    _say("", out)
+    total = ladder.counted()
+    outcomes = "   ".join(
+        f"{name} {count} ({_percent(count / total if total else 0.0).strip()})"
+        for name, count in ladder.outcomes()
+    )
+    _say(f"  stage 3 over the positives    {outcomes}", out)
+    _say(f"  reader reaches the answer     {_percent(ladder.reached())}", out)
+    negatives = ladder.negative_outcomes()
+    if negatives:
+        spelled = "   ".join(f"{name} {count}" for name, count in negatives)
+        _say(f"  over the {ladder.negatives} negatives      {spelled}", out)
+        _say(
+            "    `bound` is the one to read: a question this corpus cannot answer, "
+            "answered confidently.",
+            out,
+        )
 
 
 def _distribution(name: str, values: Sequence[float], out: TextIO | None) -> None:

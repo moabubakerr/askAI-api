@@ -42,21 +42,36 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
+from typing import Final
 
 from askai.adapters.index.labelled import LabelKind, LabelledCase, LabelledSet
 from askai.adapters.index.namesearch import NameCandidate, NamesIndex
+from askai.compile.resolve import (
+    Disambiguation,
+    QuestionSignals,
+    Resolution,
+    Resolved,
+    decide,
+    discriminate,
+    generate,
+    subject_of,
+)
 from askai.messages.lang import Lang
 from askai.ports.index import IndexScope
+from askai.ports.resolution import CandidatePort
 
 __all__ = [
     "CaseMeasurement",
     "Derivation",
+    "LadderMeasurement",
+    "LadderReport",
     "QualityReport",
     "as_percent",
     "derive_floor",
     "derive_relative_cut",
     "derive_threshold",
     "evaluate",
+    "evaluate_ladder",
     "percentile",
 ]
 
@@ -426,3 +441,175 @@ def as_percent(value: float) -> int:
     rounding it up would refuse a candidate the measurement admitted.
     """
     return int(value * _FULL)
+
+
+# ------------------------------------------------------------------ the resolution ladder
+
+
+@dataclass(frozen=True, slots=True)
+class LadderMeasurement:
+    """One labelled case put through AD-25's three stages, and what came back.
+
+    Separate from :class:`CaseMeasurement` because it measures a different thing.
+    ``CaseMeasurement`` measures *generation* against the question as asked; this measures
+    what the answer path actually does -- subject extraction, the structural gate,
+    deterministic discrimination, and the decision. A harness that reported only the first
+    would understate or overstate the shipped behaviour and give the next reader a number
+    that describes a path nothing takes.
+    """
+
+    case: LabelledCase
+
+    #: Where the first expected detail came back from *generation*, one-based, or ``None``.
+    generated_rank: int | None
+
+    #: Where it stood after discrimination. The pair is the point: discrimination earning
+    #: its place means converting recall@10 into recall@1, and only both numbers show it.
+    discriminated_rank: int | None
+
+    #: ``bound`` | ``asked`` | ``refused`` -- which of AD-25 stage 3's three outcomes.
+    outcome: str
+
+    #: Whether the reader reached the right detail at all: bound to it, or offered it among
+    #: the named candidates. A disambiguation naming the right answer is a good outcome and
+    #: counting it as a failure would make the honest path look worse than a silent guess.
+    reached: bool
+
+
+@dataclass(frozen=True, slots=True)
+class LadderReport:
+    """What the whole ladder scored over one labelled set."""
+
+    measurements: tuple[LadderMeasurement, ...]
+
+    def _positives(self, kind: LabelKind | None = None) -> tuple[LadderMeasurement, ...]:
+        return tuple(
+            entry
+            for entry in self.measurements
+            if not entry.case.is_negative and (kind is None or entry.case.kind is kind)
+        )
+
+    def generated_at(self, rank: int, kind: LabelKind | None = None) -> float:
+        found = self._positives(kind)
+        if not found:
+            return 0.0
+        hit = sum(
+            1 for e in found if e.generated_rank is not None and e.generated_rank <= rank
+        )
+        return hit / len(found)
+
+    def discriminated_at(self, rank: int, kind: LabelKind | None = None) -> float:
+        found = self._positives(kind)
+        if not found:
+            return 0.0
+        hit = sum(
+            1
+            for e in found
+            if e.discriminated_rank is not None and e.discriminated_rank <= rank
+        )
+        return hit / len(found)
+
+    def counted(self, kind: LabelKind | None = None) -> int:
+        return len(self._positives(kind))
+
+    def reached(self) -> float:
+        """The share of positive cases where the reader reaches the right detail."""
+        found = self._positives()
+        if not found:
+            return 0.0
+        return sum(1 for entry in found if entry.reached) / len(found)
+
+    def outcomes(self) -> tuple[tuple[str, int], ...]:
+        """How many positive cases ended in each of stage 3's three outcomes."""
+        found = self._positives()
+        counted = {name: sum(1 for e in found if e.outcome == name) for name in _OUTCOMES}
+        return tuple((name, counted[name]) for name in _OUTCOMES)
+
+    def negative_outcomes(self) -> tuple[tuple[str, int], ...]:
+        """The same for the cases whose correct answer is nothing.
+
+        The one to read first is ``bound``: a question this corpus cannot answer, answered
+        confidently, is the failure AD-30 and Story 2.7 exist to prevent, and it is worse
+        than either of the other two.
+        """
+        negatives = [entry for entry in self.measurements if entry.case.is_negative]
+        if not negatives:
+            return ()
+        counted = {name: sum(1 for e in negatives if e.outcome == name) for name in _OUTCOMES}
+        return tuple((name, counted[name]) for name in _OUTCOMES)
+
+    @property
+    def negatives(self) -> int:
+        return sum(1 for entry in self.measurements if entry.case.is_negative)
+
+
+#: Stage 3's three outcomes, in the order a report reads them: answered, asked, refused.
+_OUTCOMES: Final = ("bound", "asked", "refused")
+
+
+def evaluate_ladder(
+    candidates: CandidatePort, labelled: LabelledSet, *, limit: int | None = None
+) -> LadderReport:
+    """Run every case in *labelled* through AD-25's three stages and report what came back.
+
+    The signals handed to stage 2 are deliberately **empty**: this measures what the ladder
+    achieves from the question's subject alone, with no named grain, period or country to
+    discriminate on. That is the floor rather than the ceiling -- a real question carrying
+    a period or a sector gives stage 2 more to work with -- and it is the honest number to
+    compare two vector sources on, because the structural signals do not depend on which
+    vector source produced the candidates.
+    """
+    measurements: list[LadderMeasurement] = []
+    for case in labelled:
+        subject = subject_of(case.question)
+        generated = generate(subject, candidates, limit=limit)
+        result = discriminate(generated, QuestionSignals(subject=subject))
+        outcome = decide(result)
+        measurements.append(
+            LadderMeasurement(
+                case=case,
+                generated_rank=_rank_of(
+                    [found.detail_id for found in generated], case.expected
+                ),
+                discriminated_rank=_rank_of(
+                    [scored.candidate.detail_id for scored in result.survivors], case.expected
+                ),
+                outcome=_outcome_of(outcome),
+                reached=_reached(outcome, case.expected),
+            )
+        )
+    return LadderReport(measurements=tuple(measurements))
+
+
+def _rank_of(detail_ids: Sequence[str], expected: frozenset[str]) -> int | None:
+    """Where the first expected detail appears, one-based, or ``None`` if it does not."""
+    for position, detail_id in enumerate(detail_ids, start=1):
+        if detail_id in expected:
+            return position
+    return None
+
+
+def _outcome_of(outcome: Resolution) -> str:
+    match outcome:
+        case Resolved():
+            return "bound"
+        case Disambiguation():
+            return "asked"
+        case _:
+            return "refused"
+
+
+def _reached(outcome: Resolution, expected: frozenset[str]) -> bool:
+    """Did the reader reach the right detail -- bound to it, or offered it by name?
+
+    A disambiguation naming the right answer is a good outcome. Counting it as a failure
+    would make the honest path score worse than a silent guess, which is the opposite of
+    what this engine is for.
+    """
+    match outcome:
+        case Resolved(detail_id=detail_id):
+            return detail_id in expected
+        case Disambiguation(candidates=offered):
+            return any(entry.detail_id in expected for entry in offered)
+        case _:
+            return False
