@@ -21,9 +21,13 @@ from askai.rules import rules
 
 __all__ = [
     "CANDIDATE_LIMIT_RULE",
+    "DEFINITION_WEIGHT_RULE",
+    "LEXICAL_FUSION_RULE",
     "TRIGRAM_RULE",
     "VECTOR_WIDTH_RULE",
     "candidate_limit",
+    "definition_weight",
+    "lexical_weight",
     "pad_boundaries",
     "trigram_size",
     "vector_width",
@@ -32,6 +36,13 @@ __all__ = [
 VECTOR_WIDTH_RULE: Final = "R-INDEX-VECTOR-WIDTH"
 TRIGRAM_RULE: Final = "R-INDEX-CHARACTER-TRIGRAM-FALLBACK"
 CANDIDATE_LIMIT_RULE: Final = "R-INDEX-CANDIDATE-LIMIT"
+DEFINITION_WEIGHT_RULE: Final = "R-NAMES-DEFINITION-IS-ITS-OWN-SCORING-SPACE"
+LEXICAL_FUSION_RULE: Final = "R-NAMES-LEXICAL-AND-SEMANTIC-ARE-FUSED"
+
+#: A rule clause carries no floating-point value (``RuleValue`` is deliberately narrow),
+#: so a weight is written as a whole-number percentage and divided here. One divisor, in
+#: one place, so a percentage cannot reach a score as a factor of a hundred.
+_PER_CENT: Final = 100
 
 
 class TuningError(RuntimeError):
@@ -79,3 +90,30 @@ def pad_boundaries() -> bool:
 def candidate_limit() -> int:
     """How many candidates one search over one collection may return (AD-25 stage 1)."""
     return _positive_int(CANDIDATE_LIMIT_RULE, "candidates")
+
+
+def _fraction(rule_id: str, key: str) -> float:
+    value = rules().value(rule_id, key)
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise TuningError(f"{rule_id} value `{key}` is {value!r}; a weight is a whole percentage")
+    if not 0 <= value <= _PER_CENT:
+        raise TuningError(
+            f"{rule_id} value `{key}` is {value}; a weight is a percentage between 0 and "
+            f"{_PER_CENT}, and a score built from one outside that range is not comparable"
+        )
+    return value / _PER_CENT
+
+
+def definition_weight() -> float:
+    """How far a definition match counts against a name match (Story 2.2).
+
+    Returned as a fraction, from a percentage in ``rules/``. The reason for the value is
+    recorded beside it, because a reviewer changing it is entitled to know what the
+    measurement was.
+    """
+    return _fraction(DEFINITION_WEIGHT_RULE, "definition_weight_percent")
+
+
+def lexical_weight() -> float:
+    """The lexical half's share of a fused surface score; the cosine takes the rest."""
+    return _fraction(LEXICAL_FUSION_RULE, "lexical_weight_percent")

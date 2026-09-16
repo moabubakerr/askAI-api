@@ -42,6 +42,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Final
 
+from askai.adapters.index.lexical import populate_names_lexical
 from askai.adapters.index.schema import META_TABLE, collection_table, create_index_schema
 from askai.adapters.index.vectors import unit_vector_for
 from askai.ports.index import Collection, IndexRow
@@ -122,6 +123,10 @@ def _write(
             create_index_schema(connection)
             for collection in Collection:
                 _insert_rows(connection, collection, rows.get(collection, ()), source)
+            # The lexical half, from the same rows, inside the same transaction: there is
+            # no generation in which the two halves of the hybrid disagree about what the
+            # collection holds (Story 2.2).
+            populate_names_lexical(connection, rows.get(Collection.NAMES, ()))
             _insert_meta(connection, source, built_at)
     finally:
         connection.close()

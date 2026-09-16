@@ -1,0 +1,62 @@
+# The names collection -- how a detail's several published surfaces become one score.
+#
+# Story 2.2 fixes the *shape* in code: one row per surface, one vector per row, and the
+# maximum taken across a detail's surfaces rather than a blend. What lives here is the
+# two numbers a reader can feel -- how far a definition match counts against a name
+# match, and how the lexical half of the hybrid is weighed against the semantic half.
+#
+# Neither is a relevance floor, and no floor is declared here either. AD-30 requires a
+# floor to be derived from a labelled set and recorded with the separation it was derived
+# from; a weak candidate is returned to be discriminated (AD-25 stage 2), not dropped by
+# a number nobody measured.
+area: NAMES
+about: >-
+  How the several published surfaces of one indicator detail -- its name, its label, its
+  indicator's name and its definition -- are scored and combined into one candidate
+  score, in each language.
+
+rules:
+  - id: R-NAMES-DEFINITION-IS-ITS-OWN-SCORING-SPACE
+    statement: >-
+      A detail's name and its definition are scored as two separate spaces and combined
+      only at the end, with the definition weighted down; they are never concatenated
+      into one field and never share a vector.
+    status: proposed
+    kind: constant
+    sources:
+      - "_bmad-output/planning-artifacts/epics.md Story 2.2"
+      - "docs/ARCHITECTURE-SPINE.md AD-25"
+    values:
+      definition_weight_percent: 50
+    note: >-
+      The weight is 0.5, carried as a whole-number percentage because a rule clause holds
+      no floating-point value. The reason is recorded with it, as the story requires:
+      measured over 50 real questions on the inherited tuning, concatenating the
+      definition onto the name lost 4 first-place answers and doubled the false
+      positives. A definition is long, generic prose; sharing a field with a two-word
+      name dilutes the name, and sharing a vector is the same failure spelled
+      differently. Scored apart and weighted down, it still breaks ties between
+      candidates whose names are equally close, which is the whole of what it is good
+      for.
+
+  - id: R-NAMES-LEXICAL-AND-SEMANTIC-ARE-FUSED
+    statement: >-
+      A surface's score is the fusion of its FTS5 lexical rank and its embedding cosine
+      over the same row, so an exactly typed name, a code and a misspelling are all
+      reachable by one search rather than by two systems.
+    status: proposed
+    kind: constant
+    sources:
+      - "_bmad-output/planning-artifacts/epics.md Story 2.2"
+      - "docs/ARCHITECTURE-SPINE.md AD-13"
+    values:
+      lexical_weight_percent: 50
+    note: >-
+      Equal weight, and stated to be a default rather than an optimum. The two halves
+      answer different questions -- the lexical half finds the name a reader typed, the
+      semantic half finds the one they paraphrased -- and there is no labelled set yet
+      from which a better split could be derived. AD-30 requires that derivation for the
+      floors; this weight belongs in the same measurement, and until it is made an equal
+      split is the assumption that can be defended without evidence. The lexical rank is
+      rescaled against the best rank the same question achieved, because BM25 is
+      corpus-relative and unbounded and cannot otherwise be added to a cosine.

@@ -31,6 +31,7 @@ from __future__ import annotations
 import sqlite3
 from typing import Final
 
+from askai.adapters.index.lexical import create_names_lexical_table
 from askai.ports.index import Collection
 
 __all__ = [
@@ -44,7 +45,13 @@ __all__ = [
 #: built by this module and read by this module, and a change to the collection shape
 #: invalidates every generation ever built without touching the read model or the record
 #: store. A file at another version is refused at load rather than read as this one.
-INDEX_SCHEMA_VERSION: Final = 1
+#:
+#: Version 2 adds the ``names`` collection's full-text table (Story 2.2). It is a shape
+#: change and therefore a version change: a generation built before it exists has no
+#: lexical half, and half a hybrid search returning fewer candidates is precisely the
+#: kind of degradation that looks healthy. Older generations are refused at load and
+#: rebuilt, which is what this number is for.
+INDEX_SCHEMA_VERSION: Final = 2
 
 #: One row, recording what built the file. Read before anything else at load, because a
 #: cosine between two vector spaces is a number with no meaning and this is what makes
@@ -105,6 +112,11 @@ def create_index_schema(connection: sqlite3.Connection) -> None:
         create, scope_index = _collection_ddl(collection)
         connection.execute(create)
         connection.execute(scope_index)
+    # The lexical half of the ``names`` hybrid, in the same file as the vectors it is
+    # fused with (Story 2.2). Only ``names`` has one: ``analyst`` retrieval is governed by
+    # AD-14's mandatory scope pre-filter rather than by lexical recall, and ``articles``
+    # has no key to filter on at all and is the one path AD-30 gives a derived floor.
+    create_names_lexical_table(connection)
     connection.execute(
         f"""
         CREATE TABLE {META_TABLE} (

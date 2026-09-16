@@ -47,7 +47,13 @@ from askai.messages.lang import Lang
 from askai.ports.index import Collection, IndexRow, IndexScope, Match
 from askai.ports.vectors import VectorSourcePort
 
-__all__ = ["IndexGeneration", "IndexLoadError", "LoadedCollection", "load_generation"]
+__all__ = [
+    "IndexGeneration",
+    "IndexLoadError",
+    "LoadedCollection",
+    "in_scope",
+    "load_generation",
+]
 
 
 class IndexLoadError(RuntimeError):
@@ -154,6 +160,18 @@ def _in_scope(row: IndexRow, scope: IndexScope) -> bool:
     if scope.national:
         return row.country_id is None
     return scope.country_id is None or row.country_id == scope.country_id
+
+
+def in_scope(row: IndexRow, scope: IndexScope) -> bool:
+    """AD-14's pre-filter, for a caller that fuses a second signal into the ranking.
+
+    Story 2.2's hybrid has to consider rows the cosine scan discarded -- a row matched
+    lexically and not semantically is still a candidate -- and it must apply exactly the
+    same scope rule to them that ``search`` applied to the rest. Exported rather than
+    reimplemented next to the fusion, because two spellings of a *mandatory* pre-filter is
+    how one of them ends up admitting the December analysis for the May question.
+    """
+    return _in_scope(row, scope)
 
 
 def load_generation(path: Path, source: VectorSourcePort) -> IndexGeneration:
