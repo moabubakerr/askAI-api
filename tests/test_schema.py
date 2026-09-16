@@ -220,6 +220,21 @@ def test_a_table_may_not_be_declared_in_two_databases() -> None:
     assert "exactly one owner" in str(excinfo.value)
 
 
+#: The one module exempt from table ownership, and the reason.
+#:
+#: ``preflight`` proves the *filesystem* behaves -- WAL is active, the sidecars can be
+#: created, a reader is not blocked by a writer, a row survives a close and reopen. Every
+#: one of those needs a real write, and doing them against the estate would mean the
+#: durability check could corrupt the thing it is checking. So it writes throwaway probe
+#: databases it creates and deletes, which are not the estate and are declared by no
+#: schema -- correctly, since nothing else may ever read them.
+#:
+#: The exemption is bounded by the test below: every table it writes must be probe-named,
+#: so this cannot quietly widen into a licence to write the read model.
+_PROBE_ONLY_MODULES = frozenset({"askai.adapters.store.preflight"})
+_PROBE_TABLE_PREFIX = "probe"
+
+
 def test_no_module_writes_a_table_it_does_not_own() -> None:
     """AD-20, checked against the source rather than against a comment.
 
@@ -229,6 +244,8 @@ def test_no_module_writes_a_table_it_does_not_own() -> None:
     offences: list[str] = []
     for path in sorted(PACKAGE_ROOT.rglob("*.py")):
         module = _module_name(path)
+        if module in _PROBE_ONLY_MODULES:
+            continue
         for table in sorted(_tables_written_in(path.read_text(encoding="utf-8"))):
             owner = TABLE_OWNERS.get(table)
             if owner is None:
@@ -236,6 +253,17 @@ def test_no_module_writes_a_table_it_does_not_own() -> None:
             elif module != owner and not module.startswith(f"{owner}."):
                 offences.append(f"{module} writes {table!r}, owned by {owner}")
     assert offences == []
+
+
+def test_the_exempt_module_writes_only_probe_tables() -> None:
+    """The bound on the exemption above, without which it is a hole rather than a carve-out."""
+    for module in sorted(_PROBE_ONLY_MODULES):
+        path = PACKAGE_ROOT.joinpath(*module.split(".")[1:]).with_suffix(".py")
+        assert path.is_file(), f"{module} is exempt but does not exist"
+        written = sorted(_tables_written_in(path.read_text(encoding="utf-8")))
+        strays = [table for table in written if not table.startswith(_PROBE_TABLE_PREFIX)]
+        assert not strays, f"{module} is probe-exempt but writes {strays}"
+        assert written, f"{module} is exempt from ownership but writes nothing; drop the exemption"
 
 
 def test_the_ownership_scanner_sees_a_write() -> None:
@@ -593,15 +621,47 @@ def test_the_database_directory_setting_is_resolved_to_absolute_paths(tmp_path: 
     assert resolved.read_model.parent == tmp_path.resolve()
 
 
+def _reads_the_environment(tree: ast.Module) -> bool:
+    """Does this module actually read the environment, as opposed to mentioning it?
+
+    Parsed rather than grepped. A substring search flags ``src/askai/adapters/store/cli.py``,
+    whose only occurrence of ``os.getenv`` is a docstring saying not to use it -- which is
+    the right thing to write and the wrong thing to fail a build on.
+    """
+    for node in ast.walk(tree):
+        if (
+            isinstance(node, ast.Attribute)
+            and node.attr in {"environ", "getenv"}
+            and isinstance(node.value, ast.Name)
+            and node.value.id == "os"
+        ):
+            return True
+        if (
+            isinstance(node, ast.ImportFrom)
+            and node.module == "os"
+            and any(alias.name in {"environ", "getenv"} for alias in node.names)
+        ):
+            return True
+    return False
+
+
 def test_the_environment_is_read_only_in_config() -> None:
     """The typed settings object is the only in-project reader of the environment."""
     offenders = [
         str(path.relative_to(PROJECT_ROOT))
         for path in sorted(PACKAGE_ROOT.rglob("*.py"))
-        if any(read in path.read_text(encoding="utf-8") for read in ("os.environ", "os.getenv"))
+        if _reads_the_environment(ast.parse(path.read_text(encoding="utf-8")))
         and path.parent != PACKAGE_ROOT / "config"
     ]
     assert offenders == []
+
+
+def test_the_environment_scanner_tells_a_read_from_a_mention() -> None:
+    """Both halves, or the scan above is either vacuous or a nuisance."""
+    assert _reads_the_environment(ast.parse("import os\nD = os.environ['X']\n"))
+    assert _reads_the_environment(ast.parse("from os import getenv\nD = getenv('X')\n"))
+    assert not _reads_the_environment(ast.parse('"""Never call os.getenv here."""\n'))
+    assert not _reads_the_environment(ast.parse("# os.environ is banned outside config/\n"))
 
 
 def test_a_failed_creation_leaves_no_open_connection(tmp_path: Path) -> None:
