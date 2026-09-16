@@ -782,3 +782,39 @@ def test_both_arms_are_measurable_against_the_same_text() -> None:
 
     assert sent[1] == [raw], "the comparison arm shows the model the published spelling"
     assert sent[0] != sent[1], "the port's arm shows it the folded form"
+
+
+def test_a_large_batch_is_chunked_to_the_runtimes_cap() -> None:
+    """Text Embeddings Inference refuses above 32 inputs; the index build sends 1,101.
+
+    Sending them in one request builds an index against a permissive runtime and fails
+    against a strict one, which would make the index buildable on one machine and not on
+    another. The chunk size is a setting because runtimes disagree about the cap.
+    """
+    seen: list[int] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        sent = json.loads(request.content)["input"]
+        seen.append(len(sent))
+        return httpx.Response(200, json=embeddings_payload(*[(0.5, 0.5) for _ in sent]))
+
+    source = embedding_serving(handler, dimensions=2, max_batch=32)
+    vectors = source.embed_all([f"surface {index}" for index in range(100)])
+
+    assert seen == [32, 32, 32, 4], "chunks must fill to the cap and never exceed it"
+    assert len(vectors) == 100, "every input gets a vector, in order, across chunks"
+
+
+def test_a_batch_within_the_cap_is_still_one_request() -> None:
+    """Chunking must not turn a small build into a round trip per surface."""
+    requests = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal requests
+        requests += 1
+        sent = json.loads(request.content)["input"]
+        return httpx.Response(200, json=embeddings_payload(*[(1.0, 0.0) for _ in sent]))
+
+    source = embedding_serving(handler, dimensions=2, max_batch=32)
+    assert len(source.embed_all(["a", "b", "c"])) == 3
+    assert requests == 1

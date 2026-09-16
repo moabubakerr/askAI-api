@@ -196,12 +196,18 @@ class EmbeddingVectorSource:
     # ------------------------------------------------------------- the batch primitive
 
     def embed_all(self, texts: Sequence[str]) -> tuple[tuple[float, ...], ...]:
-        """Vectors for *texts*, in order, one request.
+        """Vectors for *texts*, in order, in as few requests as the runtime allows.
 
-        The build embeds thousands of surfaces; one request per surface would make a
+        The build embeds over a thousand surfaces; one request per surface would make a
         refresh a thousands-deep serial round trip. The port is per-text because a query
         is one text, so the batch lives here, on the adapter, where the build can reach
         it without the port growing a second verb.
+
+        **Chunked at ``settings.max_batch``.** Runtimes disagree about how many inputs one
+        request may carry -- Text Embeddings Inference refuses above 32 by default, vLLM
+        and the hosted APIs allow far more -- so sending all of them at once builds an
+        index against a permissive runtime and fails against a strict one. Chunking here
+        means the caller never has to know which it is talking to.
 
         Every returned vector is width-checked against the configured ``dimensions``.
         A service quietly serving a different model is exactly the failure ``identity``
@@ -210,9 +216,13 @@ class EmbeddingVectorSource:
         """
         if not texts:
             return ()
-        payload = self._post({"model": self.settings.model, "input": list(texts)})
-        vectors = self._vectors_of(payload, len(texts))
-        return vectors
+        size = self.settings.max_batch
+        vectors: list[tuple[float, ...]] = []
+        for start in range(0, len(texts), size):
+            chunk = list(texts[start : start + size])
+            payload = self._post({"model": self.settings.model, "input": chunk})
+            vectors.extend(self._vectors_of(payload, len(chunk)))
+        return tuple(vectors)
 
     def _post(self, body: dict[str, Any]) -> object:
         url = self.settings.embeddings_url

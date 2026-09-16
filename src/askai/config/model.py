@@ -41,12 +41,14 @@ __all__ = [
     "CHAT_READ_TIMEOUT_ENV",
     "CHAT_TOKEN_BUDGET_ENV",
     "DEFAULT_CONNECT_TIMEOUT_SECONDS",
+    "DEFAULT_EMBEDDING_MAX_BATCH",
     "DEFAULT_READ_TIMEOUT_SECONDS",
     "DEFAULT_TOKEN_BUDGET",
     "EMBEDDING_API_KEY_ENV",
     "EMBEDDING_BASE_URL_ENV",
     "EMBEDDING_CONNECT_TIMEOUT_ENV",
     "EMBEDDING_DIMENSIONS_ENV",
+    "EMBEDDING_MAX_BATCH_ENV",
     "EMBEDDING_MODEL_ENV",
     "EMBEDDING_READ_TIMEOUT_ENV",
     "ChatModelSettings",
@@ -95,6 +97,7 @@ EMBEDDING_READ_TIMEOUT_ENV: Final = "ASKAI_EMBEDDING_READ_TIMEOUT"
 #: compares at load. Discovering it at runtime would mean an index whose declared width
 #: depended on whether the embedding service happened to answer during the build.
 EMBEDDING_DIMENSIONS_ENV: Final = "ASKAI_EMBEDDING_DIMENSIONS"
+EMBEDDING_MAX_BATCH_ENV: Final = "ASKAI_EMBEDDING_MAX_BATCH"
 
 # ------------------------------------------------------------------------- the defaults
 
@@ -109,6 +112,11 @@ DEFAULT_READ_TIMEOUT_SECONDS: Final = 20.0
 
 #: ``max_model_len`` on the confirmed deployment: prompt plus completion, together.
 DEFAULT_TOKEN_BUDGET: Final = 16384
+
+#: Inputs per embedding request. Text Embeddings Inference caps a client batch at 32
+#: and answers 413 above it; vLLM and the hosted APIs allow far more. The strict value
+#: is the default so an index that builds against one runtime builds against all.
+DEFAULT_EMBEDDING_MAX_BATCH: Final = 32
 
 
 def _required(environ: Mapping[str, str], name: str, purpose: str) -> str:
@@ -241,6 +249,15 @@ class EmbeddingSettings:
     api_key: str | None = None
     connect_timeout_seconds: float = DEFAULT_CONNECT_TIMEOUT_SECONDS
     read_timeout_seconds: float = DEFAULT_READ_TIMEOUT_SECONDS
+    max_batch: int = DEFAULT_EMBEDDING_MAX_BATCH
+    """Inputs per request.
+
+    Every embedding runtime caps this and they do not agree: Text Embeddings Inference
+    defaults to 32 (``max_client_batch_size``), vLLM and the hosted APIs allow far more.
+    The build embeds over a thousand name surfaces, so sending them in one request is
+    rejected by the strictest server and accepted by the loosest -- which would make the
+    index buildable on one runtime and not on another. The default is the strict one.
+    """
 
     def __post_init__(self) -> None:
         if not self.base_url.strip():
@@ -254,6 +271,11 @@ class EmbeddingSettings:
             )
         if self.connect_timeout_seconds <= 0.0 or self.read_timeout_seconds <= 0.0:
             raise ConfigError("both timeouts are positive numbers of seconds")
+        if self.max_batch < 1:
+            raise ConfigError(
+                f"a batch of {self.max_batch} inputs embeds nothing; the runtime's own "
+                "cap is the number to set here"
+            )
 
     @property
     def embeddings_url(self) -> str:
@@ -275,5 +297,8 @@ class EmbeddingSettings:
             ),
             read_timeout_seconds=_positive_float(
                 env, EMBEDDING_READ_TIMEOUT_ENV, DEFAULT_READ_TIMEOUT_SECONDS
+            ),
+            max_batch=_positive_int(
+                env, EMBEDDING_MAX_BATCH_ENV, DEFAULT_EMBEDDING_MAX_BATCH
             ),
         )
