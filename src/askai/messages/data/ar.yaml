@@ -125,6 +125,34 @@ messages:
 
   caveat.external: "هذا المحتوى ليس من البيانات المنشورة المعتمدة."
 
+  # ------------------------------------------ series, change and targets (Epic 3)
+  #
+  # نقطة السلسلة لا تكرّر اسم المؤشر: الإجابة قد ذكرته، وتكراره في كل قراءة يجعل
+  # السلسلة غير قابلة للقراءة. أما الفجوة فتذكر الفترة، لأن تسمية الفترة هي محتوى
+  # العنصر نفسه (FR-45).
+  #
+  # الأساس يُكتب بالعربية من هذا الملف ولا يُنقل حرفيًا عن الإنجليزية (FR-63)، ويأتي
+  # التغير دائمًا مع القراءة التي انتهى إليها ومع الفترتين، لأن نسبة بلا مرجع تدفع
+  # القارئ إلى السؤال: مقارنةً بماذا؟
+
+  series.point: "{period}: {value} {unit}"
+  series.gap: "لا توجد قيمة منشورة لـ{period}."
+  series.gaps_note: "لا توجد قيمة منشورة لـ{periods}."
+  series.not_a_series: "ينشر {detail} تقييمًا لا رقمًا، فلا توجد سلسلة لعرضها."
+
+  change.selected: "بلغ {detail} {value} {unit} في {later}، بتغير قدره {change} {change_unit} {basis} مقارنةً بـ{earlier}."
+  change.computed: "بلغ {detail} {value} {unit} في {later}، مقابل {earlier_value} {unit} في {earlier} — أي تغير قدره {change} {change_unit} {basis}، محسوب هنا من هاتين القراءتين المنشورتين."
+  change.not_published: "لا يتوفر رقم تغير منشور لـ{detail} {basis}."
+
+  change.basis.yoy: "على أساس سنوي"
+  change.basis.qoq: "على أساس ربع سنوي"
+  change.basis.mom: "على أساس شهري"
+
+  target.value: "المستهدف المنشور لـ{detail} هو {value} {unit} لـ{period}."
+  target.not_published: "لا يوجد مستهدف منشور لـ{detail}."
+  baseline.value: "خط الأساس المنشور لـ{detail} هو {value} {unit}، مقاسًا في {period}."
+  baseline.not_published: "لا يوجد خط أساس منشور لـ{detail}."
+
   # ------------------------------------------------------------------ counted nouns
 
   count.indicator:
@@ -197,3 +225,273 @@ messages:
     few: "{counted} متاحة لـ{detail}."
     many: "{counted} متاحًا لـ{detail}."
     other: "{counted} متاح لـ{detail}."
+
+  # ============================================================ Epic 5 — the catalogue
+  #
+  # The Arabic half of the catalogue-question wordings. Authored beside the English rather
+  # than translated from it: the counted sentences below take the dual and the plural of
+  # paucity, which an English sentence has no form to translate from.
+
+  # ------------------------------------------------------ counted nouns (Epic 5 additions)
+
+  count.category:
+    zero: "فئات"
+    one: "فئة واحدة"
+    two: "فئتان"
+    few: "{count} فئات"
+    many: "{count} فئة"
+    other: "{count} فئة"
+
+  count.group:
+    zero: "مجموعات"
+    one: "مجموعة واحدة"
+    two: "مجموعتان"
+    few: "{count} مجموعات"
+    many: "{count} مجموعة"
+    other: "{count} مجموعة"
+
+  count.detail:
+    zero: "سلاسل"
+    one: "سلسلة واحدة"
+    two: "سلسلتان"
+    few: "{count} سلاسل"
+    many: "{count} سلسلة"
+    other: "{count} سلسلة"
+
+  # ------------------------------------------------------------------- group answers
+
+  group.holds:
+    zero: "لا تضم {group} أي مؤشر."
+    one: "تضم {group} {counted}."
+    two: "تضم {group} {counted}."
+    few: "تضم {group} {counted}."
+    many: "تضم {group} {counted}."
+    other: "تضم {group} {counted}."
+
+  group.members: "{group}: {names}"
+  group.list_separator: "، "
+
+  group.entry:
+    zero: "{name} ({counted})"
+    one: "{name} ({counted})"
+    two: "{name} ({counted})"
+    few: "{name} ({counted})"
+    many: "{name} ({counted})"
+    other: "{name} ({counted})"
+
+  group.breakdown: "تنقسم {group} إلى المجموعات التالية: {groups}"
+
+  group.single_group: >-
+    تضم {group} مجموعة واحدة تحمل الاسم نفسه، لذلك تُقدَّم الإجابة عن {group} ككل.
+
+  group.ambiguous: "قد يعني «{name}» {readings}. أيهما تقصد؟"
+  group.reading_separator: "، أو "
+
+  group.reading_classification:
+    zero: "الفئة {name}، وتضم {counted}"
+    one: "الفئة {name}، وتضم {counted}"
+    two: "الفئة {name}، وتضم {counted}"
+    few: "الفئة {name}، وتضم {counted}"
+    many: "الفئة {name}، وتضم {counted}"
+    other: "الفئة {name}، وتضم {counted}"
+
+  group.reading_entity:
+    zero: "المجموعة {name} ضمن {classification}، وتضم {counted}"
+    one: "المجموعة {name} ضمن {classification}، وتضم {counted}"
+    two: "المجموعة {name} ضمن {classification}، وتضم {counted}"
+    few: "المجموعة {name} ضمن {classification}، وتضم {counted}"
+    many: "المجموعة {name} ضمن {classification}، وتضم {counted}"
+    other: "المجموعة {name} ضمن {classification}، وتضم {counted}"
+
+  # ---------------------------------------------------------- what periods exist (FR-4)
+
+  periods.statement: "تنشر {detail} البيانات على النحو التالي: {calendars}."
+  periods.at_grain: "{grain}، من {first} إلى {last}"
+  periods.at_grain_single: "{grain}، {period} فقط"
+  periods.separator: "؛ "
+
+  periods.none_published: >-
+    {detail} منشورة في الدليل لكنها لا تحمل أي نقاط بيانات، لذلك لا توجد فترات يمكن سردها.
+
+  # ------------------------------------------------------------- published definitions
+
+  definition.published: "{detail}: {definition}"
+
+  definition.none_published: >-
+    لا يوجد تعريف منشور لـ{detail}. لا يُولَّد تعريف بديل، ولا يُستبدل به التعريف المنشور
+    باللغة الأخرى.
+
+  # ------------------------------------------------------------ the executive overview
+
+  overview.statement: "أحدث الأرقام المنشورة ضمن {group}: {members}"
+  overview.member: "{name}، {value} {unit}، {period}"
+  overview.member_absent: "{name}، لا يوجد رقم منشور"
+  overview.member_separator: "؛ "
+
+  overview.own_period_note: >-
+    يُعرض كل رقم عند أحدث فترة منشورة له، ولا توجد فترة واحدة تغطي المجموعة كلها.
+
+  # ---------------------------------------------------- what the engine can do (FR-32)
+
+  capability.holds:
+    zero: "لا أجد أي مؤشر في الدليل المنشور."
+    one: "أجيب اعتمادًا على {counted} في الدليل المنشور."
+    two: "أجيب اعتمادًا على {counted} في الدليل المنشور."
+    few: "أجيب اعتمادًا على {counted} في الدليل المنشور."
+    many: "أجيب اعتمادًا على {counted} في الدليل المنشور."
+    other: "أجيب اعتمادًا على {counted} في الدليل المنشور."
+
+  capability.with_data:
+    zero: "لا يحمل أي مؤشر أرقامًا منشورة."
+    one: "يحمل {counted} أرقامًا منشورة، فأستطيع تقديم القيم والسلاسل والتغير لها."
+    two: "يحمل {counted} أرقامًا منشورة، فأستطيع تقديم القيم والسلاسل والتغير لها."
+    few: "تحمل {counted} أرقامًا منشورة، فأستطيع تقديم القيم والسلاسل والتغير لها."
+    many: "يحمل {counted} أرقامًا منشورة، فأستطيع تقديم القيم والسلاسل والتغير لها."
+    other: "يحمل {counted} أرقامًا منشورة، فأستطيع تقديم القيم والسلاسل والتغير لها."
+
+  capability.categories:
+    zero: "لا ينقسم الدليل إلى أي فئة."
+    one: "ينقسم الدليل إلى {counted}."
+    two: "ينقسم الدليل إلى {counted}."
+    few: "ينقسم الدليل إلى {counted}."
+    many: "ينقسم الدليل إلى {counted}."
+    other: "ينقسم الدليل إلى {counted}."
+
+  capability.groups:
+    zero: "ولا تضم هذه الفئات أي مجموعة."
+    one: "وتضم هذه الفئات {counted} يمكنك السؤال عنها بالاسم."
+    two: "وتضم هذه الفئات {counted} يمكنك السؤال عنهما بالاسم."
+    few: "وتضم هذه الفئات {counted} يمكنك السؤال عنها بالاسم."
+    many: "وتضم هذه الفئات {counted} يمكنك السؤال عنها بالاسم."
+    other: "وتضم هذه الفئات {counted} يمكنك السؤال عنها بالاسم."
+
+  capability.countries:
+    zero: "لا توجد سلسلة تحمل أرقامًا لأكثر من دولة."
+    one: "تحمل {counted} أرقامًا لأكثر من دولة، وإلى هذا الحد تصل المقارنة."
+    two: "تحمل {counted} أرقامًا لأكثر من دولة، وإلى هذا الحد تصل المقارنة."
+    few: "تحمل {counted} أرقامًا لأكثر من دولة، وإلى هذا الحد تصل المقارنة."
+    many: "تحمل {counted} أرقامًا لأكثر من دولة، وإلى هذا الحد تصل المقارنة."
+    other: "تحمل {counted} أرقامًا لأكثر من دولة، وإلى هذا الحد تصل المقارنة."
+
+  capability.no_commentary: >-
+    لا أحتفظ بتعليقات المحللين ولا بالمقالات المنشورة، لذلك لا أستطيع بيان سبب تغير رقم ما.
+
+  capability.no_confidential_filter: >-
+    لا يحمل أي مؤشر منشور تصنيف السرية، فلا يُحجب عنك شيء تحت هذا العنوان.
+
+  # ------------------------------------------------------------------- the residual
+
+  residual.unaccounted: "غير مُفسَّر بالمكونات المنشورة"
+
+  residual.statement: >-
+    {label}: {value} {unit}، محسوبة بطرح المكونات المنشورة من الإجمالي المعلن {total}.
+
+  residual.exceeds: >-
+    مجموع المكونات المنشورة يزيد على الإجمالي المعلن {total} بمقدار {value} {unit}. تُعرض
+    المكونات كما نُشرت ولا تُعدَّل لتتطابق مع الإجمالي.
+
+  # ------------------------------------------------------- comparison (Epic 4)
+  #
+  # أربع صيغ رفض مختلفة لا صيغة واحدة: غياب دول المقارنة في الإعداد شيء، وغياب القيم
+  # المنشورة عنها شيء آخر. الدولة التي لا تنشر قيمة تبقى مذكورة في القائمة مع بيان
+  # الغياب، ولا تُحذف.
+  #
+  # لا يُذكر اسم الدولة صاحبة البيانات في أي من هذه الرسائل؛ يُشار إليها بـ
+  # `scope.national` كما في عنصر النطاق، لأن صفوفها هي الصفوف التي لا تحمل دولة.
+
+  compare.countries_headline: "{detail}، مقارنةً بين الدول في {period}."
+  compare.country_value: "{country}: {value} {unit}"
+  compare.country_absent: "{country}: لا توجد قيمة منشورة لـ{period}."
+
+  compare.no_declared_benchmarks: >-
+    {detail} لا ينشر أي دولة مقارنة، فلا يمكن مقارنته بين الدول.
+
+  compare.no_country_rows_at_all: >-
+    {detail} يعلن دول مقارنة لكنه لا ينشر أي قيمة على مستوى الدول في {period}، فلا يوجد
+    ما يُقارن.
+
+  compare.indicators_headline: >-
+    مقارنة بين المؤشرات، كل مؤشر في فترته المنشورة. الفترات غير موحّدة.
+
+  compare.indicator_value: "{detail}: {value} {unit} ({period})"
+  compare.indicator_absent: "{detail}: لا توجد قيمة منشورة لـ{period}."
+
+  compare.units_differ: >-
+    تُنشر هذه المؤشرات بوحدات مختلفة، فالأرقام غير قابلة للمقارنة المباشرة.
+
+  # ------------------------------------------------------ superlatives and spreads
+
+  extremum.highest_country: "{carrier} سجّلت أعلى {detail} في {period}: {value} {unit}."
+  extremum.lowest_country: "{carrier} سجّلت أدنى {detail} في {period}: {value} {unit}."
+  extremum.highest_period: "{carrier} هي الفترة الأعلى في {detail}: {value} {unit}."
+  extremum.lowest_period: "{carrier} هي الفترة الأدنى في {detail}: {value} {unit}."
+
+  extremum.direction_unpublished: >-
+    {detail} لا ينشر اتجاهًا، لذلك اعتبرت هذه الإجابة القيمة {direction} هي الأفضل.
+
+  direction.higher: "الأعلى"
+  direction.lower: "الأدنى"
+
+  rank.not_published: >-
+    {detail} لا ينشر ترتيبًا، فلا يوجد ترتيب يمكن تقديمه، وهذه الإجابة لا تحتسب ترتيبًا.
+
+  spread.between: >-
+    الفارق في {detail} في {period} هو {value} {unit}، من {low_carrier} عند {low}
+    {figure_unit} إلى {high_carrier} عند {high} {figure_unit}.
+
+  spread.needs_two: >-
+    {detail} ينشر أقل من قيمتين في هذا النطاق، فلا يوجد فارق يمكن حسابه.
+
+  # ------------------------------------------------------------------- ordinals
+  #
+  # الترتيب في العربية كلمة لا لاحقة، ولهذا تُكتب الصيغ هنا كما تُكتب في اللغة بدل
+  # اشتقاقها من رقم. وما بعد العاشر يُكتب رقمًا صريحًا، لأن ذلك صحيح عند كل قيمة.
+
+  ordinal.1: "الأول"
+  ordinal.2: "الثاني"
+  ordinal.3: "الثالث"
+  ordinal.4: "الرابع"
+  ordinal.5: "الخامس"
+  ordinal.6: "السادس"
+  ordinal.7: "السابع"
+  ordinal.8: "الثامن"
+  ordinal.9: "التاسع"
+  ordinal.10: "العاشر"
+  ordinal.beyond: "رقم {position}"
+
+  # ------------------------------------------------- counted sentences (Epic 4)
+  #
+  # الجملة والمعدود يختاران معًا بالعدد نفسه (R-175): المثنى في العربية صيغة مستقلة
+  # لا "اثنان + جمع"، والفعل يتغيّر مع العدد كما يتغيّر الاسم.
+
+  sentence.compare_narrowed:
+    zero: "لا تغطي هذه الإجابة أي دولة."
+    one: "تغطي هذه الإجابة {counted}."
+    two: "تغطي هذه الإجابة {counted}."
+    few: "تغطي هذه الإجابة {counted}."
+    many: "تغطي هذه الإجابة {counted}."
+    other: "تغطي هذه الإجابة {counted}."
+
+  compare.named_not_declared:
+    zero: "{countries} ليست من دول المقارنة المعتمدة لـ{detail}."
+    one: "{countries} ليست من دول المقارنة المعتمدة لـ{detail}."
+    two: "{countries} ليستا من دول المقارنة المعتمدة لـ{detail}."
+    few: "{countries} ليست من دول المقارنة المعتمدة لـ{detail}."
+    many: "{countries} ليست من دول المقارنة المعتمدة لـ{detail}."
+    other: "{countries} ليست من دول المقارنة المعتمدة لـ{detail}."
+
+  compare.declared_but_no_rows:
+    zero: "{countries} من دول المقارنة المعتمدة لـ{detail} ولم تنشر قيمة هنا."
+    one: "{countries} من دول المقارنة المعتمدة لـ{detail} ولم تنشر قيمة هنا."
+    two: "{countries} من دول المقارنة المعتمدة لـ{detail} ولم تنشرا قيمة هنا."
+    few: "{countries} من دول المقارنة المعتمدة لـ{detail} ولم تنشر قيمة هنا."
+    many: "{countries} من دول المقارنة المعتمدة لـ{detail} ولم تنشر قيمة هنا."
+    other: "{countries} من دول المقارنة المعتمدة لـ{detail} ولم تنشر قيمة هنا."
+
+  sentence.rank_position:
+    zero: "{carrier} في المرتبة {ordinal} في {detail} في {period}."
+    one: "{carrier} في المرتبة {ordinal} من {counted} في {detail} في {period}."
+    two: "{carrier} في المرتبة {ordinal} من {counted} في {detail} في {period}."
+    few: "{carrier} في المرتبة {ordinal} من {counted} في {detail} في {period}."
+    many: "{carrier} في المرتبة {ordinal} من {counted} في {detail} في {period}."
+    other: "{carrier} في المرتبة {ordinal} من {counted} في {detail} في {period}."

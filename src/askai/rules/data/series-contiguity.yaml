@@ -1,0 +1,67 @@
+# Series -- a run of readings across a span, and what happens where one is missing.
+#
+# FR-16 asks for the shape of the movement rather than a single number standing in for
+# it; FR-17 asks for that run to be contiguous at its grain or to say where it is not.
+# The second is the one with a defect behind it: a series assembled from the rows that
+# exist is always contiguous, so a missing quarter closes up and reads as though the
+# indicator moved straight from one reading to the next.
+area: SERIES
+about: >-
+  What a series is allowed to be: one grain, no collapse to a single headline figure,
+  and a gap stated as content rather than closed up.
+
+rules:
+  - id: R-SERIES-A-GAP-IS-STATED
+    statement: >-
+      A series covers every period of its span at its grain. A period the detail
+      publishes no reading for is stated as a gap, naming the period, and is never
+      skipped -- a run that omits it is shorter than the question asked for and reads
+      exactly like a complete one.
+    status: agreed
+    kind: switch
+    sources:
+      - "docs/PRD.md FR-17, FR-45, FR-59d"
+      - "docs/ARCHITECTURE-SPINE.md AD-7"
+    values:
+      skipping_a_period_is_allowed: false
+      gaps_appear_in_every_lens: true
+    note: >-
+      The gap is an element of class `absent` carrying the missing period as its content
+      (FR-45), not an omitted element, for the same reason absence is a class rather
+      than a hole everywhere else in this engine. The second clause is FR-59d: brevity
+      removes depth, never the statement that something is missing.
+
+  - id: R-SERIES-IS-ONE-GRAIN
+    statement: >-
+      A series runs at a single grain across its whole span. A reading at another grain
+      is not a point on it, however close its period sits, because a year and its own
+      fourth quarter are two different readings of the same indicator.
+    status: agreed
+    kind: switch
+    sources:
+      - "docs/PRD.md FR-5, FR-6, FR-16"
+      - "docs/ARCHITECTURE-SPINE.md AD-19"
+    values:
+      mixed_grain_is_allowed: false
+    note: >-
+      FR-6 forbids substituting an adjacent grain anywhere, and a series is where it
+      would be least visible: one yearly row quietly filling a missing quarter would
+      make the gap disappear and the shape wrong at the same time.
+
+  - id: R-SERIES-HAS-NO-HEADLINE
+    statement: >-
+      A series is not collapsed into a single headline figure. The answer to a question
+      about a run of values is the run; choosing one of its points to lead with is the
+      engine answering a question the reader did not ask.
+    status: agreed
+    kind: switch
+    sources:
+      - "docs/PRD.md FR-16"
+      - "docs/ARCHITECTURE-SPINE.md AD-18, AD-23"
+    values:
+      collapses_to_a_headline: false
+    note: >-
+      Stated as data because it is enforceable: every element a series composer emits
+      takes the `series` role, which the role tables then write at evidence precision.
+      A point promoted to `headline` would be rounded by the display rule and would sit
+      in the executive lens alone, which is the collapse arriving through a role.

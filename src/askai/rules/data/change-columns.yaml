@@ -1,0 +1,108 @@
+# Change -- which published column answers a growth question, and what quantity it is.
+#
+# DATA-CONTRACT FACT 2 and AD-4: growth, change, units, polarity, targets and baselines
+# are *published columns*. An engine that computes them is re-deriving data that already
+# exists, which is precisely the F-005 / F-029 failure mode. So the decisions here are
+# about selection -- which column matches the question -- and the one case where a
+# computation is permitted at all.
+#
+# The read model carries six change cells per row (`change_{mom,qoq,yoy}_{percent,pp}`),
+# and the export behind them is ten columns: MoM on monthly rows, QoQ on quarterly rows
+# and YoY on all three grains, each in both flavours. That asymmetry is the table below;
+# it is data because it is a fact about this export, not about arithmetic.
+area: CHANGE
+about: >-
+  How a change question reaches a figure: which published column matches the grain and
+  the basis, which basis a question that names none falls back to, which quantity the
+  column publishes, and what an answer must state before a change figure may be shown.
+
+rules:
+  - id: R-CHANGE-PUBLISHED-COLUMN-IS-SELECTED
+    statement: >-
+      A change is selected from the published column matching the grain and the basis
+      wherever one exists, and is never recomputed from two readings. A change may be
+      computed only when no published column matches, and a computed change is classed
+      derived and states the readings it was computed from.
+    status: agreed
+    kind: switch
+    sources:
+      - "docs/PRD.md FR-19"
+      - "docs/ARCHITECTURE-SPINE.md AD-4"
+      - "docs/DATA-CONTRACT.md FACT 2"
+    values:
+      recompute_a_published_column: false
+      compute_when_no_column_matches: true
+    note: >-
+      Both clauses are here rather than one, because they are two decisions and a
+      reviewer may want to move the second without touching the first. Turning
+      `compute_when_no_column_matches` off makes "no published change for that pairing"
+      a refusal, which is a defensible position and is one edit away.
+
+  - id: R-CHANGE-BASIS-BY-GRAIN
+    statement: >-
+      Which bases a grain may be asked for is fixed by what the export publishes: a
+      monthly row carries month on month and year on year, a quarterly row carries
+      quarter on quarter and year on year, and a yearly row carries year on year only.
+      A question that names no basis takes the grain's own default.
+    status: agreed
+    kind: table
+    sources:
+      - "docs/PRD.md FR-19, FR-20"
+      - "docs/DATA-CONTRACT.md FACT 2"
+    values:
+      monthly_bases: ["mom", "yoy"]
+      quarterly_bases: ["qoq", "yoy"]
+      yearly_bases: ["yoy"]
+      monthly_default: "mom"
+      quarterly_default: "qoq"
+      yearly_default: "yoy"
+    note: >-
+      The defaults are the basis that shares the row's own grain, which is the reading a
+      question like "how much did it change in April" is asking for. A quarterly row
+      publishing both QoQ and YoY is exactly why basis is not a grain: asking for the
+      change "in 2025-Q2" has two correct answers, and the question decides between them
+      rather than the row.
+
+  - id: R-CHANGE-FLAVOUR-FROM-PUBLISHED-UNIT
+    statement: >-
+      A change on an indicator whose published unit is a percentage is in percentage
+      points; a change on any other indicator is a percentage. The unit decides, and the
+      value is never inspected -- a published column states which quantity it holds.
+    status: agreed
+    kind: table
+    sources:
+      - "docs/PRD.md FR-21"
+      - "docs/ARCHITECTURE-SPINE.md AD-4"
+      - "docs/RULES.md R-167"
+    values:
+      percent_units: ["%", "percent", "percentage", "pct", "per cent"]
+      percent_unit: "%"
+      points_unit: "pp"
+    note: >-
+      `percent_units` is the set of published spellings that mean "this indicator is
+      already measured in percent", matched through the engine's single text fold.
+      `percent_unit` and `points_unit` are the units a change figure is *shown* with,
+      which is a different question from what the indicator is measured in -- an
+      inflation rate is published in %, and its movement is shown in pp.
+
+  - id: R-CHANGE-CARRIES-BASIS-AND-PERIODS
+    statement: >-
+      A change figure is shown with its basis and with both periods it was measured
+      between, and with the reading it moved to. An unlabelled growth figure is not an
+      answer: the reader cannot tell what it is relative to, and brevity may not remove
+      what makes the figure defensible.
+    status: agreed
+    kind: switch
+    sources:
+      - "docs/PRD.md FR-20, FR-59b"
+      - "docs/RULES.md R-167, R-168"
+    values:
+      basis_is_required: true
+      both_periods_are_required: true
+      later_reading_is_required: true
+    note: >-
+      R-168's argument is the third clause: a percentage on its own makes the reader ask
+      "from what?", so the change travels with the reading it moved to rather than
+      beside it. All three are switches rather than prose so that the composer reads them
+      and refuses to build an element that would breach one, which is what makes an
+      unlabelled growth figure a failing test rather than a cosmetic issue.

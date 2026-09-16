@@ -147,3 +147,92 @@
     Epic 3 — "no data for the period asked" as a distinct refusal from "no data at all"
     (e1-005) and from "not published" (e2-004). Also guards F-015: a target row at a
     different period must never be presented as the actual.
+
+# Added with the Epic 3 composers (Stories 3.2-3.8). Each of these covers an arm the ten
+# entries above leave open, and each names the property it is there to hold rather than
+# the sentence it expects.
+
+- id: e3-011
+  spec_version: 1
+  question:
+    en: How much did Qatar's Real GDP grow quarter on quarter in 2025-Q4?
+    ar: كم نما الناتج المحلي الإجمالي الحقيقي لدولة قطر على أساس ربع سنوي في الربع الرابع 2025؟
+  today: 2026-09-15
+  operation: change
+  measure: change
+  why: >-
+    Epic 3 / Stories 3.4 and 3.6 — the control case against e3-004. `Real GDP` is published
+    in QAR, not %, so its change is selected from the *percent* column and is labelled "%",
+    where Inflation's is selected from the pp column. One question apart, opposite flavours:
+    the assertion is on the column identity (`change_qoq_percent`), which is what makes the
+    F-005 pair testable rather than two numbers that both look plausible.
+
+- id: e3-012
+  spec_version: 1
+  question:
+    en: How much did Qatar's Real GDP change quarter on quarter in 2025?
+    ar: كم تغير الناتج المحلي الإجمالي الحقيقي لدولة قطر على أساس ربع سنوي في عام 2025؟
+  today: 2026-09-15
+  operation: change
+  measure: change
+  expected: refusal
+  refusal_reason: >-
+    A yearly row publishes year on year only — the export carries QoQ on quarterly rows and
+    MoM on monthly ones. There is no quarter-on-quarter column on a yearly row to select and
+    none to compute from, so the answer names the basis it could not provide.
+  why: >-
+    Epic 3 / Story 3.4 — the (grain × basis) table is what decides, and the refusal names the
+    basis. "No change is published" and "no *quarter-on-quarter* change is published" are
+    different claims, and only the second is true of this indicator.
+
+- id: e3-013
+  spec_version: 1
+  question:
+    en: Show Qatar's Real GDP each year from 2019 to 2025 and compare 2024 with 2025.
+    ar: اعرض الناتج المحلي الإجمالي الحقيقي لدولة قطر سنوياً من 2019 إلى 2025 وقارن 2024 بـ2025.
+  today: 2026-09-15
+  operation: change
+  measure: change
+  why: >-
+    Epic 3 / Stories 3.7 and 3.4 together — the pairing a published column actually spans.
+    `Real GDP` yearly: 2024 = 715.866, 2025 = 736.638, and the `YearlyYoY*` columns on the
+    2025 row cover exactly 2025 against 2024. So this comparison is *selected* where e3-006
+    (2022 against 2025) is computed, and the difference between the two entries is the whole
+    of AD-4's preference rule exercised on one indicator.
+
+- id: e3-014
+  spec_version: 1
+  question:
+    en: What was Qatar's non-hydrocarbon real GDP in 2030?
+    ar: كم بلغ الناتج المحلي الإجمالي الحقيقي غير الهيدروكربوني لدولة قطر في 2030؟
+  today: 2026-09-15
+  operation: value
+  measure: actual
+  expected: refusal
+  refusal_reason: >-
+    2030 has not happened. FR-8 excludes future-dated rows from being answered as actuals,
+    and the 2030 row on this detail is a target rather than a measured reading.
+  why: >-
+    Epic 3 / Story 3.8 — the exact contrast with e3-007, which asks the same detail for the
+    same year and is answered. The measure is what differs, and the pair is what shows that
+    FR-8's future-row exclusion governs actuals and not published targets. 322 rows are
+    dated after today and 289 of them are targets.
+
+- id: e3-015
+  spec_version: 1
+  question:
+    en: What is the baseline for Qatar's inflation rate?
+    ar: ما هو خط الأساس لمعدل التضخم في قطر؟
+  today: 2026-09-15
+  operation: value
+  measure: baseline
+  expected: refusal
+  refusal_reason: >-
+    No baseline is declared for the `Inflation` detail. Baselines reach 135 of 289 published
+    details, so this is the commoner shape of answer and it says which of the two declared
+    measures is missing rather than refusing in general terms.
+  why: >-
+    Epic 3 / Story 3.8 — the baseline arm of the refusal, paired with e3-009's target arm on
+    the same detail. Also the guard on `datapoint.baseline`, which is NULL on all 8,127 rows:
+    a composer reading the datapoint column instead of the detail's declaration would answer
+    this correctly and answer e3-008 wrongly, which is why both entries exist.

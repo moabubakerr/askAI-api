@@ -110,6 +110,37 @@ messages:
 
   caveat.external: "This did not come from the approved published data."
 
+  # ------------------------------------------ series, change and targets (Epic 3)
+  #
+  # A series point does not repeat the indicator's name -- the answer has already said
+  # what it is about, and a run of twenty readings each restating it is unreadable. A
+  # gap does carry the period, because naming the period *is* the content of the
+  # element (FR-45): "no value is published" with nothing after it would be a hole with
+  # a sentence in front of it.
+  #
+  # A change names its basis through `change.basis.*` rather than through an
+  # abbreviation, so the Arabic half is authored Arabic and not a transliterated "YoY"
+  # (FR-63). It carries both periods and the reading it moved to, because R-168's
+  # argument is that a percentage alone makes the reader ask "from what?".
+
+  series.point: "{period}: {value} {unit}"
+  series.gap: "No value is published for {period}."
+  series.gaps_note: "No value is published for {periods}."
+  series.not_a_series: "{detail} publishes a rating rather than a figure, so there is no series to show."
+
+  change.selected: "{detail} was {value} {unit} in {later}, a change of {change} {change_unit} {basis} against {earlier}."
+  change.computed: "{detail} was {value} {unit} in {later}, against {earlier_value} {unit} in {earlier} — a movement of {change} {change_unit} {basis}, computed here from those two published readings."
+  change.not_published: "No published change figure is available for {detail} {basis}."
+
+  change.basis.yoy: "year on year"
+  change.basis.qoq: "quarter on quarter"
+  change.basis.mom: "month on month"
+
+  target.value: "The published target for {detail} is {value} {unit} for {period}."
+  target.not_published: "No target is published for {detail}."
+  baseline.value: "The published baseline for {detail} is {value} {unit}, measured in {period}."
+  baseline.not_published: "No baseline is published for {detail}."
+
   # ------------------------------------------------------------------ counted nouns
   #
   # The unit the reader asked in is chosen by the caller, from these ids. There is no
@@ -153,3 +184,260 @@ messages:
   sentence.available_for:
     one: "{counted} is available for {detail}."
     other: "{counted} are available for {detail}."
+
+  # ============================================================ Epic 5 — the catalogue
+  #
+  # Questions about the catalogue itself: how big a group is, what is in it, what an
+  # indicator means, what the engine holds, and the unaccounted remainder of a set of
+  # shares. Every one of these is a sentence about *published metadata* rather than about
+  # a figure, which is why they are gathered here rather than filed under the answer
+  # wordings above.
+
+  # ------------------------------------------------------ counted nouns (Epic 5 additions)
+
+  count.category:
+    one: "{count} category"
+    other: "{count} categories"
+
+  count.group:
+    one: "{count} group"
+    other: "{count} groups"
+
+  count.detail:
+    one: "{count} series"
+    other: "{count} series"
+
+  # ------------------------------------------------------------------- group answers
+  #
+  # The size is in the sentence rather than beside it (R-GROUP-SIZE-IS-STATED): a list
+  # arriving without its count leaves a reader unable to tell a complete small group from
+  # a truncated large one, and the published groups range from 1 indicator to 23.
+
+  group.holds:
+    one: "{group} holds {counted}."
+    other: "{group} holds {counted}."
+
+  group.members: "{group}: {names}"
+  group.list_separator: ", "
+
+  group.entry:
+    one: "{name} ({counted})"
+    other: "{name} ({counted})"
+
+  group.breakdown: "{group} is divided into these groups: {groups}"
+
+  group.single_group: >-
+    {group} has a single group of the same name, so this is answered for {group} as a
+    whole.
+
+  # A name published at both levels of the group layer. Both readings are named with
+  # their sizes and neither is chosen: the two differ by as much as 98 indicators, so a
+  # preference would be wrong silently and at scale (FR-2, AD-25).
+
+  group.ambiguous: "\"{name}\" could mean {readings}. Which did you mean?"
+  group.reading_separator: ", or "
+
+  group.reading_classification:
+    one: "the category {name}, with {counted}"
+    other: "the category {name}, with {counted}"
+
+  group.reading_entity:
+    one: "the group {name} inside {classification}, with {counted}"
+    other: "the group {name} inside {classification}, with {counted}"
+
+  # ---------------------------------------------------------- what periods exist (FR-4)
+  #
+  # Stated per grain, never as one merged list: 90 of the 289 published details publish at
+  # more than one grain, and a merged calendar tells a reader a monthly figure exists for
+  # a year in which only an annual one does.
+
+  periods.statement: "{detail} publishes {calendars}."
+  periods.at_grain: "{grain}, {first} to {last}"
+  periods.at_grain_single: "{grain}, {period} only"
+  periods.separator: "; "
+
+  # Distinct from "no such detail", deliberately. 28 of the 289 published details carry no
+  # data points at all, and telling that reader their indicator does not exist is false.
+  periods.none_published: >-
+    {detail} is published in the catalogue but carries no data points, so there are no
+    periods to list.
+
+  # ------------------------------------------------------------- published definitions
+
+  definition.published: "{detail}: {definition}"
+
+  definition.none_published: >-
+    No definition is published for {detail}. Nothing is generated in its place, and the
+    other language's definition is not substituted.
+
+  # ------------------------------------------------------------ the executive overview
+  #
+  # A name and its period are written together (R-171), never as two lists the reader has
+  # to pair positionally, and no common period is forced across the set.
+
+  overview.statement: "The latest published figures across {group}: {members}"
+  overview.member: "{name}, {value} {unit}, {period}"
+  overview.member_absent: "{name}, no figure published"
+  overview.member_separator: "; "
+
+  overview.own_period_note: >-
+    Each figure is shown at its own latest published period; no single period covers the
+    set.
+
+  # ---------------------------------------------------- what the engine can do (FR-32)
+  #
+  # Counted from the loaded read model at the moment the question is asked, never read off
+  # a written list of features: a list drifts from the truth the moment an indicator is
+  # added, and it drifts silently.
+
+  capability.holds:
+    one: "I answer from {counted} in the published catalogue."
+    other: "I answer from {counted} in the published catalogue."
+
+  capability.with_data:
+    one: "{counted} carries published figures, so I can give values, series and change for it."
+    other: "{counted} carry published figures, so I can give values, series and change for them."
+
+  capability.categories:
+    one: "The catalogue is divided into {counted}."
+    other: "The catalogue is divided into {counted}."
+
+  capability.groups:
+    one: "Those hold {counted} you can ask about by name."
+    other: "Those hold {counted} you can ask about by name."
+
+  capability.countries:
+    one: "{counted} carries figures for more than one country, so comparison reaches that far."
+    other: "{counted} carry figures for more than one country, so comparison reaches that far."
+
+  capability.no_commentary: >-
+    I do not hold analyst commentary or published articles, so I cannot say why a figure
+    moved.
+
+  capability.no_confidential_filter: >-
+    No published indicator is marked confidential, so nothing is being withheld from you
+    under that heading.
+
+  # ------------------------------------------------------------------- the residual
+  #
+  # Named, never absorbed (FR-37c). The parts are shown as published and are never adjusted
+  # to make them sum, so the remainder is a part of the answer rather than a rounding.
+
+  residual.unaccounted: "not accounted for by the published components"
+
+  residual.statement: >-
+    {label}: {value} {unit}, computed as the stated total of {total} less the published
+    components.
+
+  residual.exceeds: >-
+    The published components sum to {value} {unit} more than the stated total of {total}.
+    They are shown as published and are not adjusted to make them sum.
+
+  # ------------------------------------------------------- comparison (Epic 4)
+  #
+  # Cross-country comparison reaches 21 of 289 details, so most of these ids are
+  # refusals, and the refusals are deliberately four different sentences rather than
+  # one. "This indicator declares no benchmark countries" is a configuration gap;
+  # "it declares them and publishes no country values" is a data gap; and a reader
+  # who is told one when the other happened has been told something false about the
+  # published data. The same split is why `compare.country_absent` exists at all: a
+  # country in the bound set with no row stays in the list, saying so.
+  #
+  # The home country is never named in any of these. Where it appears in a comparison
+  # it is called by `scope.national`, the same phrase the scope element uses -- its
+  # rows are the ones carrying no country value, and there is no name here to use.
+
+  compare.countries_headline: "{detail}, compared across countries at {period}."
+  compare.country_value: "{country}: {value} {unit}"
+  compare.country_absent: "{country}: no value published for {period}."
+
+  compare.no_declared_benchmarks: >-
+    {detail} publishes no benchmark countries at all, so it cannot be compared across
+    countries.
+
+  compare.no_country_rows_at_all: >-
+    {detail} declares benchmark countries but publishes no country values for {period},
+    so there is nothing to compare.
+
+  compare.indicators_headline: >-
+    Compared across indicators, each at its own published period. The periods are not
+    aligned.
+
+  compare.indicator_value: "{detail}: {value} {unit} ({period})"
+  compare.indicator_absent: "{detail}: no value published for {period}."
+
+  compare.units_differ: >-
+    These indicators are published in different units, so the figures are not directly
+    comparable.
+
+  # ------------------------------------------------------ superlatives and spreads
+  #
+  # A superlative names what carries it (FR-25) and the name leads (FR-58), so the
+  # carrier is the first thing in every sentence here. The country forms state the
+  # period the countries were lined up at; the period forms do not, because their
+  # carrier already is a period.
+
+  extremum.highest_country: "{carrier} had the highest {detail} at {period}: {value} {unit}."
+  extremum.lowest_country: "{carrier} had the lowest {detail} at {period}: {value} {unit}."
+  extremum.highest_period: "{carrier} was the highest {detail} in the period compared: {value} {unit}."
+  extremum.lowest_period: "{carrier} was the lowest {detail} in the period compared: {value} {unit}."
+
+  extremum.direction_unpublished: >-
+    {detail} publishes no direction, so this answer treated the {direction} figure as the
+    better one.
+
+  direction.higher: "higher"
+  direction.lower: "lower"
+
+  rank.not_published: >-
+    {detail} does not publish a ranking, so there is no rank to give. This answer does not
+    compute one.
+
+  spread.between: >-
+    The spread on {detail} at {period} is {value} {unit}, from {low_carrier} at {low}
+    {figure_unit} up to {high_carrier} at {high} {figure_unit}.
+
+  spread.needs_two: >-
+    {detail} publishes fewer than two values in this scope, so there is no spread to give.
+
+  # ------------------------------------------------------------------- ordinals
+  #
+  # Authored, not suffixed. English builds an ordinal by suffixing a numeral and does
+  # it irregularly -- 1st, 2nd, 3rd, then 11th breaking the pattern it just set -- while
+  # Arabic uses a word. No shared rule produces both, and one that tried would generate
+  # fluent English and broken Arabic. So each language lists its own.
+  #
+  # `ordinal.beyond` is a numbered form rather than a suffixed one on purpose: "21th"
+  # is what a suffix rule stopping at ten produces, and "number 21" is correct at every
+  # value. The largest declared benchmark set is nine countries, so it is a fallback
+  # that is right rather than a gap.
+
+  ordinal.1: "1st"
+  ordinal.2: "2nd"
+  ordinal.3: "3rd"
+  ordinal.4: "4th"
+  ordinal.5: "5th"
+  ordinal.6: "6th"
+  ordinal.7: "7th"
+  ordinal.8: "8th"
+  ordinal.9: "9th"
+  ordinal.10: "10th"
+  ordinal.beyond: "number {position}"
+
+  # ------------------------------------------------- counted sentences (Epic 4)
+
+  sentence.compare_narrowed:
+    one: "This answer covers {counted}."
+    other: "This answer covers {counted}."
+
+  compare.named_not_declared:
+    one: "{countries} is not a declared benchmark country for {detail}."
+    other: "{countries} are not declared benchmark countries for {detail}."
+
+  compare.declared_but_no_rows:
+    one: "{countries} is a declared benchmark for {detail} and published no value here."
+    other: "{countries} are declared benchmarks for {detail} and published no value here."
+
+  sentence.rank_position:
+    one: "{carrier} ranks {ordinal} of {counted} on {detail} at {period}."
+    other: "{carrier} ranks {ordinal} of {counted} on {detail} at {period}."

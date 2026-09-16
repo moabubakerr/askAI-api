@@ -33,9 +33,16 @@ PURITY_BY_PACKAGE = {
     "rules": "pure after load",
     "messages": "data",
     "compile": "pure; calls ports for candidates",
+    # Subpackages added by Epics 2-5. The spine's layer table names the top-level
+    # packages; a subpackage inherits its parent's class and declares it for itself, so
+    # a composer that quietly started doing IO fails here rather than in review.
+    "compile/resolve": "pure; calls ``CandidatePort`` for candidates and nothing else",
+    "assemble/change": "pure",
+    "assemble/meta": "pure. Asks ``ports/`` and imports no adapter",
     "validate": "pure",
     "execute": "IO, via ports only",
     "assemble": "pure",
+    "assemble/compare": "pure",
     "narrate": "pure guard; calls one port",
     "respond": "orchestration; orders packages, never mutates one",
     "ports": "declarations only",

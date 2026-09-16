@@ -1,0 +1,69 @@
+# Targets and baselines -- published columns, labelled as what they are.
+#
+# Measured on the export: targets reach 98 of 289 published details and baselines 135 of
+# 289, so "none is published" is the commoner answer and has to be as well-formed as the
+# figure. 322 datapoints are dated after today and 289 of those are targets -- which is
+# why FR-8's exclusion of future rows has to be read as governing actuals only, or the
+# engine would refuse the majority of the target series it holds.
+area: TARGET
+about: >-
+  How a target or a baseline is answered: from the published column, labelled as a
+  target or a baseline rather than as an actual, read from where the export publishes
+  it, and answerable even when it is dated in the future.
+
+rules:
+  - id: R-TARGET-IS-LABELLED-NEVER-AN-ACTUAL
+    statement: >-
+      A target and a baseline are shown labelled as a target and as a baseline. Neither
+      is ever presented as an actual reading, and neither is shown beside one without
+      saying which is which.
+    status: agreed
+    kind: switch
+    sources:
+      - "docs/PRD.md FR-37"
+      - "docs/DATA-CONTRACT.md FACT 5"
+    values:
+      may_be_shown_as_an_actual: false
+    note: >-
+      F-015 is what the absence of this looks like: a target row at a different period
+      presented as the measured figure. The target series is separate and explicitly
+      labelled, and the label is part of the sentence rather than a field a renderer
+      may drop.
+
+  - id: R-TARGET-FUTURE-DATED-IS-ANSWERABLE
+    statement: >-
+      A target dated after today is answerable as a target. FR-8 excludes future-dated
+      rows from being the latest *actual*; a target is a declared future value, and a
+      rule that hid it would hide the only thing a target is for.
+    status: agreed
+    kind: switch
+    sources:
+      - "docs/PRD.md FR-8, FR-37"
+      - "docs/DATA-CONTRACT.md FACT 5"
+    values:
+      future_dated_target_is_eligible: true
+      future_dated_actual_is_eligible: false
+    note: >-
+      Both clauses together, because they are the same decision seen from two sides and
+      a build where they disagree is one where somebody read "no future rows" as
+      applying to everything. 289 of the 322 future-dated rows are targets, running out
+      to 2030.
+
+  - id: R-TARGET-BASELINE-IS-DECLARED-ON-THE-DETAIL
+    statement: >-
+      A baseline is read from the detail that declares it, with the year it is declared
+      against, and never from a datapoint. The export publishes one baseline per detail;
+      copying it onto every row would make one declared value look like thousands of
+      measured ones.
+    status: agreed
+    kind: switch
+    sources:
+      - "docs/DATA-CONTRACT.md Item_4_IndicatorDetails"
+      - "docs/PRD.md FR-37"
+    values:
+      read_from_a_datapoint: false
+    note: >-
+      `datapoint.baseline` is NULL on all 8,127 rows and that is deliberate -- Story 1.8
+      left it NULL rather than filling it down from the detail. A composer that reached
+      for the datapoint column would find nothing and report "no baseline published" for
+      all 135 details that publish one.
