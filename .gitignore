@@ -11,3 +11,7 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 .import_linter_cache/
+
+# Per-machine compose settings: the network vLLM runs on, the export path.
+# Machine-specific, never committed.
+.env
