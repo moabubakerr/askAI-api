@@ -59,6 +59,7 @@ from askai.narrate.package import AnswerPackage, Chartable, PackageKind, Package
 from askai.narrate.structured import external_package
 from askai.respond.order import OrderingError, concatenate, ordered
 from askai.respond.response import Response
+from askai.rules.countries import country_aliases
 
 PROJECT_ROOT: Final = Path(__file__).resolve().parent.parent
 PACKAGE_ROOT: Final = PROJECT_ROOT / "src" / "askai"
@@ -743,6 +744,53 @@ def test_a_two_letter_country_code_is_not_a_country_name(databases: Databases) -
     names = read_model_snapshot(databases.read_model)
     for word in ("is", "in", "at", "no", "so", "me"):
         assert names.country_named(word) is None
+
+
+def test_the_real_catalogue_does_not_offer_the_home_country_to_be_filtered_by(
+    databases: Databases,
+) -> None:
+    """R-COUNTRY-HOME-IS-ABSENCE, asserted on the **real** snapshot.
+
+    ``tests/test_compile.py`` already asserts that naming the home country binds the
+    national scope, but it asserts it over a hand-built catalogue that omits the country
+    to begin with -- so it passed throughout the period when the snapshot built from the
+    read model offered the name and the binder duly built a filter from it. The reader
+    saw the whole defect: *"inflation in <home country>"* refused with "no data for this
+    selection" while the identical question without the name answered, because the
+    published data carries the national series as the *absence* of a country value and
+    the id matched no row.
+
+    The home country is read from the rule table and its names from its own reference
+    row, so this test names it nowhere and keeps passing if the deployment changes which
+    country is home.
+    """
+    home_code = country_aliases().home_code
+    row = databases.read_model.execute(
+        "SELECT country_id, name_en, name_ar FROM ref_country WHERE UPPER(code) = ?",
+        (home_code,),
+    ).fetchone()
+    assert row is not None, "the home country keeps its reference row; only the name is withheld"
+    country_id, name_en, name_ar = row
+
+    names = read_model_snapshot(databases.read_model)
+    for spelling in (name_en, name_ar):
+        assert names.country_named(normalise(spelling)) is None
+
+    # It is withheld because it has nothing to be filtered by -- not as a special case.
+    (rows,) = databases.read_model.execute(
+        "SELECT COUNT(*) FROM datapoint WHERE country_id = ?", (country_id,)
+    ).fetchone()
+    assert rows == 0
+
+    # And a benchmark country is still resolvable, so this excludes one country and not
+    # the country lookup itself.
+    other = databases.read_model.execute(
+        "SELECT name_en FROM ref_country WHERE UPPER(code) != ? AND country_id IN "
+        "(SELECT DISTINCT country_id FROM datapoint WHERE country_id IS NOT NULL) LIMIT 1",
+        (home_code,),
+    ).fetchone()
+    assert other is not None
+    assert names.country_named(normalise(other[0])) is not None
 
 
 def test_a_source_reference_naming_the_wrong_publisher_does_not_resolve(

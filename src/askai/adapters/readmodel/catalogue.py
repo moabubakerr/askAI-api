@@ -42,6 +42,7 @@ from askai.compile.catalogue import CatalogueCountry, CatalogueDetail, SnapshotC
 from askai.domain.period import Grain, Period, PeriodFormatError
 from askai.messages.lang import Lang
 from askai.ports.presentation import PublishedDetail
+from askai.rules.countries import country_aliases
 
 __all__ = [
     "SOURCE_REF_SEGMENTS",
@@ -113,6 +114,15 @@ def read_model_snapshot(connection: sqlite3.Connection) -> SnapshotCatalogue:
         )
         for detail_id, name_en, name_ar in connection.execute(_DETAIL_NAMES)
     ]
+    # R-COUNTRY-HOME-IS-ABSENCE, applied where the catalogue is built rather than where
+    # it is read. The home country has a reference row like any other and **no datapoint
+    # row at all** -- the national series is the absence of a country value -- so a
+    # catalogue that offers its name hands the binder an id that matches nothing. The
+    # reader then gets "no data for this selection" for naming their own country, while
+    # the identical question without the name answers. That is the F-001 defect, and the
+    # rule holds the code rather than the name precisely so this line can exclude it
+    # without `src/askai/` ever spelling the country.
+    home_code = country_aliases().home_code
     countries = [
         # Published names only -- deliberately **not** the ISO code. A two-letter code
         # folds to a two-letter word, and `is`, `in`, `at`, `no`, `so` and `me` are all
@@ -120,7 +130,8 @@ def read_model_snapshot(connection: sqlite3.Connection) -> SnapshotCatalogue:
         # the grammar of the question, and "what is inflation now" would silently become
         # a question about Iceland.
         CatalogueCountry(country_id=str(country_id), names=_names(name_en, name_ar))
-        for country_id, _code, name_en, name_ar in connection.execute(_COUNTRY_NAMES)
+        for country_id, code, name_en, name_ar in connection.execute(_COUNTRY_NAMES)
+        if str(code).upper() != home_code
     ]
     return snapshot(details=details, countries=countries)
 
