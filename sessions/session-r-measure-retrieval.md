@@ -16,7 +16,7 @@ Four real responses, and they are the whole brief:
 | --- | --- |
 | `tourism sector contribution to GDP` | `several-indicators-match: Sector Exports, Sector Exports, Sector Exports` |
 | `How fast are prices rising?` | `no-indicator-resolved: too-many-to-name` |
-| `What is the unemployment rate?` | **bound the wrong indicator** — *Workforce (Economically Active)* |
+| `What is the unemployment rate?` | **bound the wrong indicator** — *Workforce (Economically Active)*, and on a later run *Qataris Employed in Private Sector as Share of Total Qataris Employed*. Two different wrong answers to one question, and a refusal before the ladder existed. **That instability is itself a finding** — measure it, do not fix it question by question. |
 | `What is GDP?` | `no-such-indicator` |
 
 Retrieval is **working**: candidates are generated and stage 2 runs. What is unknown is whether it
