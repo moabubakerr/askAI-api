@@ -67,6 +67,7 @@ suite for days.
 | **S** | `session-s-epic-9-external-contract.md` | 9 — contract | Blocked on one decision, stated in the brief. Now reader-visible: every Combined request renders a second "could not be reached" package. |
 
 | **T** | `session-t-epic-7-conversation.md` | 7 — follow-ups | The four corpus follow-ups only, **not** Epic 7's eight stories. The inheritance is already built and unfed: `CompileInput.history` defaults to `()` and `api/ask.py` never passes one. |
+| **U** | `session-u-finish-the-analyst-commentary.md` | 6 — commentary only | **Cheapest win left.** 1,031 analyst notes are loaded and unreachable: `Engine` has no commentary port. Finishes Session K's Story 2 and unblocks the three "why" questions. Needs one line of `narrate/dispatch.py` — coordinate with Q. |
 
 Epic 7 (conversation, 8 stories) had no brief **on purpose** — it multiplies the test surface of
 every other path and is the epic most likely to destabilise what already works. That judgement
