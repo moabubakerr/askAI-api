@@ -50,6 +50,7 @@ from askai.compile.lexicon import (
     measure_words,
     readings_for_latest,
 )
+from askai.compile.operations import operation_named
 from askai.compile.periods import PeriodRefusal, grain_of, implied_grain, period_named
 from askai.compile.question import Question, Span
 from askai.compile.resolve import (
@@ -65,6 +66,7 @@ from askai.domain.period import Grain
 from askai.domain.scope import CountryScope, DeclaredBenchmarks, Named
 from askai.domain.spec import (
     Bound,
+    Deferred,
     FieldState,
     LastN,
     Latest,
@@ -373,18 +375,58 @@ def _bind_measure(
     return _from_rules(default_measure())
 
 
-def _bind_operation(earlier: CompiledQuestion | None) -> _Resolved[Operation]:
-    """The operation, which in this epic is always the rule default.
+def _bind_operation(
+    question: Question,
+    earlier: CompiledQuestion | None,
+    period: _Resolved[PeriodSpec],
+    *,
+    excluding: Span | None,
+) -> _Resolved[Operation]:
+    """The operation, read from the question's verb and then down AD-19's ladder.
 
-    Operation classification is one of the four bounded model call-sites (AD-22) and this
-    epic makes no model call, so nothing here classifies: the field is bound by a rule,
-    it says so, and the epic that adds the classifier replaces a named default rather
-    than an assumption.
+    ``compile.operations`` owns the reading and this owns the ladder, the same split
+    ``compile.periods`` and ``_bind_period`` have. What the classifier needs and cannot
+    get for itself is whether *this* question named a period, because that is what
+    separates *"What is inflation"* from *"What is inflation now"* -- so it is taken off
+    the period binding, which has already decided it, rather than read a second time.
+
+    Inherited-from-history does **not** count as the reader naming a period here. A
+    follow-up that asks what the subject is has changed the question rather than narrowed
+    it, and the earlier turn's period is not a reason to answer it with a figure.
+
+    ``Unbound`` does count: a period the reader spelled and the engine refused is still a
+    period the reader named, and reading the same sentence as a definition because the
+    period was rejected would answer a refused question with a different one.
+
+    The model rung AD-22 names would sit below these words and above the history: nothing
+    here calls one, and NFR-1's twice-compiled corpus is why.
     """
+    named = operation_named(
+        question,
+        _requested(period.state),
+        excluding=excluding,
+        period_is_the_readers=period.precedence
+        in {Precedence.NAMED_IN_QUESTION, Precedence.UNBOUND},
+    )
+    if named is not None:
+        return _from_reader(Bound(named))
     carried: _Resolved[Operation] | None = _inherited(earlier, SpecField.OPERATION)
     if carried is not None:
         return carried
     return _from_rules(default_operation())
+
+
+def _requested(state: FieldState[PeriodSpec]) -> PeriodSpec | None:
+    """The period request a bound or deferred field carries, or ``None``.
+
+    Reading both states together is not widening the field (AD-1): neither branch changes
+    what the request *is*, and the classifier only asks how many readings it covers.
+    """
+    match state:
+        case Bound(value=request) | Deferred(request=request):
+            return request
+        case _:
+            return None
 
 
 # --------------------------------------------------------------------------- the binder
@@ -419,7 +461,7 @@ def compile_question(
     period = _bind_period(question, earlier, catalogue, detail_id, request.today, excluding=span)
     scope = _bind_country_scope(question, earlier, catalogue)
     measure = _bind_measure(question, earlier, excluding=span)
-    operation = _bind_operation(earlier)
+    operation = _bind_operation(question, earlier, period, excluding=span)
 
     spec = QuerySpec(
         detail=detail.state,

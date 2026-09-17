@@ -1,0 +1,363 @@
+# Operation -- which question is being asked, read from the verb the reader used.
+#
+# Every other binder reads the question's *nouns*: which indicator, which period, which
+# country, which measure. This file is the one that reads its **verb**. Without it every
+# question compiles to `operation: value` by R-BIND-DEFAULT-OPERATION, and a reader who
+# asked what an indicator *means* is answered with its latest figure -- the noun read and
+# the verb discarded.
+#
+# AD-22 names operation classification as one of four bounded model call-sites. Nothing
+# here calls a model, and nothing here may: NFR-1 makes identical compilation a gate
+# (tests/corpus_runner.py compiles every corpus entry twice and fails on any difference),
+# and a model in the binder threatens it. So the classification is a phrase table, in both
+# languages, exactly as every other thing the binder reads from the question is. The model
+# rung, when it arrives, is a rung *below* these words, not a replacement for them.
+#
+# Every phrase is written in the engine's normal form (askai.domain.normalise), because
+# that is the form the question is folded to before it is compared; tests/test_operations.py
+# asserts it for every phrase in this file.
+area: OP
+about: >-
+  Which operation a question asks for, read from the words the reader used, in English and
+  Arabic: the phrase table per operation, the order those tables are consulted in, and the
+  one frame -- "what is X" -- whose reading depends on whether a period was named.
+
+rules:
+  - id: R-OP-WORDS
+    statement: >-
+      The words that name an operation, keyed by the operation they name. A question
+      carrying one of these has named its operation, which outranks the rule default and
+      anything a follow-up inherited. A word inside the bound detail's own published name
+      never counts, so the span the detail bound from is excluded before these are read.
+    status: agreed
+    kind: table
+    sources:
+      - "docs/ARCHITECTURE-SPINE.md AD-22"
+      - "docs/PRD.md F2, FR-23, FR-33"
+    values:
+      # No words. A question that names no operation at all is a request for a value, and
+      # R-BIND-DEFAULT-OPERATION is where that is stated -- as the last rung of AD-19's
+      # ladder rather than as a phrase somebody could also match on.
+      value_words: []
+
+      series_words:
+        - trend
+        - the trend
+        - trends
+        - trending
+        - history
+        - historical
+        - historically
+        - over time
+        - through time
+        - time series
+        - series
+        - evolution
+        - development over time
+        - track record
+        - الاتجاه
+        - اتجاه
+        - التطور
+        - تطور
+        - تاريخيا
+        - التاريخي
+        - عبر الزمن
+        - علي مر الزمن
+        - بمرور الوقت
+        - مع الوقت
+        - السلسله
+        - سلسله زمنيه
+        - سلسه زمنيه
+
+      change_words:
+        - change
+        - changed
+        - changes
+        - growth
+        - grew
+        - increase
+        - increased
+        - decrease
+        - decreased
+        - rise
+        - rose
+        - risen
+        - fall
+        - fell
+        - fallen
+        - decline
+        - declined
+        - drop
+        - dropped
+        - growth rate
+        - rate of change
+        - تغير
+        - التغير
+        - تغيير
+        - التغيير
+        - نمو
+        - النمو
+        - معدل النمو
+        - ارتفاع
+        - ارتفع
+        - انخفاض
+        - انخفض
+        - زياده
+        - الزياده
+        - تراجع
+        - نقصان
+
+      comparison_words:
+        - compare
+        - compared
+        - compares
+        - comparison
+        - versus
+        - vs
+        - against
+        - compare between
+        - قارن
+        - قارني
+        - مقارنه
+        - بالمقارنه
+        - مقابل
+        - بين
+
+      extremum_words:
+        - highest
+        - lowest
+        - maximum
+        - minimum
+        - max
+        - min
+        - best
+        - worst
+        - largest
+        - smallest
+        - biggest
+        - greatest
+        - peak
+        - top
+        - اعلي
+        - ادني
+        - الاعلي
+        - الادني
+        - اكبر
+        - اصغر
+        - الاكبر
+        - الاصغر
+        - افضل
+        - اسوا
+        - الافضل
+        - الاسوا
+        - القصوي
+        - الذروه
+
+      rank_words:
+        - rank
+        - ranks
+        - ranked
+        - ranking
+        - rankings
+        - position
+        - ترتيب
+        - الترتيب
+        - ترتيبها
+        - مرتبه
+        - المرتبه
+        - تصنيف
+        - التصنيف
+
+      spread_words:
+        - gap
+        - the gap
+        - gap between
+        - the gap between
+        - range between
+        - spread
+        - the spread
+        - difference between
+        - the difference between
+        - الفجوه
+        - فجوه
+        - الفجوه بين
+        - الفرق بين
+        - الفارق
+        - الفارق بين
+        - المدي
+        - النطاق
+
+      list_words:
+        - list
+        - list the indicators
+        - which indicators
+        - what indicators
+        - name the indicators
+        - which ones
+        - enumerate
+        - قائمه
+        - القائمه
+        - اذكر
+        - اسرد
+        - ما هي المؤشرات
+        - اي المؤشرات
+
+      count_words:
+        - how many
+        - how many indicators
+        - number of
+        - the number of
+        - count
+        - كم عدد
+        - ما عدد
+        - عدد
+        - عدد المؤشرات
+
+      definition_words:
+        - define
+        - defines
+        - defined
+        - definition
+        - definitions
+        - the definition
+        - definition of
+        - mean
+        - means
+        - meaning
+        - the meaning
+        - meaning of
+        - stand for
+        - stands for
+        - تعريف
+        - التعريف
+        - ما تعريف
+        - معني
+        - المعني
+        - ما معني
+        - ماذا يعني
+        - يعني
+        - تعني
+        - المقصود
+        - ما المقصود
+        - عرف
+
+      # No words. An explanation ("why did it rise?") is a claim about *cause*, and this
+      # engine has no approved source for one -- Epic 6's analyst commentary has no table
+      # in the read model, so there is nothing to quote and nothing to attribute. Binding
+      # the operation would produce a refusal that reads like a missing feature; leaving
+      # it unbound produces the value answer the reader can at least check. When the
+      # commentary table exists, the words go here and the composer behind them is real.
+      explanation_words: []
+    note: >-
+      "change" and "growth" are deliberately in this table *and* in
+      R-BIND-MEASURE-WORDS. They are not the same reading and neither is redundant: the
+      measure says *which published column*, and the operation says *what is being asked
+      of it*. A question naming one names both, which is correct -- "how much did
+      inflation grow" is a change question about the change column.
+
+      The bare Arabic "كم" is deliberately absent from the count table, in the way the
+      bare "quarter" is absent from R-BIND-GRAIN-WORDS: it opens "how much was inflation"
+      as readily as "how many indicators", and a question asking how much something *was*
+      is a value question. "كم عدد" and "ما عدد" carry the counting sense and are listed.
+
+      The English word "mean" carries a second sense -- the arithmetic mean -- and is in
+      the definition table anyway, because "what does X mean" is the commonest way the
+      question is asked and the alternative is a frame parser matching across the
+      indicator's name. The cost is that "what is the mean of X" binds `definition`.
+      Recorded here rather than discovered later.
+
+  - id: R-OP-PRECEDENCE
+    statement: >-
+      The order the operation phrase tables are consulted in. A longer phrase always wins
+      over a shorter one, and an earlier phrase over a later one of the same length,
+      whatever this order says -- the question is read as spans, longest and leftmost
+      first. This order decides only where one and the same span appears in two tables, so
+      that such a question classifies the same way on every run.
+    status: agreed
+    kind: constant
+    sources:
+      - "docs/ARCHITECTURE-SPINE.md AD-17"
+      - "docs/ARCHITECTURE-SPINE.md AD-22"
+    values:
+      order:
+        - definition
+        - spread
+        - extremum
+        - rank
+        - comparison
+        - change
+        - series
+        - count
+        - list
+        - explanation
+        - value
+    note: >-
+      Definition is first because it is the only reading that is not about a figure at
+      all, so where one span reads as both, the question about a word wins. Spread sits
+      above comparison for the same reason in miniature: "the difference between" and
+      "الفرق بين" are how a reader asks for the distance, not for two readings side by
+      side.
+
+      Value is last because it names no words -- it is the rule default, and listing it
+      here is what makes an operation added to the domain fail loudly rather than
+      silently having no place in the order.
+
+  - id: R-OP-BARE-SUBJECT-IS-A-DEFINITION
+    statement: >-
+      A question that asks what its subject *is*, and names no period, is asking for the
+      published definition. The same frame with a period, a grain or a latest word in it
+      is asking for a value. "What is inflation" is a definition; "what is inflation now"
+      is a figure, and the period word is the whole of the difference.
+    status: agreed
+    kind: table
+    sources:
+      - "docs/PRD.md FR-33"
+      - "docs/PRD.md FR-8"
+    values:
+      frames:
+        - what is
+        - what are
+        - what s
+        - whats
+        - ما هو
+        - ما هي
+        - ماهو
+        - ماهي
+    note: >-
+      Read off the period *binding* rather than by looking for period words a second
+      time: compile.periods is the one parser for every period expression in either
+      language, and a second reading here would be a second parser, free to disagree with
+      the first about whether the reader named a period at all.
+
+      A period inherited from an earlier turn does not count. The reader who follows "what
+      was inflation in 2025" with "what is inflation" has changed the question rather than
+      narrowed it, and inheriting the period would answer the new one with the old one's
+      subject matter.
+
+      Only the present tense is listed. "What was X" is a question about a reading that
+      has already happened, and a definition does not have a tense.
+
+  - id: R-OP-SERIES-FROM-A-MULTI-READING-REQUEST
+    statement: >-
+      Whether a period request asking for more than one reading -- "over the last five
+      years", "from 2019 to 2025" -- is by itself a request for a series. Off: such a
+      question binds the operation its words name, and the rule default when they name
+      none.
+    status: agreed
+    kind: switch
+    sources:
+      - "docs/PRD.md FR-16"
+      - "docs/ARCHITECTURE-SPINE.md AD-22"
+    values:
+      enabled: false
+    note: >-
+      Off because execute/ produces no series. execute_value refuses every operation that
+      is not `value` before it fetches anything, so a question binding `series` reaches the
+      reader as "the published data cannot answer that as asked" -- while the same question
+      today answers with the newest of the readings it asked for. Turning this on before
+      the series execution exists would replace a partial answer with a refusal, which is
+      a worse answer to the same question.
+
+      It is a switch rather than an absence so that the day execute/ can produce a series,
+      what changes is this word and not a binder. The classifier reads it; the rung is
+      built and is one clause away from firing.

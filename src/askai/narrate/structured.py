@@ -38,11 +38,19 @@ from askai.assemble.scope import scope_element
 from askai.compile.binding import CompiledQuestion, SpecField, UnboundReason
 from askai.domain.degradation import Degradation
 from askai.domain.scope import CountryScope
-from askai.domain.spec import Bound, Unbound
+from askai.domain.spec import Bound, Operation, Unbound
 from askai.execute.value import Execution, Figure, FigureCause
 from askai.messages import Catalogue, Lang, render, render_period
+from askai.narrate.dispatch import (
+    Composed,
+    NotHeld,
+    Request,
+    Unwired,
+    compose_operation,
+)
 from askai.narrate.package import AnswerPackage, PackageKind, PackageSource
 from askai.observability.degradations import DegradationKind, degrade
+from askai.ports.groups import GroupsPort
 from askai.ports.presentation import PublishedDetail
 from askai.ports.provenance_source import SourceCatalogue
 
@@ -104,12 +112,137 @@ def structured_package(
     formatter: Formatter,
     placement: Placement,
     sources: SourceCatalogue,
+    groups: GroupsPort | None = None,
 ) -> AnswerPackage:
-    """The approved package for *answer*: elements and no prose, or a stated non-answer."""
+    """The approved package for *answer*: elements and no prose, or a stated non-answer.
+
+    **The operation decides which composer answers**, and until this branch existed
+    nothing read the field: every question, whatever its verb, reached the value
+    composition below. A question that bound an operation other than ``value`` is routed
+    by ``narrate.dispatch``; everything else is the path Epic 1 shipped, unchanged, down
+    to the order of its two checks.
+
+    *groups* is optional because it is a port a process either was wired with or was not,
+    and a process without one still answers every value question exactly as before. An
+    operation that needs it and does not have it is refused *as unsupported*, which is
+    what it is -- never as "nothing is published", which would be false.
+    """
+    routed = _routed(answer, catalogue, placement, sources, groups)
+    if routed is not None:
+        return routed
     figure = answer.execution.figure
     if figure is None or answer.published is None:
         return _not_an_answer(answer, catalogue)
     return _an_answer(answer, figure, answer.published, catalogue, formatter, placement, sources)
+
+
+# ---------------------------------------------------------------- the other operations
+
+
+def _routed(
+    answer: Answer,
+    catalogue: Catalogue,
+    placement: Placement,
+    sources: SourceCatalogue,
+    groups: GroupsPort | None,
+) -> AnswerPackage | None:
+    """The package for a non-value operation, or ``None`` when this is the value path.
+
+    ``None`` for an ``Unbound`` operation as well as for ``value``: an unbound field is
+    ``compile/``'s statement that the reader was not specific enough, ``execute/`` already
+    turns it into ``OPERATION_NOT_BOUND``, and routing on a field that was never bound
+    would be this layer reinterpreting one (AD-1).
+
+    ``None`` also for a question that is not answerable at all, whatever its operation,
+    and that ordering is load-bearing. *"What is <a name two details publish>?"* binds
+    ``definition`` and binds no detail, and it is a **clarification** -- "which of these
+    did you mean" -- not "this engine cannot answer definitions". 257 of 320 published
+    names are shared, so the wrong branch here would be the commonest answer the engine
+    gives. An unbound field is the reader's question to finish; the operation only decides
+    which composer answers one that is finished.
+    """
+    if not answer.question.is_answerable:
+        return None
+    state = answer.question.spec.operation
+    if not isinstance(state, Bound) or state.value is Operation.VALUE:
+        return None
+    match compose_operation(
+        Request(
+            operation=state.value,
+            lang=answer.lang,
+            catalogue=catalogue,
+            # The rule set the answer is being composed under, taken from the collaborator
+            # that was handed it. Asking `rules()` here would read a second rule set, and
+            # two rule sets in one answer is the drift `Placement` takes one to prevent.
+            rule_set=placement.rule_set,
+            detail_id=_detail_id(answer),
+            detail_name=_detail_name(answer),
+            groups=groups,
+        )
+    ):
+        case Composed(elements=elements, rules_fired=fired):
+            return _element_answer(answer, elements, fired, catalogue, sources)
+        case NotHeld():
+            return _stated(
+                answer,
+                PackageKind.REFUSAL,
+                render(catalogue, answer.lang, AnswerMessage.NOT_PUBLISHED),
+                answer.execution.degradations,
+            )
+        case Unwired():
+            return _stated(
+                answer,
+                PackageKind.REFUSAL,
+                render(catalogue, answer.lang, AnswerMessage.NOT_SUPPORTED),
+                answer.execution.degradations,
+            )
+
+
+def _element_answer(
+    answer: Answer,
+    elements: tuple[Placed, ...],
+    rules_fired: tuple[str, ...],
+    catalogue: Catalogue,
+    sources: SourceCatalogue,
+) -> AnswerPackage:
+    """Admit what a composer built, and refuse what does not resolve (AD-7).
+
+    The same admission the value path runs, over elements that carry a *catalogue*
+    reference rather than a datapoint one. It is the same step deliberately: a definition
+    quoted from a detail the last refresh removed is exactly as unsourced as a figure from
+    a retired row, and it is refused with a typed degradation rather than shown.
+    """
+    admitted: list[Placed] = []
+    degradations: list[Degradation] = list(answer.execution.degradations)
+    for placed in elements:
+        match admit(placed.element, sources):
+            case Admitted():
+                admitted.append(placed)
+            case Refused(degradation=degradation):
+                degradations.append(degradation)
+    if not admitted:
+        return _stated(
+            answer,
+            PackageKind.REFUSAL,
+            render(catalogue, answer.lang, AnswerMessage.DATA_UNAVAILABLE),
+            tuple(degradations),
+        )
+    return AnswerPackage(
+        source=PackageSource.APPROVED,
+        kind=PackageKind.ANSWER,
+        spec=answer.question.spec,
+        bindings=answer.question.bindings,
+        resolution=answer.execution.resolution,
+        elements=tuple(admitted),
+        degradations=tuple(degradations),
+        rules_fired=rules_fired,
+    )
+
+
+def _detail_id(answer: Answer) -> str | None:
+    """The bound detail, or ``None``. Never repaired and never guessed at (AD-1)."""
+    state = answer.question.spec.detail
+    return state.value if isinstance(state, Bound) else None
 
 
 # ---------------------------------------------------------------------- the answer

@@ -34,6 +34,9 @@ from askai.rules import RuleValue, rules
 __all__ = [
     "BindingRule",
     "Clause",
+    "OperationClause",
+    "OperationRule",
+    "bare_subject_frames",
     "benchmark_words",
     "comparison_words",
     "count_words",
@@ -45,7 +48,10 @@ __all__ = [
     "latest_words",
     "measure_words",
     "month_numbers",
+    "multi_reading_is_a_series",
     "open_range_ends_at_today",
+    "operation_order",
+    "operation_words",
     "period_nouns",
     "period_prefixes",
     "precedence_order",
@@ -78,6 +84,29 @@ class BindingRule(StrEnum):
     PERIOD_RANGE_WORDS = "R-BIND-PERIOD-RANGE-WORDS"
     OPEN_RANGE_END = "R-BIND-OPEN-RANGE-ENDS-AT-TODAY"
     PERIOD_PREFIXES = "R-BIND-PERIOD-PREFIXES"
+
+
+class OperationRule(StrEnum):
+    """The rules the operation classifier reads. Ids, so a typo fails at load.
+
+    Separate from ``BindingRule`` because they are a separate file and a separate
+    decision: ``BIND`` says how a field reaches its value once something has named one,
+    and ``OP`` says what the question's *verb* named. Keeping them apart is what let the
+    operation tables be added without editing a rule file the rest of binding depends on.
+    """
+
+    WORDS = "R-OP-WORDS"
+    PRECEDENCE = "R-OP-PRECEDENCE"
+    BARE_SUBJECT = "R-OP-BARE-SUBJECT-IS-A-DEFINITION"
+    MULTI_READING_IS_A_SERIES = "R-OP-SERIES-FROM-A-MULTI-READING-REQUEST"
+
+
+class OperationClause(StrEnum):
+    """The clause names those rules carry."""
+
+    ENABLED = "enabled"
+    FRAMES = "frames"
+    ORDER = "order"
 
 
 class Clause(StrEnum):
@@ -131,35 +160,51 @@ class OpenRangeEnd(StrEnum):
     TODAY = "today"
 
 
-def _phrase(rule: BindingRule, clause: Clause) -> str:
+type _Rule = BindingRule | OperationRule
+
+
+def _phrase(rule: _Rule, clause: Clause) -> str:
     value = rules().value(rule, clause)
     if not isinstance(value, str):
         raise TypeError(_wrong_shape(rule, clause, value, "a word"))
     return value
 
 
-def _phrases(rule: BindingRule, clause: str) -> frozenset[str]:
+def _flag(rule: _Rule, clause: OperationClause) -> bool:
+    """A switch clause, read as the toggle it is and never as a truthy value.
+
+    ``bool`` before ``int`` in the check because ``bool`` *is* an ``int`` in Python, and a
+    clause written as ``0`` would otherwise arrive here as a switch that is off -- a
+    reader-affecting decision made by a coincidence of the type system.
+    """
+    value = rules().value(rule, clause)
+    if not isinstance(value, bool):
+        raise TypeError(_wrong_shape(rule, clause, value, "a switch"))
+    return value
+
+
+def _phrases(rule: _Rule, clause: str) -> frozenset[str]:
     value = rules().value(rule, clause)
     if not isinstance(value, tuple):
         raise TypeError(_wrong_shape(rule, clause, value, "a list of words"))
     return frozenset(value)
 
 
-def _numbers(rule: BindingRule, clause: Clause) -> Mapping[str, int]:
+def _numbers(rule: _Rule, clause: Clause) -> Mapping[str, int]:
     value = rules().value(rule, clause)
     if not isinstance(value, Mapping):
         raise TypeError(_wrong_shape(rule, clause, value, "a table of words to numbers"))
     return value
 
 
-def _count(rule: BindingRule, clause: Clause) -> int:
+def _count(rule: _Rule, clause: Clause) -> int:
     value = rules().value(rule, clause)
     if not isinstance(value, int) or isinstance(value, bool):
         raise TypeError(_wrong_shape(rule, clause, value, "a count"))
     return value
 
 
-def _wrong_shape(rule: BindingRule, clause: str, value: RuleValue, wanted: str) -> str:
+def _wrong_shape(rule: _Rule, clause: str, value: RuleValue, wanted: str) -> str:
     return (
         f"{rule.value} clause `{clause}` is {type(value).__name__}, and binding needs "
         f"{wanted}; the clause is read here and nowhere else, so the file is what changes"
@@ -304,3 +349,61 @@ def period_prefixes() -> frozenset[str]:
 def open_range_ends_at_today() -> bool:
     """Does a range whose end the reader left open end at the period containing ``today``?"""
     return OpenRangeEnd(_phrase(BindingRule.OPEN_RANGE_END, Clause.END)) is OpenRangeEnd.TODAY
+
+
+# ------------------------------------------------------------------ the operation tables
+
+
+@cache
+def operation_order() -> tuple[Operation, ...]:
+    """The operations, in the order their phrase tables are consulted (AD-17).
+
+    Checked against ``Operation`` rather than merely read, and checked in both
+    directions: an operation missing from the order would silently never be classified,
+    and a name in the order that is not an operation is a typo the file should fail on.
+    """
+    value = rules().value(OperationRule.PRECEDENCE, OperationClause.ORDER)
+    if not isinstance(value, tuple):
+        raise TypeError(
+            _wrong_shape(OperationRule.PRECEDENCE, OperationClause.ORDER, value, "an order")
+        )
+    order = tuple(Operation(name) for name in value)
+    if sorted(order) != sorted(Operation):
+        missing = ", ".join(sorted(absent.value for absent in set(Operation) - set(order)))
+        raise ValueError(
+            f"{OperationRule.PRECEDENCE.value} clause `{OperationClause.ORDER.value}` "
+            f"does not name every operation exactly once; missing: {missing or 'nothing'}"
+            " -- an operation absent from the order is one nothing can ever classify"
+        )
+    return order
+
+
+@cache
+def operation_words() -> Mapping[Operation, frozenset[str]]:
+    """Each operation and the phrases that name it, in the order they are consulted.
+
+    Keyed by ``Operation`` and built from ``operation_order``, so an operation added to
+    the domain fails here -- naming the clause the file is missing -- rather than quietly
+    having no words and never being classified. The insertion order *is* the precedence a
+    caller walking the mapping gets, which is why the order is data and not a sort.
+    """
+    return {
+        value: _phrases(OperationRule.WORDS, f"{value.value}_words")
+        for value in operation_order()
+    }
+
+
+@cache
+def bare_subject_frames() -> frozenset[str]:
+    """The frames that ask what the subject *is* -- "what is", "ما هو".
+
+    A definition only when the question names no period; ``R-OP-BARE-SUBJECT-IS-A-
+    DEFINITION`` says so and ``compile.operations`` is where the period is consulted.
+    """
+    return _phrases(OperationRule.BARE_SUBJECT, OperationClause.FRAMES)
+
+
+@cache
+def multi_reading_is_a_series() -> bool:
+    """Is a request for more than one reading, by itself, a request for a series?"""
+    return _flag(OperationRule.MULTI_READING_IS_A_SERIES, OperationClause.ENABLED)
