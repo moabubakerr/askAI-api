@@ -111,8 +111,11 @@ def test_the_admission_set_is_exactly_the_enumerated_sources(base: KnowledgeBase
 def test_an_admitted_source_says_what_it_is_and_where_it_lives(base: KnowledgeBase) -> None:
     assert base.source("datapoint").table == "datapoint"
     assert base.source("reference").table == "ref_lookup"
+    # Admitted and materialised. It carried no table until the read model grew one:
+    # Story 1.6 named Epic 1's tables and Story 1.8 asked for the analyses, so the
+    # ingest counted 1,031 and stored none. The admission was never the missing half.
+    assert base.source("analysis").table == "analysis"
     # Admitted, with no table of its own. Recorded as an absence rather than omitted.
-    assert base.source("analysis").table is None
     assert base.source("article").table is None
     assert base.source("entity").table is None
     assert all(source.about for source in base.sources)

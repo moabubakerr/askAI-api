@@ -46,14 +46,19 @@ from askai.config.database import (
 PROJECT_ROOT: Final = Path(__file__).resolve().parent.parent
 PACKAGE_ROOT: Final = PROJECT_ROOT / "src" / "askai"
 
-#: The tables Epic 1 needs, and only those. Written out rather than derived from the
-#: schemas, so adding a table to the estate has to be a decision taken here too --
-#: which is how a vector collection arriving early gets caught.
+#: Every table the estate declares, and only those. Written out rather than derived from
+#: the schemas, so adding a table has to be a decision taken here too -- which is how a
+#: vector collection arriving early gets caught.
+#:
+#: ``analysis`` is the one addition to Epic 1's set. It is here, not in the index file,
+#: because it is fetched by exact key: the semantic index finds *which* passage is
+#: relevant, and the read model holds it.
 EPIC_1_TABLES: Final = frozenset(
     {
         "catalogue",
         "detail",
         "datapoint",
+        "analysis",
         "ref_country",
         "ref_lookup",
         "record",

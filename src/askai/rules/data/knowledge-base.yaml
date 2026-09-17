@@ -39,15 +39,20 @@ rules:
         # `key | read model table or - | what it is`.
         #
         # The lines carrying `-` are admitted and have no table of their own. That is the
-        # honest state: Story 1.6 created no table for analyst prose (1,031 analyses are
-        # counted at ingest and stored nowhere), articles are loose export files that no
-        # story has ingested, groups are read from the published benchmark tables, and the
-        # champion/entity names ride on the indicator row they belong to. Listing them
-        # here says the admission decision was taken; it does not claim a table exists.
+        # honest state: articles are loose export files that no story has ingested,
+        # groups are read from the published benchmark tables, and the champion/entity
+        # names ride on the indicator row they belong to. Listing them here says the
+        # admission decision was taken; it does not claim a table exists.
+        #
+        # `analysis` carried a `-` until the read model grew a table for it. Story 1.6
+        # named Epic 1's five tables and Story 1.8 asked for the 1,031 analyses to be
+        # loaded, so the ingest counted them and stored them nowhere. The admission
+        # decision on this line was always taken; what changed is that there is now
+        # somewhere for the admitted source to live.
         - "indicator | catalogue | published indicators, minus the confidential ones the CHECK makes unrepresentable"
         - "detail | detail | published indicator details -- the unit, format and series an answer is actually about"
         - "datapoint | datapoint | published datapoints: actual, target, baseline and the published changes"
-        - "analysis | - | published analyst text, admitted only where it is attached to a datapoint"
+        - "analysis | analysis | published analyst text, admitted only where it is attached to a datapoint"
         - "article | - | live published articles, under the admission predicate of R-KB-ARTICLE-ADMISSION"
         - "reference | ref_lookup | the published reference lookups -- units, polarities, value types, data sources"
         - "country | ref_country | the published country reference table"

@@ -96,6 +96,7 @@ REAL_ROWS: Final = {
     "datapoint": 8_127,
     "ref_country": 235,
     "ref_lookup": 145,
+    "analysis": 1_031,
 }
 
 #: The duplicate the story names. Both spellings are published under one ISO code.
@@ -320,6 +321,10 @@ def test_a_reader_on_another_connection_sees_the_old_rows_until_the_commit(
             before = read_served_version(reader)
             # A write transaction left open: the reader must be untouched by it.
             databases.read_model.execute("BEGIN")
+            # Children first, which is the ingest's own clear order: `analysis`
+            # references `datapoint`, so emptying the parent on its own is refused by a
+            # foreign key rather than by anything this test is about.
+            databases.read_model.execute("DELETE FROM analysis")
             databases.read_model.execute("DELETE FROM datapoint")
             assert read_served_version(reader) == before
             databases.read_model.rollback()

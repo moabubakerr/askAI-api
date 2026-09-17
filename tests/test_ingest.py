@@ -162,18 +162,20 @@ def test_the_published_layer_arrives_whole(report: IngestReport) -> None:
     assert report.lookups == REFERENCE_LOOKUPS
 
 
-def test_the_report_counts_the_published_analyses_it_did_not_store(
+def test_the_published_analyses_are_counted_and_stored(
     report: IngestReport, read_model: sqlite3.Connection
 ) -> None:
-    """The export's 1,031 analyses are counted and reported.
+    """The export's 1,031 analyses are counted, and now every one of them is kept.
 
-    They are not stored: the read model declares no table for analyst prose. It is
-    retrieved with a mandatory metadata filter from the semantic index, which is a
-    separate file with a separate owner and arrives in Epic 2. A refresh still has to
-    say what the export held, which is what this count is.
+    Until the ``analysis`` table existed this test asserted the opposite -- the count
+    without the rows -- because Story 1.6 named Epic 1's tables and Story 1.8 asked for
+    the analyses to be loaded, and the ingest refused to invent a table. The table is
+    the resolution; what the two stories disagreed about is settled, not worked around.
+    ``tests/test_analysis.py`` holds the rest.
     """
     assert report.analyses_available == ANALYSES
-    assert "analysis" not in _table_names(read_model)
+    assert report.analyses == ANALYSES
+    assert _count(read_model, "analysis") == ANALYSES
 
 
 def test_the_counts_on_the_report_agree_with_the_tables(
@@ -184,13 +186,21 @@ def test_the_counts_on_the_report_agree_with_the_tables(
     assert report.datapoints == _count(read_model, "datapoint")
     assert report.rows_written == sum(
         _count(read_model, table)
-        for table in ("ref_country", "ref_lookup", "catalogue", "detail", "datapoint")
+        for table in (
+            "ref_country",
+            "ref_lookup",
+            "catalogue",
+            "detail",
+            "datapoint",
+            "analysis",
+        )
     )
 
 
 def test_the_read_model_holds_no_table_for_the_base_layer(read_model: sqlite3.Connection) -> None:
     """The base layer is not loaded anywhere a published row could join to it."""
     assert _table_names(read_model) == [
+        "analysis",
         "catalogue",
         "datapoint",
         "detail",

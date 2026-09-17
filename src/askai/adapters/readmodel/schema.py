@@ -1,4 +1,5 @@
-"""The read model's tables -- catalogue, detail, datapoint, and the two reference tables.
+"""The read model's tables -- catalogue, detail, datapoint, analysis, and the two
+reference tables.
 
 Purity: IO.
 
@@ -8,9 +9,16 @@ no grain, no Arabic analysis, no unit and no format, so it cannot answer anythin
 CHECK rather than by an ingest filter, so an indicator the Council never approved is
 unrepresentable in the file an answer is computed from, not merely unlikely.
 
-Epic 1's tables and no others. The vector collections -- `names` in Epic 2, analyst and
-article content in Epic 2 and Epic 6 -- are created by the story that fills them, in
+Epic 1's tables, plus ``analysis``. The vector collections -- `names` in Epic 2, analyst
+and article content in Epic 2 and Epic 6 -- are created by the story that fills them, in
 the separate index file AD-20 keeps them in.
+
+``analysis`` is the one table here that Epic 1 did not declare, and it is here rather
+than in the index file because it is fetched by exact key: an analyst note is bound to
+one ``(detail, period, country)``, so retrieving it is the same keyed lookup a figure
+is. The semantic index answers *which* passage is relevant, and that is a different
+question asked of a different file; this table is what *holds* the passage, and Epic 6
+needs both.
 
 Every table here is owned by ``askai.adapters.readmodel``: the ingest of Story 1.8
 writes them and nothing else does. The record store's tables are owned elsewhere and
@@ -23,7 +31,16 @@ from typing import Final
 
 from askai.adapters.store.database import DatabaseSchema, Table
 
-__all__ = ["CATALOGUE", "DATAPOINT", "DETAIL", "OWNER", "READ_MODEL", "REF_COUNTRY", "REF_LOOKUP"]
+__all__ = [
+    "ANALYSIS",
+    "CATALOGUE",
+    "DATAPOINT",
+    "DETAIL",
+    "OWNER",
+    "READ_MODEL",
+    "REF_COUNTRY",
+    "REF_LOOKUP",
+]
 
 #: The one module AD-20 permits to write these tables.
 OWNER: Final = "askai.adapters.readmodel"
@@ -134,6 +151,62 @@ DATAPOINT: Final = Table(
     ),
 )
 
+ANALYSIS: Final = Table(
+    name="analysis",
+    owner=OWNER,
+    ddl="""
+    CREATE TABLE IF NOT EXISTS analysis (
+        -- Keyed to the datapoint identity, not to the analysis's own id: what a reader
+        -- asks for is "the commentary on this detail, at this period, in this scope",
+        -- and a key the question can be spelled in is the one that answers it. The
+        -- export publishes 1,031 analyses over 1,031 distinct datapoints, so the 0..1
+        -- relation is measured rather than hoped for.
+        detail_id               TEXT    NOT NULL REFERENCES detail(detail_id),
+        period                  TEXT    NOT NULL,
+        -- NULL is the national marker here for the same reason it is on `datapoint`,
+        -- and the two must agree: an analysis whose scope is spelled differently from
+        -- the figure it explains would be fetched for a different question than the one
+        -- it answers.
+        country_id              TEXT             REFERENCES ref_country(country_id),
+        source_analysis_id      TEXT    NOT NULL UNIQUE,
+        -- The enforced link. A composite foreign key onto (detail, period, country)
+        -- would not be checked at all on a national row, because a foreign key with a
+        -- NULL column is satisfied by default -- and 5,263 of 8,127 rows are national.
+        -- This one is NOT NULL on both sides, so every analysis provably explains a row
+        -- that survived the ingest's confidentiality filter.
+        source_datapoint_id     TEXT    NOT NULL UNIQUE
+                                        REFERENCES datapoint(source_datapoint_id),
+        -- The ten published prose columns, decoded to text once at ingest by
+        -- `content.published_text`. NULL means "this column publishes nothing", which
+        -- is the common case: 652 rows carry an English summary, 135 an SRO note, 7 an
+        -- NPC analysis. Nothing here is a summary of anything -- the text stored is the
+        -- text the analyst wrote, because an answer quotes it rather than paraphrasing.
+        sro_en                  TEXT,
+        sro_ar                  TEXT,
+        summary_en              TEXT,
+        summary_ar              TEXT,
+        detailed_en             TEXT,
+        detailed_ar             TEXT,
+        npc_en                  TEXT,
+        npc_ar                  TEXT,
+        benchmark_en            TEXT,
+        benchmark_ar            TEXT,
+        PRIMARY KEY (detail_id, period, country_id)
+    )
+    """,
+    # Not STRICT, and for `datapoint`'s reason exactly: a STRICT table's PRIMARY KEY
+    # columns are implicitly NOT NULL, which would forbid the national marker.
+    indexes=(
+        # As on `datapoint`: two NULLs compare distinct, so the primary key does not
+        # constrain the national rows and this partial index is what makes a second
+        # national note on one detail and period unrepresentable.
+        """
+        CREATE UNIQUE INDEX IF NOT EXISTS analysis_one_national_row
+            ON analysis(detail_id, period) WHERE country_id IS NULL
+        """,
+    ),
+)
+
 REF_COUNTRY: Final = Table(
     name="ref_country",
     owner=OWNER,
@@ -169,5 +242,5 @@ READ_MODEL: Final = DatabaseSchema(
     name="read model",
     # Reference tables first: the order is the creation order, and a table is easier to
     # read when the things it points at already exist above it.
-    tables=(REF_COUNTRY, REF_LOOKUP, CATALOGUE, DETAIL, DATAPOINT),
+    tables=(REF_COUNTRY, REF_LOOKUP, CATALOGUE, DETAIL, DATAPOINT, ANALYSIS),
 )

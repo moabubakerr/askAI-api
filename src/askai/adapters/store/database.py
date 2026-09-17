@@ -45,7 +45,13 @@ __all__ = [
 #: files: they are provisioned by a single step, so a shape change to any of them
 #: invalidates the set, and three independently drifting numbers would be three ways to
 #: be half-migrated.
-SCHEMA_VERSION: Final = 1
+#:
+#: Version 2 adds the read model's ``analysis`` table. There is no migration and there
+#: will not be one: the read model is a materialised copy of the export, so an estate at
+#: the previous version is re-provisioned and refreshed rather than altered in place. The
+#: visible consequence is intended -- a file at version 1 fails at startup instead of
+#: being adopted and quietly answering without commentary.
+SCHEMA_VERSION: Final = 2
 
 #: Applied to every connection. WAL removes the reader/writer conflict but not the
 #: writer/writer one, so a concurrent writer must wait rather than raise immediately.

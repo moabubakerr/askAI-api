@@ -3,8 +3,8 @@
 Purity: IO.
 
 Story 1.8. The published ``P*`` layer is copied into the local read model -- 189
-indicators, 289 details, 8,127 datapoints and the reference tables -- and the base
-``Item_*`` layer is not copied at all. It has no table here: it is reachable only
+indicators, 289 details, 8,127 datapoints, 1,031 analyses and the reference tables -- and
+the ``Item_*`` layer is not copied at all. It has no table here: it is reachable only
 through :mod:`askai.adapters.readmodel.unpublished`, behind a port that exposes names
 and existence, so an unapproved value has no row to be joined to.
 
@@ -66,6 +66,21 @@ PRIORITY_LOOKUP_TYPE: Final = "IndicatorPriorityTypes"
 #
 # A tuple rather than a dict: module-level mutable state is what AD-15 forbids, and this
 # is a fixed table of three rows, not a collector.
+#: The published prose columns of an analysis, in the order the table declares them:
+#: the export's column, then the column here. A tuple, not a dict, for AD-15's reason.
+_ANALYSIS_PROSE_COLUMNS: Final = (
+    "SroEN",
+    "SroAR",
+    "SummaryEN",
+    "SummaryAR",
+    "DetailedAnalysisEN",
+    "DetailedAnalysisAR",
+    "NPCAnalysisEN",
+    "NPCAnalysisAR",
+    "BenchmarkEN",
+    "BenchmarkAR",
+)
+
 _YOY_COLUMNS: Final = (
     (Grain.MONTHLY, "MonthlyYoYPercent", "MonthlyYoYpp"),
     (Grain.QUARTERLY, "QuarterlyYoYPercent", "QuarterlyYoYpp"),
@@ -100,9 +115,18 @@ _DATAPOINT_SQL: Final = """
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 """
 
+_ANALYSIS_SQL: Final = """
+    INSERT INTO analysis (
+        detail_id, period, country_id, source_analysis_id, source_datapoint_id,
+        sro_en, sro_ar, summary_en, summary_ar, detailed_en, detailed_ar,
+        npc_en, npc_ar, benchmark_en, benchmark_ar
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+"""
+
 #: Emptied in this order -- children first -- so the foreign keys hold at every point of
 #: the refresh rather than only at its end.
 _CLEAR_SQL: Final = (
+    "DELETE FROM analysis",
     "DELETE FROM datapoint",
     "DELETE FROM detail",
     "DELETE FROM catalogue",
@@ -131,11 +155,22 @@ class IngestReport:
     datapoints: int
     national_rows: int
     country_rows: int
-    #: Read from the export and deliberately **not** stored. Analyst prose is retrieved
-    #: with a mandatory metadata filter from the semantic index, which is a different
-    #: file with a different owner and arrives in Epic 2; the read model declares no
-    #: table for it. Counted here so a refresh still reports what the export held.
+    #: Read from the export, and now stored: ``analyses_available`` is what the export
+    #: held and ``analyses`` is what reached the table. They differ only by commentary
+    #: whose datapoint the confidentiality filter removed.
     analyses_available: int
+    analyses: int
+    #: Stored rows carrying no prose at all, in either language, after decoding. They
+    #: are kept -- the row records that an analysis exists for this datapoint and says
+    #: nothing -- and they are counted, because they are a published rejection class and
+    #: a silent change in their number is a change in the export nobody would see.
+    analyses_without_prose: int
+    #: Stored rows carrying a substantive English summary. The measure of what Story 2
+    #: can actually quote: 652 of 8,127 datapoints, which is why absence is the normal
+    #: case rather than a fault.
+    analyses_with_english_summary: int
+    #: Commentary dropped because the datapoint it explains is not in the read model.
+    analyses_without_a_datapoint: int
     #: Refused by FR-50, before the read model's own ``CHECK`` would have refused them.
     confidential_indicators_excluded: int
     #: The reviewed alias table, widened by the names this export publishes. Carried on
@@ -148,7 +183,14 @@ class IngestReport:
     @property
     def rows_written(self) -> int:
         """Every row in the read model after the ingest."""
-        return self.countries + self.lookups + self.indicators + self.details + self.datapoints
+        return (
+            self.countries
+            + self.lookups
+            + self.indicators
+            + self.details
+            + self.datapoints
+            + self.analyses
+        )
 
 
 def _text(row: Row, column: str) -> str:
@@ -308,6 +350,50 @@ def _datapoint_rows(export: CmsExport, details: frozenset[str]) -> list[tuple[ob
     ]
 
 
+def _analysis_rows(
+    export: CmsExport, datapoints: Sequence[tuple[object, ...]]
+) -> tuple[list[tuple[object, ...]], int]:
+    """The analyst commentary, keyed to the datapoint it explains. Rows and the cut.
+
+    An analysis whose datapoint is not in the read model is **dropped and counted**, not
+    stored keyless: the only datapoints missing are the ones the confidentiality filter
+    removed, and a note explaining a confidential figure is as unpublishable as the
+    figure (FR-50). Measured on this export: 1,031 analyses, all 1,031 resolving, so the
+    cut is zero here -- it is the branch that keeps it zero for the next export too.
+    """
+    keyed = {str(row[3]): (row[0], row[1], row[2]) for row in datapoints}
+    rows: list[tuple[object, ...]] = []
+    dropped = 0
+    for analysis in export.published_analyses():
+        source_datapoint_id = _text(analysis, "PublishedDataPointId")
+        key = keyed.get(source_datapoint_id)
+        if key is None:
+            dropped += 1
+            continue
+        rows.append(
+            (
+                *key,
+                _text(analysis, "PublishedDataPointAnalysisId"),
+                source_datapoint_id,
+                # Decoded here, once, by the one decoder. The export carries this prose
+                # as CMS-authored HTML on most rows -- `<ul><li><p>...` -- and a reader
+                # never saw a tag, so no answer-time path has one to strip (FR-64).
+                *(published_text(_text(analysis, column)) for column in _ANALYSIS_PROSE_COLUMNS),
+            )
+        )
+    return rows, dropped
+
+
+def _has_prose(row: tuple[object, ...]) -> bool:
+    """Does this stored analysis carry any prose at all, in either language?
+
+    The prose columns are the tail of the row, so they are read off the end rather than
+    by name: the row is built from ``_ANALYSIS_PROSE_COLUMNS`` immediately above, and
+    two hand-kept lists of ten column names would be two lists to keep in step.
+    """
+    return any(cell is not None for cell in row[-len(_ANALYSIS_PROSE_COLUMNS) :])
+
+
 def _count(connection: sqlite3.Connection, sql: str) -> int:
     row = connection.execute(sql).fetchone()
     if row is None:
@@ -347,6 +433,7 @@ def ingest_published_layer(connection: sqlite3.Connection, export: CmsExport) ->
     details = _detail_rows(export, indicators)
     detail_ids = frozenset(str(row[0]) for row in details)
     datapoints = _datapoint_rows(export, detail_ids)
+    analyses, unkeyed = _analysis_rows(export, datapoints)
 
     # Checked before the write, so the collision is reported as itself rather than as
     # whichever of the two unique constraints sqlite happens to reach first.
@@ -366,6 +453,7 @@ def ingest_published_layer(connection: sqlite3.Connection, export: CmsExport) ->
             connection.executemany(_CATALOGUE_SQL, catalogue)
             connection.executemany(_DETAIL_SQL, details)
             connection.executemany(_DATAPOINT_SQL, datapoints)
+            connection.executemany(_ANALYSIS_SQL, analyses)
     except sqlite3.DatabaseError as error:
         raise IngestError(f"the export was refused by the read model: {error}") from error
 
@@ -381,7 +469,13 @@ def ingest_published_layer(connection: sqlite3.Connection, export: CmsExport) ->
         country_rows=_count(
             connection, "SELECT COUNT(*) FROM datapoint WHERE country_id IS NOT NULL"
         ),
-        analyses_available=len(export.published_analyses()),
+        analyses_available=len(analyses) + unkeyed,
+        analyses=_count(connection, "SELECT COUNT(*) FROM analysis"),
+        analyses_without_prose=sum(1 for row in analyses if not _has_prose(row)),
+        analyses_with_english_summary=_count(
+            connection, "SELECT COUNT(*) FROM analysis WHERE summary_en IS NOT NULL"
+        ),
+        analyses_without_a_datapoint=unkeyed,
         confidential_indicators_excluded=excluded,
         country_aliases=aliases,
     )
