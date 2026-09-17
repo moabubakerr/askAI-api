@@ -66,9 +66,13 @@ suite for days.
 | **R** | `session-r-measure-retrieval.md` | 2 — quality | After M. Builds the labelled set the AD-30 harness needs, measures recall@1, then derives the margin from it. |
 | **S** | `session-s-epic-9-external-contract.md` | 9 — contract | Blocked on one decision, stated in the brief. Now reader-visible: every Combined request renders a second "could not be reached" package. |
 
-Epic 7 (conversation, 8 stories) has no brief **on purpose**. It multiplies the test surface of
-every other path for little standalone value, and it is the epic most likely to destabilise what
-already works. Write one only if someone decides they want it.
+| **T** | `session-t-epic-7-conversation.md` | 7 — follow-ups | The four corpus follow-ups only, **not** Epic 7's eight stories. The inheritance is already built and unfed: `CompileInput.history` defaults to `()` and `api/ask.py` never passes one. |
+
+Epic 7 (conversation, 8 stories) had no brief **on purpose** — it multiplies the test surface of
+every other path and is the epic most likely to destabilise what already works. That judgement
+stands. Session T takes only the four corpus follow-ups, because *"And monthly?"* is what a person
+types within a minute of seeing an answer and today it is refused. Session T is not permission to
+start the other seven stories.
 
 ## Read this before starting a session
 
