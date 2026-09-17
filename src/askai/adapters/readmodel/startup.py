@@ -44,7 +44,11 @@ from askai.adapters.readmodel.catalogue import (
     ReadModelSources,
     read_model_snapshot,
 )
-from askai.adapters.readmodel.groups import ReadModelGroups
+from askai.adapters.readmodel.groups import (
+    EitherSource,
+    ReadModelCatalogueSources,
+    ReadModelGroups,
+)
 from askai.adapters.readmodel.reachability import SqliteStoreHealth
 from askai.adapters.store.provision import Databases
 from askai.adapters.store.records import SqliteRecordStore
@@ -185,7 +189,19 @@ def engine_for(
         names=read_model_snapshot(databases.read_model),
         datapoints=ReadModelDatapoints(databases.read_model),
         presentation=ReadModelPresentation(connection=databases.read_model),
-        sources=ReadModelSources(connection=databases.read_model),
+        # Both reference shapes, because an answer carries both. A datapoint element
+        # names `detail|period|country|source` and a catalogue element -- a quoted
+        # definition, a group's count, a capability statement -- names
+        # `catalogue|kind|key`. Wired with the datapoint resolver alone, every
+        # catalogue element failed admission, every element of a definition answer was
+        # refused, and the empty result was reported as `data-could-not-be-reached`:
+        # the one refusal that means *a fault in the engine* spent on a composer that
+        # had worked. AD-7's closed world has to cover what the composers actually
+        # build, or it rejects the engine's own output.
+        sources=EitherSource(
+            datapoints=ReadModelSources(connection=databases.read_model),
+            catalogue=ReadModelCatalogueSources(connection=databases.read_model),
+        ),
         groups=ReadModelGroups(connection=databases.read_model),
         candidates=candidates,
         model=chat_model(),

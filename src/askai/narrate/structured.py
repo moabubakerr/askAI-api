@@ -40,6 +40,7 @@ from askai.compile.resolve.decide import Disambiguation
 from askai.domain.degradation import Degradation
 from askai.domain.scope import CountryScope
 from askai.domain.spec import Bound, Operation, Unbound
+from askai.execute.shapes import Executed, SpanExecution
 from askai.execute.value import Execution, Figure, FigureCause
 from askai.messages import Catalogue, Lang, render, render_period
 from askai.narrate.clarify import (
@@ -192,7 +193,11 @@ class Answer:
     """
 
     question: CompiledQuestion
-    execution: Execution
+    #: What the fetch produced, in whatever shape the bound operation asked for.
+    #: Widened from the single-figure ``Execution`` in Session L: every member answers
+    #: the same three questions -- is there a figure, what did the period resolve to,
+    #: what degraded -- so the value path below reads it exactly as it always has.
+    execution: Executed
     lang: Lang
     published: PublishedDetail | None = None
     #: The published name of the country the figure was read in, when the scope named
@@ -252,7 +257,7 @@ def structured_package(
     operation that needs it and does not have it is refused *as unsupported*, which is
     what it is -- never as "nothing is published", which would be false.
     """
-    routed = _routed(answer, catalogue, placement, sources, groups)
+    routed = _routed(answer, catalogue, formatter, placement, sources, groups)
     if routed is not None:
         return routed
     figure = answer.execution.figure
@@ -267,6 +272,7 @@ def structured_package(
 def _routed(
     answer: Answer,
     catalogue: Catalogue,
+    formatter: Formatter,
     placement: Placement,
     sources: SourceCatalogue,
     groups: GroupsPort | None,
@@ -303,6 +309,13 @@ def _routed(
             detail_id=_detail_id(answer),
             detail_name=_detail_name(answer),
             groups=groups,
+            # What the fetch produced, and the collaborators that word a number from it.
+            # Handed over rather than reached for, so a composer routed from here runs
+            # under the same catalogue, rule set and formatter as the value path.
+            executed=answer.execution,
+            published=answer.published,
+            formatter=formatter,
+            placement=placement,
         )
     ):
         case Composed(elements=elements, rules_fired=fired):
@@ -435,12 +448,27 @@ def _an_answer(
         resolution=answer.execution.resolution,
         elements=tuple(admitted),
         degradations=tuple(degradations),
-        row_ids=tuple(
-            reading.figure.source_datapoint_id for reading in answer.execution.readings
-        )
-        or (figure.source_datapoint_id,),
+        row_ids=_row_ids(answer.execution, figure),
         rules_fired=_rules_fired(answer),
     )
+
+
+def _row_ids(execution: Executed, figure: Figure) -> tuple[str, ...]:
+    """Every published row this answer stands on, and never fewer than the one it shows.
+
+    A shape that walked several periods names all of them, so a series answer's record
+    defends each point rather than only its newest. A shape that carries no run of
+    readings falls back to the figure's own row -- never to an empty tuple, because an
+    answer with no row behind it is one AD-7 refuses to show at all.
+    """
+    match execution:
+        case Execution() | SpanExecution():
+            rows = tuple(
+                reading.figure.source_datapoint_id for reading in execution.readings
+            )
+        case _:
+            rows = ()
+    return rows or (figure.source_datapoint_id,)
 
 
 def _premise_correction(

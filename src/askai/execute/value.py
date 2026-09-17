@@ -34,6 +34,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
+from datetime import date
 from decimal import Decimal, InvalidOperation
 from enum import StrEnum
 
@@ -75,9 +76,15 @@ __all__ = [
     "Execution",
     "Figure",
     "FigureCause",
+    "PeriodResolution",
     "Reading",
+    "Walk",
     "Where",
     "execute_value",
+    "failed_execution",
+    "nothing_executed",
+    "resolution_of",
+    "walk_readings",
 ]
 
 
@@ -352,7 +359,7 @@ def _resolution(
     )
 
 
-def _nothing(cause: FigureCause, particulars: str, request: PeriodSpec | None) -> Execution:
+def nothing_executed(cause: FigureCause, particulars: str, request: PeriodSpec | None) -> Execution:
     """An absence reached before any row was read, so nothing resolved."""
     return _absent(
         cause,
@@ -366,6 +373,29 @@ def _nothing(cause: FigureCause, particulars: str, request: PeriodSpec | None) -
     )
 
 
+def lookup_failure(particulars: str) -> Degradation:
+    """The read model did not answer, as the one typed degradation that says so.
+
+    Shared by every execution shape, because *"a read model that cannot return a row"*
+    is one fact whatever was being fetched, and a second kind invented beside it would
+    make the rate that should page someone count two things.
+    """
+    return degrade(DegradationKind.ADAPTER_UNAVAILABLE, Where.EXECUTE.value, particulars)
+
+
+def resolution_of(
+    request: PeriodSpec | None, periods: tuple[Period, ...] = ()
+) -> PeriodResolution:
+    """The resolution record for a shape that resolved *periods* from *request*."""
+    deferred = request is not None and requires_data_to_resolve(request)
+    return PeriodResolution(
+        request=request,
+        was_deferred=deferred,
+        periods=periods,
+        resolved_by=FetchRule.MOST_RECENT_ACTUAL.value if deferred and periods else None,
+    )
+
+
 def _absent(cause: FigureCause, particulars: str, resolution: PeriodResolution) -> Execution:
     """A well-founded nothing, stating which nothing it is."""
     return Execution(
@@ -375,7 +405,7 @@ def _absent(cause: FigureCause, particulars: str, resolution: PeriodResolution) 
     )
 
 
-def _failed(particulars: str, request: PeriodSpec | None) -> Execution:
+def failed_execution(particulars: str, request: PeriodSpec | None) -> Execution:
     """The read model did not answer. Counted as a degradation, never shown as absence.
 
     ``ADAPTER_UNAVAILABLE`` is the taxonomy's member for an adapter's own typed failure
@@ -385,9 +415,7 @@ def _failed(particulars: str, request: PeriodSpec | None) -> Execution:
     """
     return Execution(
         outcome=Failed(
-            degradations=(
-                degrade(DegradationKind.ADAPTER_UNAVAILABLE, Where.EXECUTE.value, particulars),
-            )
+            degradations=(lookup_failure(particulars),),
         ),
         resolution=PeriodResolution(
             request=request,
@@ -414,7 +442,7 @@ def execute_value(question: CompiledQuestion, datapoints: DatapointsPort) -> Exe
 
     refusal = _unanswerable(question)
     if refusal is not None:
-        return _nothing(refusal[0], refusal[1], request)
+        return nothing_executed(refusal[0], refusal[1], request)
 
     detail_id = _bound(spec.detail)
     measure = _bound(spec.measure)
@@ -426,7 +454,7 @@ def execute_value(question: CompiledQuestion, datapoints: DatapointsPort) -> Exe
 
     country_id, one_series = _country_of(scope)
     if not one_series:
-        return _nothing(
+        return nothing_executed(
             FigureCause.SCOPE_IS_NOT_ONE_SERIES,
             f"{detail_id}: {type(scope).__name__} selects more than one country, and a "
             "cross-country result is the union of two selections, assembled elsewhere",
@@ -438,43 +466,77 @@ def execute_value(question: CompiledQuestion, datapoints: DatapointsPort) -> Exe
     # stack trace -- and never as "this detail has no data".
     try:
         if not datapoints.publishes(detail_id):
-            return _nothing(
+            return nothing_executed(
                 FigureCause.DETAIL_PUBLISHES_NOTHING,
                 f"{detail_id} publishes no datapoint at any period or country",
                 request,
             )
         published = datapoints.periods(detail_id, country_id)
         if not published:
-            return _nothing(
+            return nothing_executed(
                 FigureCause.SCOPE_PUBLISHES_NOTHING,
                 f"{detail_id} publishes no row in {_scope_name(country_id)}",
                 request,
             )
-        return _walk(spec, datapoints, detail_id, measure, country_id, published)
+        deferred = requires_data_to_resolve(request)
+        walk = walk_readings(
+            request,
+            datapoints,
+            detail_id,
+            measure,
+            country_id,
+            published,
+            spec.today,
+            readings_wanted(request),
+        )
+        if walk.stopped is not None:
+            return walk.stopped
+        return _answer(request, deferred, walk.readings, detail_id, country_id)
     except DatapointsUnavailable as error:
-        return _failed(
+        return failed_execution(
             f"the read model could not answer for {detail_id} in "
             f"{_scope_name(country_id)}: {type(error).__name__}: {error}",
             request,
         )
 
 
-def _walk(
-    spec: QuerySpec,
+@dataclass(frozen=True, slots=True)
+class Walk:
+    """What walking the candidate periods found, before anything decides what it means.
+
+    Two fields and never both: ``readings`` is what the exact-key fetches produced, and
+    ``stopped`` is the stated absence the walk halted at -- a row that publishes a rating
+    rather than a number, or a named period whose measure is not published. A caller
+    turns one of them into its own shape, which is why neither is an ``Execution`` until
+    something says which shape this is.
+    """
+
+    readings: tuple[Reading, ...] = ()
+    stopped: Execution | None = None
+
+
+def walk_readings(
+    request: PeriodSpec,
     datapoints: DatapointsPort,
     detail_id: str,
     measure: Measure,
     country_id: str | None,
     published: tuple[Period, ...],
-) -> Execution:
-    """Try the candidate periods in order, fetching each by its exact key."""
-    request = _requested(spec)
-    assert request is not None
-    deferred = requires_data_to_resolve(request)
-    wanted = readings_wanted(request)
+    today: date,
+    limit: int | None,
+) -> Walk:
+    """Every reading *request* resolves to, newest first, each fetched by exact key.
 
+    The one place a candidate period becomes a ``Figure``, for every execution shape
+    rather than for the single-figure one alone. *limit* is how many readings to stop
+    after -- ``readings_wanted`` for a value fetch, ``None`` for a span, which wants all
+    of them -- and it is a parameter rather than a re-reading of the request because a
+    series over a ``Range`` and a value at a ``Range`` ask the same question of the
+    calendar and want different amounts of the answer.
+    """
+    deferred = requires_data_to_resolve(request)
     readings: list[Reading] = []
-    for period in candidate_periods(request, published, spec.today):
+    for period in candidate_periods(request, published, today):
         row = datapoints.row(detail_id, period, country_id)
         if row is None:
             continue
@@ -487,10 +549,13 @@ def _walk(
         if text is None or not is_published_text(text):
             if deferred:
                 continue
-            return _absent(
-                FigureCause.MEASURE_NOT_PUBLISHED,
-                f"{detail_id} {period} {_scope_name(country_id)}: {measure.value}",
-                _resolution(request, deferred, (period,)),
+            return Walk(
+                readings=tuple(readings),
+                stopped=_absent(
+                    FigureCause.MEASURE_NOT_PUBLISHED,
+                    f"{detail_id} {period} {_scope_name(country_id)}: {measure.value}",
+                    _resolution(request, deferred, (period,)),
+                ),
             )
         value = _read(text)
         if value is None:
@@ -498,17 +563,20 @@ def _walk(
             # read it correctly: what is absent is a *figure*, which is a fact about the
             # indicator rather than a failure, so the walk stops and says so instead of
             # reaching further back for an older row of the same kind.
-            return _absent(
-                FigureCause.VALUE_IS_NOT_A_FIGURE,
-                f"{detail_id} {period} {_scope_name(country_id)} publishes "
-                f"{measure.value}={text!r}, which is not a number",
-                _resolution(request, deferred, (period,)),
+            return Walk(
+                readings=tuple(readings),
+                stopped=_absent(
+                    FigureCause.VALUE_IS_NOT_A_FIGURE,
+                    f"{detail_id} {period} {_scope_name(country_id)} publishes "
+                    f"{measure.value}={text!r}, which is not a number",
+                    _resolution(request, deferred, (period,)),
+                ),
             )
         readings.append(Reading(period=period, figure=_figure(row, measure, value)))
-        if wanted is not None and len(readings) >= wanted:
+        if limit is not None and len(readings) >= limit:
             break
 
-    return _answer(request, deferred, readings, detail_id, country_id)
+    return Walk(readings=tuple(readings))
 
 
 def _answer(

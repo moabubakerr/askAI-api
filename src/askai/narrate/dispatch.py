@@ -36,11 +36,23 @@ from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Final
 
+from askai.assemble.change.series import (
+    ComposedSeries,
+    NotASeries,
+    SeriesRule,
+    SeriesTables,
+    series_composition,
+    series_over,
+)
+from askai.assemble.format import Formatter
 from askai.assemble.meta.definitions import DefinitionRule, definition_element
-from askai.assemble.roles import Placed
+from askai.assemble.roles import Placed, Placement
 from askai.domain.spec import Operation
+from askai.execute.shapes import Executed, SpanExecution
+from askai.execute.value import FigureCause
 from askai.messages import Catalogue, Lang
 from askai.ports.groups import GroupsPort
+from askai.ports.presentation import PublishedDetail
 from askai.rules import RuleSet
 
 __all__ = ["Composed", "NotHeld", "Request", "Routed", "Unwired", "compose_operation"]
@@ -110,6 +122,21 @@ class Request:
     #: wired with one"*, which is an ``Unwired`` and never a silent empty answer.
     groups: GroupsPort | None = None
 
+    #: What ``execute/`` produced, in the shape the operation asked for. ``None`` is a
+    #: caller that ran no execution at all, which is an ``Unwired`` for every operation
+    #: that needs one -- never an empty answer, and never a composer fed a default.
+    executed: Executed | None = None
+
+    #: The published detail the figures were read from, where a figure exists. Needed by
+    #: every composer that words a number, because the unit and the display format are
+    #: the catalogue's and never this layer's.
+    published: PublishedDetail | None = None
+
+    #: The collaborators that turn a ``Decimal`` into words. Carried rather than reached
+    #: for, so an answer cannot be composed under two formatters or two rule sets.
+    formatter: Formatter | None = None
+    placement: Placement | None = None
+
 
 #: Why each operation that is not wired is not wired. Stated once, here, so the reason a
 #: reader gets a refusal is a sentence a maintainer can find -- and so that wiring one is
@@ -120,10 +147,6 @@ class Request:
 #: Read-only, because a module-level ``dict`` in this engine is the shape an ambient
 #: collector takes and ``tests/test_domain_invariants.py`` refuses one.
 _NEEDS_EXECUTION: Final[Mapping[Operation, str]] = MappingProxyType({
-    Operation.SERIES: (
-        "assemble.change.series.series_composition needs the readings of a span; "
-        "execute.value refuses a non-value operation before fetching, so it has none"
-    ),
     Operation.CHANGE: (
         "assemble.change.delta.change_composition needs a selected or computed Change "
         "over two rows; nothing selects the published change column for a bound spec"
@@ -171,6 +194,8 @@ def compose_operation(request: Request) -> Routed:
     match request.operation:
         case Operation.DEFINITION:
             return _definition(request)
+        case Operation.SERIES:
+            return _series(request)
         case Operation.VALUE:
             raise ValueError(
                 "value is composed by narrate.structured and never routed; reaching here "
@@ -187,6 +212,69 @@ def compose_operation(request: Request) -> Routed:
                     "with the wrong composer's data"
                 )
             return Unwired(operation=request.operation, because=because)
+
+
+def _series(request: Request) -> Routed:
+    """FR-16, FR-17: every period of the span, its gaps stated rather than skipped.
+
+    The readings come from ``execute.shapes``, which fetched each one by exact key, and
+    ``series_over`` places them against the span the question bound -- so a period that
+    published nothing becomes a stated gap here, worded from the catalogue, instead of a
+    row quietly missing from a list that reads as complete.
+
+    ``publishes_a_figure`` is answered from the **cause the execution stated**, never
+    from an empty run. 21 details publish a rating or a band across 126 rows, and a run
+    of those is not a series with gaps -- it is an indicator that answers in words. The
+    fetch is what read the row and so is what knows which of the two nothings this is;
+    inferring it from a short list here would report a present-but-textual indicator as
+    a span of missing data, which is why the composer takes it as an argument.
+    """
+    executed = request.executed
+    if not isinstance(executed, SpanExecution):
+        return Unwired(
+            operation=Operation.SERIES,
+            because=(
+                "a series is composed from the readings of a span, and this request "
+                f"carries {type(executed).__name__}; execute.shapes produces the span "
+                "and the caller has to run it before the composer can be handed one"
+            ),
+        )
+    if request.published is None or request.formatter is None or request.placement is None:
+        return Unwired(
+            operation=Operation.SERIES,
+            because=(
+                "a series words a number at every point, which needs the published unit "
+                "and display format and the formatter that applies them; this request "
+                "carries no published detail or no formatter"
+            ),
+        )
+    composed = series_composition(
+        series_over(executed.span, executed.readings),
+        request.published,
+        request.catalogue,
+        request.formatter,
+        request.placement,
+        SeriesTables(rule_set=request.rule_set),
+        request.lang,
+        executed.country_id,
+        publishes_a_figure=executed.cause is not FigureCause.VALUE_IS_NOT_A_FIGURE,
+    )
+    match composed:
+        case NotASeries(reason=reason):
+            return NotHeld(
+                particulars=(
+                    f"{executed.detail_id} cannot be answered as a series: "
+                    f"{reason.value}"
+                )
+            )
+        case ComposedSeries():
+            return Composed(
+                elements=composed.elements,
+                rules_fired=(
+                    SeriesRule.A_GAP_IS_STATED.value,
+                    SeriesRule.IS_ONE_GRAIN.value,
+                ),
+            )
 
 
 def _definition(request: Request) -> Routed:

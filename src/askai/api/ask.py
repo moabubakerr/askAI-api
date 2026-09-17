@@ -63,7 +63,7 @@ from askai.api.tiebreak import TieBreakRung
 from askai.compile.binder import CompileInput, compile_question
 from askai.compile.binding import Binding, CompiledQuestion
 from askai.domain.admission import PackageSource, SourceAdmission
-from askai.execute.value import Execution, execute_value
+from askai.execute.shapes import Executed, execute_operation
 from askai.messages import Lang, render
 from askai.narrate.package import AnswerPackage
 from askai.narrate.structured import (
@@ -197,7 +197,12 @@ def answer_question(engine: Engine, ask: Ask) -> Answered:
             engine.candidates,
             tie_break=rung,
         )
-        execution = execute_value(compiled, engine.datapoints)
+        # One execution, in whatever shape the bound operation asks for. Not a ladder of
+        # per-operation call sites: `execute_operation` is one function over the closed
+        # `Operation`, and what comes back is the closed `Executed`, so an operation added
+        # to the domain fails to type-check somewhere rather than falling through to the
+        # single-figure fetch -- which is the defect this line replaces.
+        execution = execute_operation(compiled, engine.datapoints)
         freshness = engine.freshness.freshness(moment)
 
         packages = _packages(engine, ask, compiled, execution)
@@ -390,7 +395,7 @@ def _external_answer(engine: Engine, ask: Ask, result: ExternalResult) -> Extern
 
 
 def _packages(
-    engine: Engine, ask: Ask, compiled: CompiledQuestion, execution: Execution
+    engine: Engine, ask: Ask, compiled: CompiledQuestion, execution: Executed
 ) -> tuple[AnswerPackage, ...]:
     """One package per admitted source. Never merged, never de-duplicated (AD-10).
 
@@ -414,7 +419,7 @@ def _packages(
 
 
 def _approved(
-    engine: Engine, ask: Ask, compiled: CompiledQuestion, execution: Execution
+    engine: Engine, ask: Ask, compiled: CompiledQuestion, execution: Executed
 ) -> AnswerPackage:
     """The approved package, with the published detail read *after* the fetch.
 

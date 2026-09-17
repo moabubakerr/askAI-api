@@ -349,15 +349,21 @@ rules:
       - "docs/PRD.md FR-16"
       - "docs/ARCHITECTURE-SPINE.md AD-22"
     values:
-      enabled: false
+      enabled: true
     note: >-
-      Off because execute/ produces no series. execute_value refuses every operation that
-      is not `value` before it fetches anything, so a question binding `series` reaches the
-      reader as "the published data cannot answer that as asked" -- while the same question
-      today answers with the newest of the readings it asked for. Turning this on before
-      the series execution exists would replace a partial answer with a refusal, which is
-      a worse answer to the same question.
+      On since Session L, and the condition it was waiting for is met: execute/ produces a
+      series. `execute.shapes.execute_operation` dispatches on the bound operation and
+      returns a `SpanExecution` carrying one exact-key reading per period of the span,
+      with the periods that published nothing left as holes for
+      `assemble.change.series.series_over` to state; `narrate.dispatch` routes the
+      operation to `series_composition`, which words every point and every gap from the
+      bilingual catalogue.
 
-      It is a switch rather than an absence so that the day execute/ can produce a series,
-      what changes is this word and not a binder. The classifier reads it; the rung is
-      built and is one clause away from firing.
+      It was off because turning it on before that existed would have replaced a partial
+      answer -- the newest of the readings the question asked for -- with a refusal, which
+      is a worse answer to the same question. That trade no longer applies: the question
+      now gets the whole span it asked for.
+
+      It was a switch rather than an absence precisely so that the day execute/ could
+      produce a series, what changed would be this word and not a binder. That is what
+      changed. The classifier reads it; the rung was built and was one clause away.

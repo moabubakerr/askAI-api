@@ -391,15 +391,19 @@ def test_the_bare_subject_frame_is_read_off_the_period_binding_not_a_second_pars
     """A grain and a relative expression are period expressions the frame must respect,
     and they are respected because the *binding* is consulted -- the one parser, in
     ``compile.periods``, that read them in the first place."""
-    for asked in (
-        "What is inflation over the last five years?",
-        "What is quarterly inflation?",
-        "What is inflation since 2019?",
+    for asked, expected in (
+        ("What is inflation over the last five years?", Operation.SERIES),
+        ("What is quarterly inflation?", Operation.VALUE),
+        ("What is inflation since 2019?", Operation.SERIES),
     ):
         assert compiled(asked).by_field[SpecField.PERIOD].precedence is (
             Precedence.NAMED_IN_QUESTION
         )
-        assert operation_of(asked) is Operation.VALUE
+        # What the frame does with the binding is the *other* half, and it turns on
+        # `R-OP-SERIES-FROM-A-MULTI-READING-REQUEST`, which Session L switched on: a
+        # request for several readings is a series, and a bare grain is not one. Both
+        # answers are read off the same binding, which is this test's subject.
+        assert operation_of(asked) is expected
 
 
 def test_a_period_inherited_from_an_earlier_turn_does_not_make_it_a_value() -> None:
@@ -423,13 +427,18 @@ def test_a_question_naming_no_operation_still_binds_the_rule_default() -> None:
     assert binding.bound_by is BoundBy.RULE
 
 
-def test_a_multi_reading_request_is_not_by_itself_a_series() -> None:
-    """``R-OP-SERIES-FROM-A-MULTI-READING-REQUEST`` is off, and this is what off means:
-    a question asking for five readings still answers with the newest of them rather than
-    refusing, because ``execute/`` produces no series to answer it with."""
-    assert multi_reading_is_a_series() is False
-    assert operation_of("Inflation over the last five years") is Operation.VALUE
-    assert operation_of("Inflation from 2019 to 2025") is Operation.VALUE
+def test_a_multi_reading_request_is_by_itself_a_series() -> None:
+    """``R-OP-SERIES-FROM-A-MULTI-READING-REQUEST`` is on, and this is what on means.
+
+    It was off while ``execute/`` produced no series: a question asking for five readings
+    answered with the newest of them, because a partial answer beat a refusal. Session L
+    built the span execution, so the same question now gets the whole span it asked for
+    and the switch was flipped -- which is the point of its being a switch. What changed
+    was the word in the rule file, not a binder.
+    """
+    assert multi_reading_is_a_series() is True
+    assert operation_of("Inflation over the last five years") is Operation.SERIES
+    assert operation_of("Inflation from 2019 to 2025") is Operation.SERIES
 
 
 @pytest.mark.parametrize(
