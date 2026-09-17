@@ -20,6 +20,13 @@ identically, so moving a rule to ``agreed`` is a data edit and not a code change
 gate that consumes the status is Story 10.7. The single asymmetry is ``rejected``, which
 loads (so it is not re-proposed) and never fires -- enforced in ``loader.py``, not here.
 
+**Approval is a field, and it is empty.** ``agreed_by`` and ``agreed_on`` (Story 10.2)
+carry who agreed a rule and when. Every rule in ``data/`` leaves them null, because
+agreement was given verbally on 2026-09-16 and no approver was named. The mechanism is
+not optional and the identity is not the engine's to choose (FR-72a), so the field is
+built, left empty, and reported as empty by ``coverage.py`` -- an invented approver
+would be the only outcome worse than none.
+
 **A ``rejected`` rule must say why it was withdrawn.** ``R-157`` is in the catalogue
 because it was tried, fixed one case and broke twenty-two checks; an entry recording the
 withdrawal without recording the reason would be re-proposed within the year, which is
@@ -30,6 +37,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping, Sequence
+from datetime import date
 from enum import StrEnum
 from typing import Annotated, Final, Self
 
@@ -124,6 +132,8 @@ class Rule(BaseModel):
     values: Mapping[str, RuleValue] = {}
     note: str | None = None
     withdrawn_because: str | None = None
+    agreed_by: str | None = None
+    agreed_on: date | None = None
 
     @property
     def area(self) -> str:
@@ -142,6 +152,17 @@ class Rule(BaseModel):
         """
         return self.status is not RuleStatus.REJECTED
 
+    @property
+    def is_attributed(self) -> bool:
+        """Does the agreement name someone who is accountable for it?
+
+        Deliberately separate from ``status``. Every non-rejected rule is ``agreed`` as
+        of 2026-09-16, and **not one is attributed**: the agreement was verbal and no
+        approver was named. The two questions have different answers, so they are two
+        fields and two properties, and the coverage report prints both.
+        """
+        return bool((self.agreed_by or "").strip()) and self.agreed_on is not None
+
     @model_validator(mode="after")
     def _withdrawal_is_explained(self) -> Self:
         if self.status is RuleStatus.REJECTED and not (self.withdrawn_because or "").strip():
@@ -154,6 +175,30 @@ class Rule(BaseModel):
             raise ValueError(
                 f"{self.id} is {self.status.value} and carries `withdrawn_because`; a "
                 "rule is withdrawn or it is not, and the reason belongs to the rejection"
+            )
+        return self
+
+    @model_validator(mode="after")
+    def _approval_names_a_person_and_a_date_together(self) -> Self:
+        """Who agreed it, and when -- both or neither, and only on an agreed rule.
+
+        FR-72 asks for the approver *and* the date. One without the other is the shape
+        the field fails in: a name with no date cannot be matched against a version of
+        the rule, and a date with no name records that agreement happened without
+        recording who is accountable for it -- which is the state the catalogue is in
+        today, and the reason this field exists rather than a boolean.
+        """
+        named, dated = (self.agreed_by or "").strip(), self.agreed_on
+        if bool(named) != (dated is not None):
+            raise ValueError(
+                f"{self.id} records only half of its approval (`agreed_by` "
+                f"{self.agreed_by!r}, `agreed_on` {dated}); FR-72 asks who agreed it "
+                "and when, and either alone cannot be checked against anything"
+            )
+        if named and self.status is not RuleStatus.AGREED:
+            raise ValueError(
+                f"{self.id} is {self.status.value} and names an approver; approval is "
+                "recorded on the rule it approved, and a proposed rule has none"
             )
         return self
 

@@ -1,0 +1,73 @@
+# Bilingual parity -- Story 10.4, FR-60 and FR-62.
+#
+# Parity is measured, not asserted in a design document, so what is written here is the
+# target the measurement is judged against and the one behaviour the measurement found
+# that needs a decision rather than a fix.
+#
+# The cross-language rule below is aimed where the asymmetry actually reproduces. The TEA
+# test design measured it: 0-1 cases on detailed analysis, and 6-7 on SRO with 2 each way
+# on Summary. A redesign was scoped for the place it barely happens; these two fields are
+# the place it does.
+#
+# `proposed`, like GOV and for the same reason: written after the 2026-09-16 agreement,
+# so nobody has agreed them.
+area: PARITY
+about: >-
+  The bilingual parity target the corpus is measured against, the requirement that every
+  capability is asked in both languages, and what the engine does with a passage that
+  exists in only one of them.
+
+rules:
+  - id: R-PARITY-A-LANGUAGE-GAP-IS-A-DEFECT
+    statement: >-
+      The corpus score difference between English and Arabic is measured on every build
+      and its target is zero. A gap is a defect against FR-60 rather than a
+      characteristic of the Arabic path, and it is reported as a number so that it
+      cannot be settled by a reader's impression of a screenshot.
+    status: proposed
+    kind: constant
+    sources:
+      - "docs/PRD.md FR-60"
+      - "_bmad-output/planning-artifacts/epics.md Story 10.4"
+    values:
+      maximum_score_gap_percent: 0
+
+  - id: R-PARITY-EVERY-CAPABILITY-IS-ASKED-IN-BOTH
+    statement: >-
+      Every capability the corpus covers carries entries in both languages, so parity is
+      asserted across the whole surface rather than sampled on the capabilities somebody
+      thought to translate. A capability asked in one language only is a capability whose
+      Arabic behaviour is unmeasured, which reads in a report exactly like parity.
+    status: proposed
+    kind: switch
+    sources:
+      - "docs/PRD.md FR-60"
+      - "_bmad-output/planning-artifacts/epics.md Story 10.4"
+    values:
+      both_languages_per_capability: true
+
+  - id: R-PARITY-A-CROSS-LANGUAGE-PASSAGE-IS-LABELLED
+    statement: >-
+      Where a question in one language finds published prose only in the other, on the
+      fields this rule names, the passage is surfaced in the language it was published in
+      and labelled as such. It is never machine-translated, because a translated passage
+      is no longer the published text and the engine does not produce prose about
+      approved data; and it is never dropped silently, because a reader cannot ask for
+      what they are not told exists.
+    status: proposed
+    kind: table
+    sources:
+      - "docs/ARCHITECTURE-SPINE.md open question 8"
+      - "_bmad-output/planning-artifacts/epics.md Story 10.4"
+      - "docs/PRD.md FR-60, FR-64"
+    values:
+      fields: ["sro", "summary"]
+      label_the_language_of_the_passage: true
+      translate_the_passage: false
+      drop_the_passage_silently: false
+    note: >-
+      Three options were on the table -- surface it translated, surface it labelled, or
+      not at all. Labelled is chosen because it is the only one of the three that leaves
+      the reader able to act: translation would have the engine generating content about
+      approved data, and silence is indistinguishable from the field being empty. The
+      choice is stated to the reader whichever way it goes, which is what the label is.

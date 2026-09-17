@@ -13,7 +13,8 @@
   operation: value
   measure: actual
   why: >-
-    Epic 10 / Story 10.4 — the English half of a parity pair. `Total Population` yearly
+    Epic 10 / Story 10.4 — the English half of a parity pair, and the evidence for
+    R-PARITY-EVERY-CAPABILITY-IS-ASKED-IN-BOTH and R-PARITY-A-LANGUAGE-GAP-IS-A-DEFECT. `Total Population` yearly
     national actual 2025 = 3.214609, unit m, format 0.00, source National Planning Council.
     Deliberately English-only so that e10-002 is a separate entry rather than a second field
     on this one: parity is measured by two answers agreeing, which needs two runs.
@@ -26,7 +27,9 @@
   operation: value
   measure: actual
   why: >-
-    Epic 10 / Story 10.4 — the Arabic half of the pair with e10-001. Same detail, same
+    Epic 10 / Story 10.4 — the Arabic half of the pair with e10-001, and the other half
+    of the evidence for R-PARITY-EVERY-CAPABILITY-IS-ASKED-IN-BOTH and
+    R-PARITY-A-LANGUAGE-GAP-IS-A-DEFECT. Same detail, same
     period, same scope; the figure, the unit and the period must be identical and only the
     language of the surrounding answer may differ. The published Arabic indicator name is
     "عدد السكان" and the Arabic unit is "مليون". A divergence here is a bilingual-parity

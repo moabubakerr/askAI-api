@@ -1,0 +1,85 @@
+# How a rule changes -- Story 10.3, FR-73.
+#
+# Every other file here says what the engine does. This one says what may be done to
+# those files, and it is a rule file rather than a paragraph in a document for one
+# reason: the constraints below are checked on every build (tests/test_rule_governance.py)
+# and a document is not.
+#
+# These rules are `proposed`. The agreement given on 2026-09-16 covered the 188 rules in
+# docs/RULES.md; these are not among them, they were written afterwards, and recording
+# them as agreed would be manufacturing an approval for a rule nobody had seen -- the
+# exact failure FR-72a exists to prevent. They fire regardless: nothing gates on status.
+area: GOV
+about: >-
+  What a rule change is, what it must leave behind, and what it may never do to a rule
+  id -- with the cost of the deferred operator surface recorded rather than implied.
+
+rules:
+  - id: R-GOV-A-RULE-CHANGE-IS-A-REVIEWED-COMMIT
+    statement: >-
+      A change to a rule is a change to a file under `rules/data/`, reviewed and
+      committed to version control. The commit is the audit trail: it carries who
+      changed what, when, against which version, and the review that accepted it. A rule
+      changed any other way -- in a running process, in a database, by hand on the host
+      -- is business logic that moved without a reviewer, which is the founding defect.
+    status: proposed
+    kind: switch
+    sources:
+      - "docs/PRD.md FR-73"
+      - "_bmad-output/planning-artifacts/epics.md Story 10.3"
+    values:
+      the_commit_is_the_audit_trail: true
+    note: >-
+      This satisfies FR-73's audit trail and its reviewer, and it satisfies neither
+      cheaply nor completely -- see R-GOV-CHANGING-A-RULE-NEEDS-THE-REPOSITORY.
+
+  - id: R-GOV-CHANGING-A-RULE-NEEDS-THE-REPOSITORY
+    statement: >-
+      While the operator surface is deferred, changing a rule or a message is out of
+      reach of anyone who does not work in this repository. A data steward can see every
+      rule and trace it to its evidence, and cannot change one. That is a real cost
+      against the purpose of this epic and it is recorded here rather than discovered by
+      the first steward who tries.
+    status: proposed
+    kind: principle
+    sources:
+      - "_bmad-output/planning-artifacts/epics.md Story 10.3"
+      - "_bmad-output/implementation-artifacts/deferred-work.md"
+    note: >-
+      The reason to reinstate the panel eventually. Recorded as a principle rather than
+      a switch because there is nothing here for the engine to read: it is an accepted
+      cost, and the acceptance is what has to survive the people who accepted it.
+
+  - id: R-GOV-A-RULE-CHANGE-RUNS-THE-CORPUS
+    statement: >-
+      A proposed change to a rule or a prompt runs the question corpus in CI, and the
+      build fails on a regression. A rule is behaviour, so it answers to the same gate
+      as code; a rule change that cannot fail a build is a change nobody can review the
+      consequences of, only the diff.
+    status: proposed
+    kind: switch
+    sources:
+      - "docs/ARCHITECTURE-SPINE.md AD-11, AD-29"
+      - "_bmad-output/planning-artifacts/epics.md Story 10.3"
+    values:
+      the_corpus_gates_a_rule_change: true
+
+  - id: R-GOV-A-RULE-ID-IS-NEVER-REUSED
+    statement: >-
+      A rule id names exactly one rule for the life of the catalogue. A withdrawn rule
+      keeps its id and is retained with its reason; a new rule takes a new id. An id
+      returned to the pool would make every reference to it -- in a test, a commit
+      message, a review, a finding -- silently mean something else.
+    status: proposed
+    kind: table
+    sources:
+      - "docs/PRD.md FR-70, FR-72"
+      - "_bmad-output/planning-artifacts/epics.md Story 10.3"
+    values:
+      retired_ids: []
+    note: >-
+      `retired_ids` lists ids of rules that were deleted outright rather than withdrawn,
+      and it is empty and is meant to stay that way: withdrawing a rule (status
+      `rejected`, with `withdrawn_because`) keeps it visible, which is what R-157 is for.
+      An id here is checked against the live set on every build, so a deletion cannot be
+      quietly undone by a later author reaching for a short id that looks free.
