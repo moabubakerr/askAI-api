@@ -15,6 +15,14 @@ Then: **"Read `AGENTS.md` and `sessions/<your-brief>.md`, then begin."**
 `AGENTS.md` carries the house rules, the VM facts, the deployment order and the build state. Each
 brief carries only what is specific to that session. Read both.
 
+## Suggested order
+
+**Q** and **P** first — they are correctness and are what stops this being demonstrable. **N** next,
+because until its gate exists nothing measures whether a change helped. Then **R** (the number that
+decides the serving posture), **L** finished, **S** once its decision is made, **O** last.
+
+Q, P, N and R touch different packages and can run in parallel; check the fences below.
+
 ## State — 2026-09-17
 
 **Deployed and answering on the target VM.** `POST /api/ask` returns a real figure with a resolving
@@ -49,10 +57,14 @@ suite for days.
 | **H** | `session-h-epic-9-closed-world.md` | 9 — closed world, external | Ready. 9.1/9.3/9.5 are pure type work. |
 | **I** | `session-i-epic-10-governance.md` | 10 — governance | Ready, and newly unblocked: the rules are agreed. |
 | **J** | `session-j-epic-2-refusals.md` | 2 — refusals, tie-break | **Done.** Landed in `9cd8a3d`. |
-| **L** | `session-l-execute-beyond-value.md` | 3/4/5 — reachability | **Run this.** `execute/` produces one shape, so every composer in `assemble/compare/` is still unreachable. |
-| **M** | `session-m-wire-the-ladder.md` | 2 — reachability | **Run this.** The ladder is built and never executes: `engine_for` passes no `CandidatePort`. |
-| **N** | `session-n-deploy-and-verify.md` | — | After L and M. First session to judge the engine by what a reader gets on the VM. |
+| **L** | `session-l-execute-beyond-value.md` | 3/4/5 — reachability | **In progress**, committed mid-flight at `3c945e6`. Series works; comparison, counts and lists still refuse. Read `review-findings-session-l.md` before continuing. |
+| **M** | `session-m-wire-the-ladder.md` | 2 — reachability | **Done.** `b33a831`. Ladder live on the VM. |
+| **N** | `session-n-deploy-and-verify.md` | — | **Run this.** Its main deliverable is the gate that measures whether questions are answered — nothing in this repo does. |
 | **O** | `session-o-answer-from-articles.md` | 6 — articles only | After M. Answers from the 67 articles. **No relevance floor — decided deliberately**, see the brief. |
+| **P** | `session-p-what-the-reader-is-told.md` | 2 — narration | **Run this.** Detail ids are reaching readers in four composers, and the commonest clarification offers three identical names. |
+| **Q** | `session-q-answers-that-should-be-refusals.md` | 1/3/9 — correctness | **Highest severity.** Six questions that must refuse now answer, including a target invented for an indicator that publishes none. |
+| **R** | `session-r-measure-retrieval.md` | 2 — quality | After M. Builds the labelled set the AD-30 harness needs, measures recall@1, then derives the margin from it. |
+| **S** | `session-s-epic-9-external-contract.md` | 9 — contract | Blocked on one decision, stated in the brief. Now reader-visible: every Combined request renders a second "could not be reached" package. |
 
 Epic 7 (conversation, 8 stories) has no brief **on purpose**. It multiplies the test surface of
 every other path for little standalone value, and it is the epic most likely to destabilise what
