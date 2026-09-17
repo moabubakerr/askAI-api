@@ -21,12 +21,16 @@ from typing import Final
 
 import pytest
 
+from askai.adapters.readmodel.commentary import ReadModelCommentary
 from askai.adapters.readmodel.content import published_text
 from askai.adapters.readmodel.export import CmsExport
 from askai.adapters.readmodel.ingest import IngestReport, ingest_published_layer
 from askai.adapters.readmodel.schema import ANALYSIS, OWNER
 from askai.adapters.store.database import SCHEMA_VERSION
 from askai.adapters.store.provision import TABLE_OWNERS, Databases, provision
+from askai.domain.period import Period
+from askai.messages.lang import Lang
+from askai.ports.commentary import Commentary, CommentaryUnavailable
 
 PROJECT_ROOT: Final = Path(__file__).resolve().parent.parent
 EXPORT_ROOT: Final = PROJECT_ROOT / "data"
@@ -359,3 +363,120 @@ def test_a_refresh_replaces_the_commentary_rather_than_appending_it(
         second = ingest_published_layer(databases.read_model, export)
         assert second.analyses == ANALYSES
         assert _count(databases.read_model, "SELECT COUNT(*) FROM analysis") == ANALYSES
+
+
+# ------------------------------------------------------------------ fetching one note
+
+
+def test_a_note_is_fetched_by_the_complete_key(read_model: sqlite3.Connection) -> None:
+    """The adapter takes the whole (detail, period, country) key and nothing less."""
+    row = read_model.execute(
+        """
+        SELECT detail_id, period, country_id, source_datapoint_id
+        FROM analysis WHERE summary_en IS NOT NULL LIMIT 1
+        """
+    ).fetchone()
+    assert row is not None
+    detail_id, period, country_id, source_datapoint_id = row
+
+    note = ReadModelCommentary(read_model).note(str(detail_id), Period(str(period)), country_id)
+    assert note is not None
+    assert note.source_datapoint_id == source_datapoint_id
+    assert note.detail_id == detail_id
+    assert note.period == Period(str(period))
+    assert note.country_id == country_id
+    assert note.quotable(Lang.EN)
+
+
+def test_a_key_with_no_note_is_a_miss_and_not_a_failure(
+    read_model: sqlite3.Connection,
+) -> None:
+    """8% coverage means nine calls in ten miss, and a miss is the published state.
+
+    Asserted against a real datapoint that publishes no commentary rather than an
+    invented key, because the case that matters is the common one -- a figure the
+    engine can answer and an analyst never wrote about.
+    """
+    row = read_model.execute(
+        """
+        SELECT detail_id, period, country_id FROM datapoint
+        WHERE source_datapoint_id NOT IN (SELECT source_datapoint_id FROM analysis)
+        LIMIT 1
+        """
+    ).fetchone()
+    assert row is not None
+    found = ReadModelCommentary(read_model).note(str(row[0]), Period(str(row[1])), row[2])
+    assert found is None
+
+
+def test_the_national_scope_is_selected_as_an_absent_country(
+    read_model: sqlite3.Connection,
+) -> None:
+    """``IS NULL``, never ``= ?``. Two NULLs do not compare equal in SQL, so the
+    parameterised form would lose every national note while looking correct (AD-5)."""
+    row = read_model.execute(
+        "SELECT detail_id, period FROM analysis WHERE country_id IS NULL LIMIT 1"
+    ).fetchone()
+    assert row is not None
+    commentary = ReadModelCommentary(read_model)
+    assert commentary.note(str(row[0]), Period(str(row[1])), None) is not None
+    # The same key with a country named is a different key, and holds nothing.
+    assert commentary.note(str(row[0]), Period(str(row[1])), "no-such-country") is None
+
+
+def test_a_dead_store_is_a_typed_failure_not_an_absence(
+    read_model: sqlite3.Connection,
+) -> None:
+    """The distinction the port is declared for: a store that stopped answering must
+    not reach a reader as "no commentary is published for this period"."""
+    closed = sqlite3.connect(":memory:")
+    closed.close()
+    with pytest.raises(CommentaryUnavailable):
+        ReadModelCommentary(closed).note("any", Period("2025"), None)
+
+
+def test_the_quoted_passage_prefers_the_summary_over_the_detailed_analysis() -> None:
+    """The summary is what an analyst wrote to be read *beside* the figure; the
+    detailed analysis is what they wrote to be read instead of it. Falling back the
+    other way would put several paragraphs where one sentence was published."""
+    both = Commentary(
+        detail_id="d",
+        period=Period("2025"),
+        country_id=None,
+        source_datapoint_id="dp",
+        summary=("the summary", None),
+        detailed=("the detailed analysis", None),
+    )
+    assert both.quotable(Lang.EN) == "the summary"
+
+    detailed_only = Commentary(
+        detail_id="d",
+        period=Period("2025"),
+        country_id=None,
+        source_datapoint_id="dp",
+        detailed=("the detailed analysis", None),
+    )
+    assert detailed_only.quotable(Lang.EN) == "the detailed analysis"
+
+
+def test_a_passage_never_crosses_languages() -> None:
+    """An Arabic answer carrying an English paragraph is finding 121's failure with a
+    source_ref attached: the reader asked in Arabic and would be shown text they may
+    not read, sourced as though it were approved for them. Nothing, instead."""
+    english_only = Commentary(
+        detail_id="d",
+        period=Period("2025"),
+        country_id=None,
+        source_datapoint_id="dp",
+        summary=("the summary", None),
+    )
+    assert english_only.quotable(Lang.EN) == "the summary"
+    assert english_only.quotable(Lang.AR) is None
+
+
+def test_the_adapter_only_reads() -> None:
+    """AD-20: `analysis` has one writer, the ingest. A fetch that wrote it is a second."""
+    adapter = PROJECT_ROOT / "src" / "askai" / "adapters" / "readmodel" / "commentary.py"
+    source = adapter.read_text(encoding="utf-8")
+    for statement in ("INSERT", "UPDATE ", "DELETE", "CREATE", "DROP"):
+        assert statement not in source.upper().replace("UPDATEDAT", "")
