@@ -1,63 +1,50 @@
-# Session H — Epic 9: one answer path, closed world, and the external view
+# Session H — Epic 9: one answer path, closed world, the external view
 
-**Read `AGENTS.md` first.** It carries the house rules, the VM facts and the build state.
+Read `AGENTS.md` first (house rules, VM facts, build state). This brief adds only what is specific.
 
-This epic is what makes "the engine answers only from approved published data" a property of the
-code rather than a claim in a document. Most of it is pure type work and needs no model.
+Most of this epic is pure type work and needs no model or network.
 
-## You own
+## Own
 
-`src/askai/respond/` · `src/askai/adapters/external/` · `src/askai/ports/` (new filenames) ·
-`corpus/epic-9.yaml` · new files under `src/askai/rules/data/` · new test files
+`respond/` · `adapters/external/` · new `ports/` filenames · `corpus/epic-9.yaml` ·
+new `rules/data/` files · new test files
 
-## What exists
+## Build on
 
-- `respond/order.py`, `respond/response.py` — Story 1.15 built these **generic over an opaque type**,
-  so the layer literally cannot name or read a package. That is AD-2's "respond arranges packages,
-  it never reaches inside one", made structural. Keep it that way.
-- `narrate/package.py` — the only `AnswerPackage` constructor in the tree.
-- `ports/unpublished_catalogue.py` — the base CMS layer, exposing **names and existence only**.
-  `UnpublishedName` carries two fields and no id, period, country, definition or value, and a test
-  asserts no type from it crosses into an `Answer`. That is 9.2's foundation, already laid.
-- `observability/degradations.py` — the closed `DegradationKind` set, `Outcome[T]`, and `Tally`.
-  `EXTERNAL_AGENT_UNAVAILABLE` already exists.
-- `adapters/model/` — the pattern for an outbound adapter: totally non-raising, every failure a
-  typed degradation, fakes so the suite passes with nothing reachable.
+- `respond/order.py`, `response.py` — Story 1.15 built these **generic over an opaque type**, so
+  the layer cannot name or read a package. That is AD-2 made structural. Keep it.
+- `ports/unpublished_catalogue.py` — names and existence only; `UnpublishedName` has two fields and
+  no id, period, country, definition or value, with a test asserting no type from it reaches an
+  `Answer`. That is 9.2's foundation, already laid.
+- `observability/degradations.py` — closed `DegradationKind`, `Outcome[T]`, `Tally`.
+  `EXTERNAL_AGENT_UNAVAILABLE` exists.
+- `adapters/model/` — the pattern for an outbound adapter: non-raising, every failure a typed
+  degradation, fakes so the suite passes with nothing reachable.
 
-## Stories, batched
+## Stories
 
-| Batch | Stories | Notes |
-|---|---|---|
-| **1** | **9.1 + 9.3 + 9.5** | Source admission set, structural closed-world enforcement, every answer declares its agent. **All pure, no model, no network.** Start here — it is a type invariant that gets harder to retrofit with every epic that lands on top. |
-| **2** | 9.2 + 9.4 | The knowledge base and nothing else; say what is missing rather than reaching for something adjacent. |
-| **3** | 9.6 + 9.7 + 9.8 + 9.9 | The external agent: fetched in parallel on its own budget, returning **two answers never one**, with an unconditional caveat, recorded on every answer. |
+| Batch | Stories |
+|---|---|
+| 1 | **9.1 + 9.3 + 9.5** — source admission set, structural closed world, every answer declares its agent. Pure. **Start here** — a closed-world invariant gets harder to retrofit with every epic on top. |
+| 2 | 9.2 + 9.4 — the knowledge base and nothing else; say what is missing rather than reaching for something adjacent |
+| 3 | 9.6–9.9 — the external agent: parallel, own budget, **two answers never one**, unconditional caveat, recorded |
 
-## The constraints that define this epic
+## Non-obvious constraints
 
-- **Two answers, never one.** 9.7 is the story most likely to be softened by accident. An external
-  view and an approved answer are never merged, never averaged, never reconciled. The reader sees
-  both, labelled, or sees one and is told the other was unavailable.
-- **The caveat is unconditional.** Not "when the external answer disagrees" — always. 9.8 says it
-  must also be honest about its own limits.
-- **Closed world is structural, not a filter.** 9.3 is the difference between "we exclude
-  unpublished content" and "unpublished content cannot be represented in an answer". Story 1.6
-  already did this for confidential indicators with a `CHECK` constraint rather than an ingest
-  filter — that is the standard to match.
-- **No external endpoint exists.** Build behind a port with a fake, exactly as the model adapter
-  does. Every test passes with nothing reachable.
+- **Two answers, never one** (9.7). Never merged, averaged or reconciled. The reader sees both
+  labelled, or sees one and is told the other was unavailable. This is the story most likely to be
+  softened by accident.
+- **The caveat is unconditional** (9.8) — not "when they disagree". Always, and honest about its
+  own limits.
+- **Closed world is structural, not a filter** (9.3). Story 1.6 made confidential indicators
+  unrepresentable with a `CHECK` rather than an ingest filter. Match that standard.
+- **No external endpoint exists.** Port plus fake; every test passes with nothing reachable.
 
 ## Two things you will find
 
-- **No published indicator is marked `Confidential`.** `P13_Ref_IndicatorPriorityTypes` defines the
-  type; the export has 105 `Priority`, 84 blank and **zero** confidential, in both layers. The
-  exclusion is real and enforced, and **it cannot be evidenced from this export**. Say so rather
-  than writing a test that passes vacuously.
-- **342 CMS indicators were never approved for publication**, and they are reachable only as names
-  through the unpublished port. That is your worked example for 9.2.
-
-## Ownership
-
-Do NOT edit `pyproject.toml`, `uv.lock`, any existing test file, or anything under
-`src/askai/domain/`, `compile/`, `execute/`, `assemble/`, `narrate/`, `messages/`, `config/`,
-`adapters/readmodel/`, `adapters/store/`, `adapters/index/`, `_bmad-output/` or `docs/`.
-All five gates must pass; see `AGENTS.md`.
+- **No published indicator is marked `Confidential`** — the type exists in
+  `P13_Ref_IndicatorPriorityTypes`, the export has 105 `Priority`, 84 blank, **zero** confidential,
+  in both layers. The exclusion is real and **cannot be evidenced from this export**. Say so
+  rather than writing a test that passes vacuously.
+- **342 CMS indicators were never approved for publication**, reachable only as names through the
+  unpublished port. That is 9.2's worked example.
