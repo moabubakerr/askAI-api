@@ -57,7 +57,7 @@ from askai.compile.lexicon import (
     readings_for_latest,
     relative_back_words,
 )
-from askai.compile.question import Question, Span
+from askai.compile.question import Question, Span, longest_phrase
 from askai.domain.normalise import normalise
 from askai.domain.period import Grain, Period, PeriodFormatError
 from askai.domain.spec import Exact, LastN, Latest, PeriodSpec, Range
@@ -234,7 +234,7 @@ def _parts(question: Question, *, excluding: Span | None) -> tuple[_Part, ...]:
     months, quarters = month_numbers(), quarter_numbers()
     taken: list[Span] = []
     found: list[_Part] = []
-    for span in question.spans():
+    for span in question.spans(longest_phrase([*months, *quarters])):
         if span.overlaps(excluding) or any(span.overlaps(other) for other in taken):
             continue
         month = months.get(span.text)
@@ -423,6 +423,24 @@ def _element(phrase: str) -> _Element | None:
     return None
 
 
+def _relative_bound() -> int:
+    """The longest span that could still parse as a relative expression, in words.
+
+    An accepted expression is exactly one interval noun, at most one count, and one or
+    more backward-pointing words -- so its length is bounded by the longest noun phrase,
+    plus the longest count phrase, plus every back word spelled once. Back words may
+    repeat (*"over the last"* uses three distinct ones), but repeating the *same* one
+    adds no element the guard below reads, so a span longer than this is padding rather
+    than an expression. Derived from the rule data, so a new back word widens it.
+    """
+    backs = relative_back_words()
+    return (
+        longest_phrase(phrase for nouns in period_nouns().values() for phrase in nouns)
+        + longest_phrase(count_words())
+        + sum(len(phrase.split()) for phrase in backs)
+    )
+
+
 def _elements(words: list[str]) -> tuple[_Element, ...] | None:
     """Every word of a candidate expression as a part, or ``None`` if one is not a part.
 
@@ -453,7 +471,7 @@ def _relative(question: Question, *, excluding: Span | None) -> LastN | None:
     ``R-BIND-GRAIN-FROM-DECLARED-DEFAULT``'s ``readings`` -- so *"last year"* and
     *"العام الماضي"* are the same request as "the latest yearly reading".
     """
-    for span in question.spans():
+    for span in question.spans(_relative_bound()):
         if span.overlaps(excluding):
             continue
         elements = _elements(span.text.split())

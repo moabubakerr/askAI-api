@@ -223,7 +223,7 @@ def _bind_detail(
     :class:`TieBroken`), and a second decision here could disagree with the resolution it
     is describing.
     """
-    for span in question.spans():
+    for span in question.spans(catalogue.longest_name_words()):
         found = catalogue.details_named(span.text)
         if not found:
             continue
@@ -387,7 +387,7 @@ def _bind_country_scope(
     mechanism -- there is no name to special-case and no list to keep in step.
     """
     named: list[str] = []
-    for span in question.spans():
+    for span in question.spans(catalogue.longest_name_words()):
         found = catalogue.country_named(span.text)
         if found is not None and found not in named:
             named.append(found)
@@ -552,7 +552,10 @@ def _resolve(
     """
     if candidates is None:
         return None
-    if any(catalogue.details_named(span.text) for span in question.spans()):
+    if any(
+        catalogue.details_named(span.text)
+        for span in question.spans(catalogue.longest_name_words())
+    ):
         return None
     return resolve(
         request.question,
@@ -612,7 +615,7 @@ def _named_countries(question: Question, catalogue: CataloguePort) -> frozenset[
     """The countries the reader named, resolved by the same lookup the scope binder uses."""
     return frozenset(
         found
-        for span in question.spans()
+        for span in question.spans(catalogue.longest_name_words())
         if (found := catalogue.country_named(span.text)) is not None
     )
 

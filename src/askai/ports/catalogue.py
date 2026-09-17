@@ -45,6 +45,16 @@ class CataloguePort(Protocol):
         """
         ...
 
+    def longest_name_words(self) -> int:
+        """How many words the longest published name spells.
+
+        The binder reads the question as spans of adjacent words; a span longer than
+        this can equal no published name, so it is never built. Without the bound the
+        span enumeration is quadratic in the question's length and a long enough
+        question exhausts memory before a single name is looked up.
+        """
+        ...
+
     def default_grain(self, detail_id: str) -> Grain | None:
         """The grain the detail *declares* as its default, or ``None`` if it declares none.
 

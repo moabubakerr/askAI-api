@@ -190,6 +190,11 @@ def test_the_catalogue_port_cannot_return_a_figure_a_period_or_a_row() -> None:
         "default_grain",
         "published_grains",
         "country_named",
+        # A count of words over the published *names*, which binding already reads. It
+        # returns an int and can express no figure, period or row, so it widens the
+        # surface without weakening the claim above -- admitted deliberately, because a
+        # method that could return data must never be added here by reflex.
+        "longest_name_words",
     }
 
 

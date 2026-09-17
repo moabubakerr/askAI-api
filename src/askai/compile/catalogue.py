@@ -18,6 +18,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 
+from askai.compile.question import longest_phrase
 from askai.domain.normalise import normalise
 from askai.domain.period import Grain
 
@@ -62,6 +63,7 @@ class SnapshotCatalogue:
     _details_by_name: Mapping[str, tuple[str, ...]] = field(init=False, repr=False, compare=False)
     _countries_by_name: Mapping[str, str] = field(init=False, repr=False, compare=False)
     _by_id: Mapping[str, CatalogueDetail] = field(init=False, repr=False, compare=False)
+    _longest_name_words: int = field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         by_name: dict[str, list[str]] = {}
@@ -85,9 +87,22 @@ class SnapshotCatalogue:
         object.__setattr__(
             self, "_by_id", {detail.detail_id: detail for detail in self.details}
         )
+        object.__setattr__(
+            self,
+            "_longest_name_words",
+            longest_phrase([*self._details_by_name, *self._countries_by_name]),
+        )
 
     def details_named(self, normalised_name: str) -> tuple[str, ...]:
         return self._details_by_name.get(normalised_name, ())
+
+    def longest_name_words(self) -> int:
+        """How many words the longest published name in this snapshot spells.
+
+        Measured once at construction from the folded names, because the binder reads
+        the question as spans and a span longer than this can match nothing here.
+        """
+        return self._longest_name_words
 
     def default_grain(self, detail_id: str) -> Grain | None:
         entry = self._by_id.get(detail_id)

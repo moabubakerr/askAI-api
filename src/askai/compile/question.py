@@ -27,7 +27,18 @@ from dataclasses import dataclass
 
 from askai.domain.normalise import normalise
 
-__all__ = ["Question", "Span"]
+__all__ = ["Question", "Span", "longest_phrase"]
+
+
+def longest_phrase(phrases: Iterable[str]) -> int:
+    """How many words the longest of *phrases* spells, or 1 when there are none.
+
+    This is the bound a caller hands :meth:`Question.spans`: a span longer than the
+    longest phrase in the table being searched cannot equal any of them, so it never
+    needs to exist. Derived rather than declared, so adding a longer published name
+    widens the search by itself.
+    """
+    return max((len(phrase.split()) for phrase in phrases), default=1)
 
 
 @dataclass(frozen=True, slots=True)
@@ -79,19 +90,32 @@ class Question:
             raw_words=tuple(trimmed for trimmed in map(_trimmed, asked.split()) if trimmed),
         )
 
-    def spans(self) -> tuple[Span, ...]:
+    def spans(self, max_length: int | None = None) -> tuple[Span, ...]:
         """Every run of adjacent words, longest first and leftmost within a length.
 
         The order *is* the preference: the first span a lookup matches is the one that
         wins, so a longer published name beats the shorter one inside it without anything
         having to score them.
+
+        *max_length* is the longest phrase the caller can possibly match, in words. Every
+        span longer than that would be compared against the caller's table and rejected,
+        so enumerating them is pure waste -- and not cheap waste: unbounded, this is
+        quadratic in the question's length, and a reader who pastes several thousand
+        words exhausts memory before binding reads a single name. The bound is always
+        derived from the caller's own vocabulary (see :func:`longest_phrase`), never
+        guessed, so nothing that could have matched is skipped.
         """
+        words = len(self.words)
+        longest = words if max_length is None else min(max_length, words)
         found = [
-            Span(start=start, stop=stop, text=" ".join(self.words[start:stop]))
-            for start in range(len(self.words))
-            for stop in range(start + 1, len(self.words) + 1)
+            Span(
+                start=start,
+                stop=start + length,
+                text=" ".join(self.words[start : start + length]),
+            )
+            for length in range(longest, 0, -1)
+            for start in range(words - length + 1)
         ]
-        found.sort(key=lambda span: (-span.length, span.start))
         return tuple(found)
 
     def names(self, phrases: Iterable[str], *, excluding: Span | None = None) -> Span | None:
@@ -102,7 +126,7 @@ class Question:
         a measure or a grain.
         """
         wanted = frozenset(phrases)
-        for span in self.spans():
+        for span in self.spans(longest_phrase(wanted)):
             if span.overlaps(excluding):
                 continue
             if span.text in wanted:
@@ -117,7 +141,8 @@ class Question:
         Spans are walked longest-first and the keys in the order the table gives them, so
         two keys sharing a phrase resolve the same way on every run (AD-17).
         """
-        for span in self.spans():
+        bound = longest_phrase(phrase for phrases in table.values() for phrase in phrases)
+        for span in self.spans(bound):
             if span.overlaps(excluding):
                 continue
             for key, phrases in table.items():
@@ -129,7 +154,7 @@ class Question:
         self, table: Mapping[str, int], *, excluding: Span | None = None
     ) -> tuple[int, Span] | None:
         """The number the question names in words -- a month, a quarter -- and its span."""
-        for span in self.spans():
+        for span in self.spans(longest_phrase(table)):
             if span.overlaps(excluding):
                 continue
             number = table.get(span.text)
