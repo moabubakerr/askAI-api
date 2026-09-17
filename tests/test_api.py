@@ -367,6 +367,7 @@ def test_a_package_carries_composed_elements_and_no_prose(app: FastAPI) -> None:
     package = ask(app, f"What is {INFLATION} now?")["packages"][0]
     assert set(package) == {
         "provenance",
+        "agent",
         "kind",
         "spec",
         "elements",

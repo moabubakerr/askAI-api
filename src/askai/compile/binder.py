@@ -27,8 +27,10 @@ question, history and ``today`` compile to the same spec on every run.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date
+from typing import Protocol
 
 from askai.compile.binding import (
     Binding,
@@ -80,7 +82,38 @@ from askai.domain.spec import (
 from askai.ports.catalogue import CataloguePort
 from askai.ports.resolution import CandidatePort
 
-__all__ = ["CompileInput", "compile_question"]
+__all__ = ["CompileInput", "TieBreaker", "TieBroken", "compile_question"]
+
+
+class TieBroken(Protocol):
+    """What the model rung answers with, seen from here: a resolution and an authority.
+
+    A *structural* type, and deliberately so. AD-25's last rung lives in
+    ``adapters/model/tiebreak.py`` because AD-9 keeps the protocol inside ``adapters/``,
+    and two contracts forbid this module from naming it: ``lint-imports`` forbids
+    ``compile -> adapters``, and ``tests/test_epic9_closed_world.py`` forbids every
+    composing package from importing ``askai.ports.model`` or ``askai.adapters.model``
+    at all. So the rung arrives as a **function**, from the composition root that is
+    allowed to build one, and this protocol says only what the binder reads off its
+    answer. The degradations and the prompt the rung also carries are the composition
+    root's to put on the record; the binder has no record to put them on and does not
+    look at them.
+    """
+
+    @property
+    def resolution(self) -> Resolution:
+        """``Resolved`` when the model bound it, and the unchanged ``Disambiguation``
+        otherwise -- the fallback is asking the reader, never a narrowed list."""
+
+    @property
+    def bound_by(self) -> BoundBy | None:
+        """``BoundBy.MODEL`` exactly when the model bound it, and ``None`` otherwise."""
+
+
+#: The model rung as the binder sees it: a tie, and what became of it. ``None`` is the
+#: default everywhere and is the only state NFR-6 requires to work -- no model reachable,
+#: no rung injected, and the deterministic ladder's own disambiguation flows on.
+type TieBreaker = Callable[[str, Disambiguation], TieBroken]
 
 
 @dataclass(frozen=True, slots=True)
@@ -162,6 +195,7 @@ def _bind_detail(
     earlier: CompiledQuestion | None,
     catalogue: CataloguePort,
     resolution: Resolution | None,
+    authority: BoundBy,
 ) -> tuple[_Resolved[str], Span | None]:
     """The detail, and the span its name occupied if the reader typed one.
 
@@ -182,6 +216,12 @@ def _bind_detail(
     unchanged: an exactly typed ambiguous name is an ambiguity the reader created and the
     engine cannot resolve for them. The difference is that the ladder's own disambiguation
     now has somewhere to go instead of being flattened into the same refusal.
+
+    *authority* is who resolved the tie the ladder left: ``SEMANTIC`` for the
+    deterministic stages, and ``MODEL`` where the tie-break rung bound it. It is passed
+    in rather than decided here because the rung runs outside ``compile/`` (see
+    :class:`TieBroken`), and a second decision here could disagree with the resolution it
+    is describing.
     """
     for span in question.spans():
         found = catalogue.details_named(span.text)
@@ -200,9 +240,12 @@ def _bind_detail(
             _Resolved(
                 state=Bound(resolution.detail_id),
                 precedence=Precedence.NAMED_IN_QUESTION,
-                # FR-14's axis: the reader's words chose it, but a semantic match is what
-                # read them. `SEMANTIC` has been in `BoundBy` since Epic 1 for this rung.
-                bound_by=BoundBy.SEMANTIC,
+                # FR-14's axis: the reader's words chose it, but something else read
+                # them -- a semantic match on the deterministic rungs, and the model
+                # where the tie-break bound it. Both have been in `BoundBy` since Epic 1
+                # for this, and recording which is how over-binding stays visible in the
+                # data rather than being argued about (Story 2.6).
+                bound_by=authority,
             ),
             None,
         )
@@ -436,6 +479,7 @@ def compile_question(
     request: CompileInput,
     catalogue: CataloguePort,
     candidates: CandidatePort | None = None,
+    tie_break: TieBreaker | None = None,
 ) -> CompiledQuestion:
     """Bind every field once, then freeze the spec. The only ``QuerySpec`` construction.
 
@@ -451,12 +495,18 @@ def compile_question(
     signals the compiler has already extracted and the period binder is what extracts
     them. That ordering is resolved below: the period is read first for its grain and
     span, resolution consumes them, and the detail binds from the result.
+
+    *tie_break* of ``None`` -- the default, and the only state NFR-6 requires -- compiles
+    with the deterministic ladder alone: a tie stays a tie and the reader is asked which
+    indicator they meant. Supplied, it is consulted **only** where that ladder left a
+    ``Disambiguation``, and it is the one thing that can bind a detail ``BoundBy.MODEL``.
     """
     earlier = _earlier_turn(request, catalogue)
     question = Question.parse(request.question)
 
-    resolution = _resolve(request, question, catalogue, candidates)
-    detail, span = _bind_detail(question, earlier, catalogue, resolution)
+    ladder = _resolve(request, question, catalogue, candidates)
+    resolution, authority = _tie_broken(request.question, ladder, tie_break)
+    detail, span = _bind_detail(question, earlier, catalogue, resolution, authority)
     detail_id = detail.state.value if isinstance(detail.state, Bound) else None
     period = _bind_period(question, earlier, catalogue, detail_id, request.today, excluding=span)
     scope = _bind_country_scope(question, earlier, catalogue)
@@ -509,6 +559,30 @@ def _resolve(
         candidates,
         _question_signals(question, request.today, catalogue),
     )
+
+
+def _tie_broken(
+    question: str, ladder: Resolution | None, tie_break: TieBreaker | None
+) -> tuple[Resolution | None, BoundBy]:
+    """AD-25's last rung: what the deterministic ladder left, and who resolved it.
+
+    Reached only from a ``Disambiguation`` -- a tie the deterministic stages could not
+    break. A ``Resolved`` is already bound and a ``Refusal`` is already a refusal, and
+    putting either to a model would be asking it to overturn a decision the data made
+    (AD-25). ``None`` -- no candidate port, which is every Epic 1 caller and every corpus
+    entry -- never reaches here either, so NFR-1's twice-compiled corpus is untouched.
+
+    Both failure shapes come back as *the tie, unchanged*: a rung that was not injected,
+    and a rung that ran and did not bind. That is the same outcome by construction rather
+    than by two branches agreeing, and it is why an outage costs the reader a clarifying
+    question and nothing more.
+    """
+    if tie_break is None or not isinstance(ladder, Disambiguation):
+        return ladder, BoundBy.SEMANTIC
+    broken = tie_break(question, ladder)
+    if broken.bound_by is BoundBy.MODEL and isinstance(broken.resolution, Resolved):
+        return broken.resolution, BoundBy.MODEL
+    return ladder, BoundBy.SEMANTIC
 
 
 def _question_signals(

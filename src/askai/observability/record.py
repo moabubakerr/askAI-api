@@ -39,6 +39,7 @@ from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Final
 
+from askai.domain.admission import SourceAdmission
 from askai.domain.degradation import Degradation
 from askai.domain.element import Element
 from askai.domain.scope import DeclaredBenchmarks, Named, National
@@ -56,6 +57,7 @@ from askai.domain.spec import (
 )
 from askai.messages.lang import Lang
 from askai.observability.identity import MAX_ID_CHARS, Anonymous, Asserted, CallerIdentity
+from askai.ports.external_agent import ExternalOutcome
 from askai.ports.record import RecordRow
 
 __all__ = [
@@ -67,6 +69,7 @@ __all__ = [
     "SPEC_FIELDS",
     "AnswerRecord",
     "BindingMechanism",
+    "ExternalCall",
     "FieldBinding",
     "PromptUse",
     "RecordError",
@@ -186,6 +189,63 @@ class PromptUse:
 
 
 @dataclass(frozen=True, slots=True)
+class ExternalCall:
+    """The external call this answer made: what went out, and what came back (Story 9.9).
+
+    **What the engine sent is recorded, and it is two strings** (NFR-4a). ``sent_question``
+    is the reader's own question and ``sent_context`` is the deterministic context line
+    the engine composed; together they are the whole outbound payload, so an auditor
+    months later can reconstruct exactly what a third party was told. There is no field
+    here for a figure, a row id or a spec, which is the same absence ``ExternalRequest``
+    has -- *"never approved data"* is a property of the shape rather than a rule the
+    recorder has to keep.
+
+    **The outcome is one of four** and it is the port's own closed enum, not a second
+    spelling of it. A record that said "failed" could not tell a dead platform from a slow
+    one from a budget the engine chose to cut short, and those are three different
+    conversations with three different people.
+
+    ``orphaned_job`` is how the accepted cost stops being an unexamined one: a job the
+    engine abandoned client-side may still be running, and the id of it is written down on
+    the answer that abandoned it. It is ``None`` when the budget expired before the
+    adapter ever handed a job id back -- an orphan whose name the engine never learned,
+    which is the worst kind and is exactly why ``ABANDONED`` is itself a recorded outcome
+    rather than a field that has to be populated to count. Counting these over a window is
+    how anyone finds out whether the budget is too tight.
+
+    Every string here is bounded by the same reduction the rest of the row is (NFR-9) --
+    see ``_external_payload`` -- so a long question or a chatty platform cannot push one
+    record past Story 1.16's ceiling.
+    """
+
+    outcome: ExternalOutcome
+    sent_question: str
+    sent_context: str
+    job_id: str | None = None
+    orphaned_job: str | None = None
+    #: Wall-clock seconds the call took. Recorded on every answer so Combined latency can
+    #: be measured against ``[ASSUMPTION A4]``'s ~2x baseline instead of believed (NFR-3).
+    elapsed_seconds: float = 0.0
+
+    def __post_init__(self) -> None:
+        if not self.sent_question.strip():
+            raise RecordError(
+                "an external call records the question it sent; a blank one would make "
+                "the outbound payload unreconstructable, which is the whole of NFR-4a"
+            )
+        if not self.sent_context.strip():
+            raise RecordError("an external call records the context line it sent")
+        if self.orphaned_job is not None and self.outcome is not ExternalOutcome.ABANDONED:
+            raise RecordError(
+                f"a {self.outcome.value} call naming an orphaned job; a job is orphaned by "
+                "being abandoned, and recording one against any other outcome would "
+                "inflate the count the budget is tuned against"
+            )
+        if self.elapsed_seconds < 0.0:
+            raise RecordError("elapsed time is measured forwards")
+
+
+@dataclass(frozen=True, slots=True)
 class AnswerRecord:
     """Everything AD-16 requires of one answer, as one frozen value.
 
@@ -208,12 +268,23 @@ class AnswerRecord:
     data_as_of: str | None = None
     conversation_id: str | None = None
     turn: int | None = None
+    #: The agent the reader selected, in the reader's own spelling (FR-90, Story 9.9).
+    #: The admission's value, not a derived label: ``approved+external`` on the row says
+    #: what was asked for, which is the question an audit starts from and is not
+    #: recoverable from the packages -- an admission that admitted the external agent and
+    #: got nothing looks, in the packages alone, like one that never asked.
+    agent: str = SourceAdmission.APPROVED_ONLY.value
+    #: The external call, or ``None`` when the admission did not admit one. ``None`` means
+    #: *no call was made*, which is a different fact from a call that failed, and the two
+    #: are kept apart here for the reason ``Absent`` and ``Failed`` are kept apart.
+    external_call: ExternalCall | None = None
 
     def __post_init__(self) -> None:
         self._check_identifiers()
         self._check_time()
         self._check_bindings()
         self._check_conversation()
+        self._check_agent()
         if not self.question.strip():
             raise RecordError("a record needs the question it answered")
 
@@ -276,6 +347,30 @@ class AnswerRecord:
             )
         if self.turn is not None and self.turn < 1:
             raise RecordError(f"turn numbering starts at 1, got {self.turn}")
+
+    def _check_agent(self) -> None:
+        """The recorded agent is one of the three admissions, and the call agrees with it.
+
+        Two halves, both of them the same argument. A free-text agent would make a count
+        of agents a count of typos -- ``DegradationKind``'s reason, at a different grain.
+        And a record claiming an external call under an approved-only admission would be a
+        record that disagrees with the request it describes, which is the failure mode
+        ``_check_bindings`` exists to prevent one field at a time.
+        """
+        try:
+            admission = SourceAdmission(self.agent)
+        except ValueError:
+            raise RecordError(
+                f"{self.agent!r} is not one of the three admissions; the record stores "
+                "the reader's selection in the reader's own spelling, and a value outside "
+                "the closed set could only have come from a request that was never served"
+            ) from None
+        if self.external_call is not None and admission is SourceAdmission.APPROVED_ONLY:
+            raise RecordError(
+                "an external call recorded under the approved-only admission; the engine "
+                "never reaches an external service for an answer that did not admit one "
+                "(FR-79), so a record saying it did is a record that is wrong"
+            )
 
 
 # ------------------------------------------------------------------- the size bound
@@ -506,10 +601,42 @@ def _evidence_payload(
         ],
         "element_count": len(record.elements),
         "data_as_of": record.data_as_of,
+        # FR-90: which agent the reader selected, and what the external call did. Both on
+        # the one record AD-16 allows, never on a second row written from a second place.
+        "agent": record.agent,
+        "external_call": _external_payload(record.external_call, budget, trimmed),
     }
     if trimmed:
         payload["truncated"] = list(trimmed)
     return payload
+
+
+def _external_payload(
+    call: ExternalCall | None, budget: _Budget, trimmed: list[JsonValue]
+) -> JsonValue:
+    """The external call, or ``null`` for an answer that never made one.
+
+    Both outbound strings go through ``_text``, so the row a chatty question produces is
+    reduced like every other and the NFR-9 ceiling holds whatever the reader typed. The
+    prose that came *back* is deliberately absent: the record stores what was sent and
+    what the call did, and copying a third party's answer in would make one audit row grow
+    with the length of somebody else's essay.
+    """
+    if call is None:
+        return None
+    return {
+        "outcome": call.outcome.value,
+        "sent": {
+            "question": _text(call.sent_question, budget.text, "external.question", trimmed),
+            "context": _text(call.sent_context, budget.text, "external.context", trimmed),
+        },
+        "job_id": call.job_id,
+        "orphaned_job": call.orphaned_job,
+        # Whole milliseconds: the record's JSON holds no float anywhere, and a latency
+        # measured to the microsecond would be reporting precision the clock does not
+        # have. This is the number ``[ASSUMPTION A4]`` is tested against.
+        "elapsed_ms": round(call.elapsed_seconds * 1000),
+    }
 
 
 def _identity_payload(

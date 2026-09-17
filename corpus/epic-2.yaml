@@ -383,3 +383,171 @@
     which grains exist; a detail whose periods the export never recorded is not vetoed,
     because a veto on missing evidence removes candidates for a gap in the export rather
     than for a mismatch.
+
+# ---------------------------------------------------------------------------------------
+# Batch 1 of the refusal stories — 2.7, 2.9, 2.10 and 2.11, added 2026-09-17.
+#
+# The entries above state how the ladder *reaches* an answer. These state what the reader
+# is told when it cannot, and each pins one of the six causes to a fact read off the
+# export rather than to a hypothetical. The runner compiles them against an empty
+# catalogue, so what it gates here is totality and determinism; which of the six each one
+# is said as is asserted in `tests/test_refusals.py`, against the same questions.
+
+- id: e2-021
+  spec_version: 1
+  question:
+    en: How does Total Population compare across the benchmark countries?
+    ar: كيف تُقارَن إجمالي السكان بين دول المقارنة؟
+  today: 2026-09-17
+  operation: comparison
+  measure: actual
+  expected: refusal
+  refusal_reason: >-
+    `Total Population` is the only one of the 21 declared benchmark sets with **zero**
+    country rows. It declares benchmark countries and publishes no country values, which
+    is "no data for this selection" — the fourth cause — and not "not a declared
+    benchmark", which is the fifth. Telling this reader the indicator declares no
+    benchmarks would be false about the configuration; telling them it is not published
+    would be false about the data.
+  why: >-
+    Epic 2 / Story 2.7 — the worked example that separates cause four from cause five on a
+    real row. The two are one edit apart in the export and three sentences apart to a
+    reader: one is fixed by whoever loads the country rows, the other by whoever declares
+    the benchmark set.
+
+- id: e2-022
+  spec_version: 1
+  question:
+    en: What is the value of the Cost of Business Start-up Procedures?
+    ar: ما قيمة تكلفة إجراءات بدء النشاط التجاري؟
+  today: 2026-09-17
+  operation: value
+  measure: actual
+  expected: refusal
+  refusal_reason: >-
+    One of the 28 published details that carry no data points at all. The detail is in the
+    catalogue, so "I hold no such indicator" is false; it carries nothing at any period,
+    so "no data for the period you asked" is false too. The third cause exists for exactly
+    this row and says the indicator is published and empty.
+  why: >-
+    Epic 2 / Story 2.7 — cause three, on one of the 28. Without its own sentence this
+    reader is told either that their indicator does not exist (and stops asking about
+    something the catalogue does hold) or that their *period* is the problem (and retries
+    twenty periods that are all equally empty).
+
+- id: e2-023
+  spec_version: 1
+  question:
+    en: What is Nominal GDP?
+    ar: ما هو الناتج المحلي الإجمالي الاسمي؟
+  today: 2026-09-17
+  operation: value
+  measure: actual
+  expected: refusal
+  refusal_reason: >-
+    No detail is published as `Nominal GDP`. `Real GDP` is, and it is not the same
+    measurable: the refusal says the named indicator is not held, and may *name* the
+    similar one in its own sentence, marked as not what was asked and not used to answer.
+  why: >-
+    Epic 2 / Story 2.9 and FR-39 — never substitute. The suggestion is a second sentence
+    with its own message id rather than a clause inside the refusal, so that the two can be
+    read side by side and the second cannot be mistaken for an answer. `GDP` matching 15
+    published details (e2-001) is why the near miss is so easy to reach and so wrong to
+    answer with.
+
+- id: e2-024
+  spec_version: 1
+  question:
+    en: Why did inflation fall to 0.2% in April 2026?
+    ar: لماذا انخفض التضخم إلى 0.2% في أبريل 2026؟
+  today: 2026-09-17
+  operation: explanation
+  measure: actual
+  why: >-
+    Epic 2 / Story 2.10, FR-41 and FR-58 — the question asserts a figure the bound data
+    contradicts. Inflation for 2026-04 is published as 2.6, so the correction leads the
+    answer, carries the published figure with its full provenance, and appears in both
+    lenses because it takes the `headline` role that `R-ROLE-LENS-MAPPING` names in both.
+    A briefing built on 0.2 is the failure; being told the premise is wrong *after* the
+    explanation would be the same failure one paragraph later.
+
+- id: e2-025
+  spec_version: 1
+  question:
+    en: What is GDP?
+    ar: ما هو الناتج المحلي الإجمالي؟
+  today: 2026-09-17
+  operation: value
+  measure: actual
+  expected: clarification
+  why: >-
+    Epic 2 / Story 2.11 — `GDP` matches 15 published details, so the turn asks one closed
+    question naming the candidates rather than refusing flatly or picking one. At most one
+    question is asked, and "please rephrase" is never among the things it could say:
+    `tests/test_refusals.py` scans both catalogue files to assert no message in either
+    language says it. Where one candidate is clearly dominant the engine prefers answering
+    under a stated assumption, which is `R-CLARIFY-DOMINANT-SHARE` and, on the resolution
+    ladder itself, `R-RESOLVE-AMBIGUITY-MARGIN`.
+
+- id: e2-026
+  spec_version: 1
+  question:
+    en: The real one
+    ar: الحقيقي
+  history:
+    - en: What is GDP?
+      ar: ما هو الناتج المحلي الإجمالي؟
+  today: 2026-09-17
+  operation: value
+  measure: actual
+  why: >-
+    Epic 2 / Story 2.11 and FR-94 — the reply to e2-025's clarification. It completes the
+    existing query rather than starting a new one: the fields the first turn bound are
+    preserved through the binder's history rung, and a field inherited from it is recorded
+    `inherited-from-history` by precedence and `reader` by authority (FR-14, AD-19). The
+    two axes are separate for this exact case — the value came from the history, and the
+    authority behind it is still the reader's.
+
+- id: e2-027
+  spec_version: 1
+  question:
+    en: What is the percentage of classified hotels?
+    ar: ما هي نسبة الفنادق المصنفة؟
+  today: 2026-09-17
+  operation: value
+  measure: actual
+  expected: refusal
+  refusal_reason: >-
+    `Classified Hotels (%)` / "الفنادق المصنفة (٪)" is one of the 342 CMS indicators that
+    were never approved, so the refusal is "exists and is not approved for publication" and
+    not "no such indicator". It carries no value, no period, no definition and no name from
+    the unapproved row: the message takes no parameters at all, so there is no slot one
+    could arrive in.
+  why: >-
+    Epic 2 / Story 2.8, FR-38a and AD-12 — `R-UNAPPROVED-IS-A-DISTINCT-REFUSAL` and
+    `R-UNAPPROVED-LEAKS-NOTHING`. The reader writes a question, not the catalogue's
+    spelling, so the whole name is recognised inside the sentence under the engine's single
+    fold and only in full — `R-UNAPPROVED-NAME-IS-RECOGNISED-IN-FULL`. Both halves matter:
+    the answer must be better than "I don't know about that", and it must not become a
+    channel through which unapproved content reaches a reader.
+
+- id: e2-028
+  spec_version: 1
+  question:
+    en: What is the average PISA test score?
+    ar: ما هو متوسط درجات اختبار البرنامج الدولي لتقييم الطلبة؟
+  today: 2026-09-17
+  operation: value
+  measure: actual
+  expected: refusal
+  refusal_reason: >-
+    Unapproved in both languages. Where the base layer cannot be read at all, the answer is
+    the plain "no such indicator" it would otherwise have been, with a typed degradation
+    beside it — never an editorial gap claimed on a catalogue nobody could open, and never
+    an error shown to the reader.
+  why: >-
+    Epic 2 / Story 2.8 and AD-15 — `R-UNAPPROVED-UNREACHABLE-DEGRADES`. The fallback is
+    honest, because the engine genuinely found no published indicator; what would not be
+    honest is the silence. An operator watching refusals by cause would otherwise see the
+    editorial ones quietly become lexical ones with nothing to explain it, which is the
+    findings 23/128/150 failure arriving from the one direction AD-15 did not already cover.

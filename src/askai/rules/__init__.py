@@ -13,6 +13,16 @@ and ``tests/test_rules.py`` scans for one.
 
 from __future__ import annotations
 
+from askai.rules.knowledge_base import (
+    AdmittedRefusal,
+    AdmittedSource,
+    ArticleAdmission,
+    KnowledgeBase,
+    KnowledgeBaseError,
+    OutboundInventory,
+    knowledge_base,
+    load_knowledge_base,
+)
 from askai.rules.loader import (
     DATA_DIR,
     LoadedRule,
@@ -27,7 +37,13 @@ from askai.rules.schema import PER_CENT, Rule, RuleFile, RuleKind, RuleStatus, R
 __all__ = [
     "DATA_DIR",
     "PER_CENT",
+    "AdmittedRefusal",
+    "AdmittedSource",
+    "ArticleAdmission",
+    "KnowledgeBase",
+    "KnowledgeBaseError",
     "LoadedRule",
+    "OutboundInventory",
     "Rule",
     "RuleFile",
     "RuleKind",
@@ -36,6 +52,8 @@ __all__ = [
     "RuleSet",
     "RuleStatus",
     "RuleValue",
+    "knowledge_base",
+    "load_knowledge_base",
     "load_rules",
     "rules",
 ]

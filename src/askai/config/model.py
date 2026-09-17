@@ -1,4 +1,4 @@
-"""Where the model runtimes live -- the chat endpoint and the embedding endpoint.
+"""Where the runtimes live -- the chat endpoint, the embeddings, the external agent.
 
 Purity: configuration; validated at startup, the only in-project reader of the environment.
 
@@ -22,6 +22,13 @@ carry declared defaults: they are operational dials, they cannot silently addres
 wrong server, and the defaults here are the measured properties of the confirmed
 deployment (see the VM section of ``AGENTS.md``). They remain overridable per
 deployment. None of them is a reader-affecting constant, so none belongs in ``rules/``.
+
+**Three endpoints, and the third is not ours.** ``ExternalAgentSettings`` addresses the
+third-party agent platform (AD-9, Story 9.6), which is not a model runtime at all: it is
+a job queue that answers in prose. It is a separate settings object for the same reason
+the first two are separate from each other, and for a stronger one -- it is the only
+address in this file that points outside the estate, so a reviewer asking *what does this
+system call that it does not run?* has exactly one place to look (NFR-4a).
 """
 
 from __future__ import annotations
@@ -32,6 +39,7 @@ from dataclasses import dataclass
 from typing import Final
 
 from askai.config.database import ConfigError
+from askai.ports.external_agent import DEFAULT_EXTERNAL_BUDGET, ExternalBudget
 
 __all__ = [
     "CHAT_API_KEY_ENV",
@@ -51,9 +59,16 @@ __all__ = [
     "EMBEDDING_MAX_BATCH_ENV",
     "EMBEDDING_MODEL_ENV",
     "EMBEDDING_READ_TIMEOUT_ENV",
+    "EXTERNAL_API_KEY_ENV",
+    "EXTERNAL_BASE_URL_ENV",
+    "EXTERNAL_CONNECT_TIMEOUT_ENV",
+    "EXTERNAL_POLL_INTERVAL_ENV",
+    "EXTERNAL_READ_TIMEOUT_ENV",
+    "EXTERNAL_TOTAL_TIMEOUT_ENV",
     "ChatModelSettings",
     "ConfigError",
     "EmbeddingSettings",
+    "ExternalAgentSettings",
 ]
 
 # ------------------------------------------------------------------ the chat runtime
@@ -98,6 +113,28 @@ EMBEDDING_READ_TIMEOUT_ENV: Final = "ASKAI_EMBEDDING_READ_TIMEOUT"
 #: depended on whether the embedding service happened to answer during the build.
 EMBEDDING_DIMENSIONS_ENV: Final = "ASKAI_EMBEDDING_DIMENSIONS"
 EMBEDDING_MAX_BATCH_ENV: Final = "ASKAI_EMBEDDING_MAX_BATCH"
+
+# ------------------------------------------------------------------ the external agent
+
+#: The root of the agent platform's job API. The adapter appends ``/jobs`` to submit and
+#: ``/jobs/{id}`` to poll; the shape of those paths is protocol and stays in the adapter
+#: (AD-9). Required, with no default: a process that guessed this address would start,
+#: answer, and quietly send a reader's question somewhere nobody approved.
+EXTERNAL_BASE_URL_ENV: Final = "ASKAI_EXTERNAL_BASE_URL"
+
+#: Optional. Absent means no ``Authorization`` header, which is different from an empty one.
+EXTERNAL_API_KEY_ENV: Final = "ASKAI_EXTERNAL_API_KEY"
+
+#: The whole budget for one external call, in seconds. The caller abandons here whatever
+#: the platform is doing (NFR-10), so this is the number that decides how long a Combined
+#: answer can be made to wait -- and the one to turn down first if it ever does.
+EXTERNAL_TOTAL_TIMEOUT_ENV: Final = "ASKAI_EXTERNAL_TOTAL_TIMEOUT"
+EXTERNAL_CONNECT_TIMEOUT_ENV: Final = "ASKAI_EXTERNAL_CONNECT_TIMEOUT"
+EXTERNAL_READ_TIMEOUT_ENV: Final = "ASKAI_EXTERNAL_READ_TIMEOUT"
+
+#: Seconds between polls of a submitted job. Small enough that a fast answer is not held
+#: back by the sleep, large enough that a twenty-second budget is not a hundred requests.
+EXTERNAL_POLL_INTERVAL_ENV: Final = "ASKAI_EXTERNAL_POLL_INTERVAL"
 
 # ------------------------------------------------------------------------- the defaults
 
@@ -301,4 +338,67 @@ class EmbeddingSettings:
             max_batch=_positive_int(
                 env, EMBEDDING_MAX_BATCH_ENV, DEFAULT_EMBEDDING_MAX_BATCH
             ),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class ExternalAgentSettings:
+    """Where the third-party agent platform is, and how long it may be waited on.
+
+    The budget is not held here as four loose numbers: ``budget`` *is* an
+    ``ExternalBudget``, the same value the port puts on every request, so the deployment
+    dial and the deadline the caller enforces are one object rather than two that can
+    drift. ``ExternalBudget`` validates itself -- a connect slice longer than the whole
+    budget is a timeout that can never be reached -- so a misconfigured deployment fails
+    at startup naming the variable rather than at the first Combined request.
+    """
+
+    base_url: str
+    budget: ExternalBudget = DEFAULT_EXTERNAL_BUDGET
+    api_key: str | None = None
+
+    def __post_init__(self) -> None:
+        if not self.base_url.strip():
+            raise ConfigError("an external agent platform needs a base url")
+
+    @property
+    def submit_url(self) -> str:
+        """Where a job is submitted. The only outbound address in the whole engine."""
+        return _endpoint(self.base_url, "jobs")
+
+    def poll_url(self, job_id: str) -> str:
+        """Where a submitted job is polled, and where a cancellation is attempted."""
+        return _endpoint(self.submit_url, job_id)
+
+    @classmethod
+    def from_env(cls, environ: Mapping[str, str] | None = None) -> ExternalAgentSettings:
+        """Read the external agent settings, or fail loudly naming the variable."""
+        env = os.environ if environ is None else environ
+        try:
+            budget = ExternalBudget(
+                total_seconds=_positive_float(
+                    env, EXTERNAL_TOTAL_TIMEOUT_ENV, DEFAULT_EXTERNAL_BUDGET.total_seconds
+                ),
+                connect_seconds=_positive_float(
+                    env, EXTERNAL_CONNECT_TIMEOUT_ENV, DEFAULT_EXTERNAL_BUDGET.connect_seconds
+                ),
+                read_seconds=_positive_float(
+                    env, EXTERNAL_READ_TIMEOUT_ENV, DEFAULT_EXTERNAL_BUDGET.read_seconds
+                ),
+                poll_interval_seconds=_positive_float(
+                    env,
+                    EXTERNAL_POLL_INTERVAL_ENV,
+                    DEFAULT_EXTERNAL_BUDGET.poll_interval_seconds,
+                ),
+            )
+        except ValueError as error:
+            raise ConfigError(
+                f"the external agent budget is not usable as set: {error}"
+            ) from None
+        return cls(
+            base_url=_required(
+                env, EXTERNAL_BASE_URL_ENV, "the third-party agent platform's job API root"
+            ),
+            budget=budget,
+            api_key=_optional(env, EXTERNAL_API_KEY_ENV),
         )

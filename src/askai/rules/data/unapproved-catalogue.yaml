@@ -1,0 +1,96 @@
+# The unapproved catalogue -- what it may improve, and what it may never let through.
+#
+# The CMS holds 531 indicators and 189 of them reached readers. A reader who names one of
+# the other 342 asked a sensible question about a real indicator, and telling them "I do
+# not hold an indicator matching that" sends them away to rephrase a question no
+# rephrasing will answer. Telling them it exists and was not approved for publication ends
+# the retrying, which is the whole of FR-38a.
+#
+# Everything else in this file exists to stop that better answer from becoming a leak. The
+# base layer was not approved; its values, periods, definitions and names are not
+# published text and do not become published text by being mentioned in a refusal.
+area: UNAPPROVED
+about: >-
+  When a refusal may be improved from the base CMS layer, what may cross from it (one
+  boolean), and what happens when it cannot be read.
+
+rules:
+  - id: R-UNAPPROVED-IS-A-DISTINCT-REFUSAL
+    statement: >-
+      An indicator the base CMS layer holds and the published layer does not is refused as
+      "exists but is not approved for publication", never as "no such indicator". The
+      improvement applies to that one cause; a published-but-empty detail, a period with no
+      row, an unsupported question and an unreachable store are each left as they were. The
+      wording states the position as it stands and does not imply the figure can be
+      obtained, asked for, or awaited.
+    status: agreed
+    kind: wording
+    sources:
+      - "docs/PRD.md FR-38a"
+      - "docs/ARCHITECTURE-SPINE.md AD-12"
+      - "docs/DATA-CONTRACT.md 1.4"
+      - "_bmad-output/planning-artifacts/epics.md Story 2.8"
+    note: >-
+      "Not yet approved" and "pending publication" would both be wrong in the same way: an
+      analyst told the figure is coming waits for it, which is the retrying this story
+      exists to end, one turn later. The catalogue files say "has not been approved for
+      publication" and "لم يُعتمد نشره" -- a state, with no horizon attached to it -- and
+      tests/test_unapproved_refusal.py scans both languages for the words that would attach
+      one.
+
+  - id: R-UNAPPROVED-LEAKS-NOTHING
+    statement: >-
+      Nothing from an unapproved row reaches a reader: no value, no period, no definition,
+      no unit, no id and no name. The only thing that crosses out of the base layer is the
+      answer to "does the catalogue hold what this reader named", as a boolean, and the
+      refusal it improves carries no parameter for anything else to arrive in.
+    status: agreed
+    kind: principle
+    sources:
+      - "docs/PRD.md FR-38a, FR-49"
+      - "docs/ARCHITECTURE-SPINE.md AD-12"
+      - "_bmad-output/planning-artifacts/epics.md Story 2.8"
+    note: >-
+      Structural rather than remembered. The composer is handed a callable of str to
+      bool-or-None and never the port, so there is no type on which an unapproved value
+      could arrive, and no layer on the answer path imports the port's module at all. A
+      rule a composer has to obey would be obeyed until someone needed a name for a better
+      sentence.
+
+  - id: R-UNAPPROVED-UNREACHABLE-DEGRADES
+    statement: >-
+      Where the unapproved catalogue cannot be read, the refusal given is the plain "no such
+      indicator" it would otherwise have been, with a typed degradation recorded beside it.
+      An unreadable catalogue is never rendered as an editorial gap, never fails the answer,
+      and never reaches the reader as an error.
+    status: agreed
+    kind: principle
+    sources:
+      - "docs/ARCHITECTURE-SPINE.md AD-15"
+      - "_bmad-output/planning-artifacts/epics.md Story 2.8"
+    note: >-
+      Silence is the failure mode, not the fallback. The fallback is honest -- the engine
+      genuinely could not find a published indicator -- but an operator watching refusals by
+      cause would see the editorial ones quietly become lexical ones with nothing to explain
+      it. The degradation is what makes the substitution visible.
+
+  - id: R-UNAPPROVED-NAME-IS-RECOGNISED-IN-FULL
+    statement: >-
+      An unapproved name is recognised inside a longer question only when the whole of it
+      appears, bounded by word boundaries under the engine's single fold, and only when it
+      carries at least the recorded number of words. A shorter name is too generic to be
+      evidence that the reader named that indicator.
+    status: agreed
+    kind: constant
+    values:
+      minimum_words: 2
+    sources:
+      - "docs/PRD.md FR-38a"
+      - "docs/DATA-CONTRACT.md 1.4"
+      - "_bmad-output/planning-artifacts/epics.md Story 2.8"
+    note: >-
+      A reader writes "what is the rate of volunteer work here?", not "The Rate of
+      Volunteer Work", so exact equality would recognise almost none of the 281 named
+      unapproved indicators. One folded word would recognise far too many: a single common
+      noun appearing in a question is a coincidence, and the cost of that coincidence is an
+      engine claiming an editorial gap where there is none.

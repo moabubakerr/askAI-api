@@ -1,0 +1,91 @@
+# The six refusals -- what each one means, and the wording each is owed.
+#
+# FR-38 names six reasons the engine cannot answer. They are six because a reader acts on
+# each differently: an editorial gap is fixed by an editor, an empty detail is fixed by the
+# publisher, an outage is fixed by an operator, and an unsupported question is fixed by the
+# reader asking a different one. An engine that says "I can't answer that" to all six has
+# told the reader nothing they can act on, and has told QC nothing they can test.
+#
+# Every rule here is `kind: wording`, which is the catalogue's own class for a rule about
+# what a reader is told (docs/RULES.md §2). A wording rule carries no `values`: the wording
+# itself lives in messages/data/en.yaml and messages/data/ar.yaml, as one reviewable
+# artifact in two halves, and these rules say what those sentences must keep true of each
+# other. The machine half -- `RefusalCode` -- is stable across every wording fix, which is
+# what lets a dashboard count the same thing before and after an editorial change.
+area: REFUSAL
+about: >-
+  The six distinct causes a question can be refused for, what distinguishes each from the
+  others, and the wording each is owed in both languages.
+
+rules:
+  - id: R-REFUSAL-SIX-DISTINCT-CAUSES
+    statement: >-
+      A refusal names exactly one of six causes -- no such indicator; exists in the CMS but
+      is not approved for publication; published but carries no data; no data for this
+      period, grain or country; the question is unsupported; the data could not be reached
+      -- and each cause carries its own stable machine code and its own message id in both
+      languages. No two causes share a sentence.
+    status: agreed
+    kind: wording
+    sources:
+      - "docs/PRD.md FR-38, FR-63"
+      - "_bmad-output/planning-artifacts/epics.md Story 2.7"
+    note: >-
+      The test that keeps this true renders all six in both languages and asserts they are
+      pairwise distinct. It is a cheap test and it guards the expensive property: once two
+      causes have been collapsed into one sentence, nothing downstream can tell them apart
+      again, and the QC tester who needed to distinguish a data gap from a catalogue gap
+      has no evidence left to work from.
+
+  - id: R-REFUSAL-EMPTY-IS-NOT-ABSENT
+    statement: >-
+      A detail that is published and carries no data points is told apart from a detail
+      that does not exist, and from a detail that carries data but none for the period,
+      grain or country asked. Twenty-eight of the published details carry no data points at
+      all, and telling that reader their indicator does not exist is false.
+    status: agreed
+    kind: wording
+    sources:
+      - "docs/PRD.md FR-38"
+      - "_bmad-output/planning-artifacts/epics.md Story 2.7"
+    note: >-
+      The same split already exists for the periods answer (`periods.none_published`) and
+      for cross-country comparison (`compare.no_declared_benchmarks` against
+      `compare.no_country_rows_at_all`). This rule is that split applied to the refusal
+      path, so the engine does not contradict itself depending on which operation was asked.
+
+  - id: R-REFUSAL-FAILURE-IS-NEVER-AN-ABSENCE
+    statement: >-
+      A refusal caused by a dependency the engine could not reach is worded as a fault in
+      the engine, carries a typed degradation, and is never worded as an absence in the
+      published data.
+    status: agreed
+    kind: wording
+    sources:
+      - "docs/ARCHITECTURE-SPINE.md AD-15"
+      - "docs/PRD.md FR-38"
+      - "findings 23, 128, 150"
+    note: >-
+      This is the oldest defect in the inherited system and the one that cost the most
+      trust: a reader told "there are no approved figures" when a store was unreachable
+      stops asking, and an operator watching a refusal rate sees nothing wrong. The
+      degradation is what makes the second half visible; the separate wording is what makes
+      the first half honest.
+
+  - id: R-REFUSAL-NEVER-SUBSTITUTES
+    statement: >-
+      Where the named indicator does not exist and a similar one does, the refusal says so
+      and is not answered with the similar indicator. The similar one may be named as a
+      suggestion, in a sentence that says plainly it is not what was asked and was not used
+      to answer.
+    status: agreed
+    kind: wording
+    sources:
+      - "docs/PRD.md FR-39, FR-40"
+      - "docs/ARCHITECTURE-SPINE.md AD-3"
+      - "_bmad-output/planning-artifacts/epics.md Story 2.9"
+    note: >-
+      Recorded failure F-003 is this rule's absence: a substring match on "GDP" resolved to
+      a venture-capital share of GDP and answered with it. The suggestion sentence is a
+      separate message id rather than a clause inside the refusal, so that a reviewer can
+      see the two sentences side by side and confirm the second cannot be read as an answer.

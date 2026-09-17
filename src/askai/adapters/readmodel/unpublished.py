@@ -16,19 +16,33 @@ join to and no unapproved figure, period or definition anywhere in the read mode
 Names are matched under the domain's single fold, so a reader's spelling meets a stored
 one exactly as it does on the published side; a second fold here is the defect that
 package exists to prevent.
+
+:func:`existence_probe` is how Story 2.8 reaches this from a composer, and its return
+type is the design: ``str -> bool | None``. A composer that held the port could ask it
+for :meth:`UnpublishedCatalog.names`, and the hand after that would put one of those
+names in a sentence; a composer that holds the probe can ask one question and receive
+one bit. ``None`` is the third state -- *the catalogue could not be read* -- and it is
+produced here, at the adapter boundary where AD-15 allows a foreign failure to be
+converted into a value rather than a stack trace.
 """
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 
 from askai.adapters.readmodel.export import CmsExport, Row
 from askai.domain.normalise import normalise
 from askai.domain.text import is_published_text
-from askai.ports.unpublished_catalogue import UnpublishedName
+from askai.ports.unpublished_catalogue import UnpublishedCatalogPort, UnpublishedName
+from askai.rules import RuleSet, rules
 
-__all__ = ["UnpublishedCatalog"]
+__all__ = ["MINIMUM_WORDS_RULE", "UnpublishedCatalog", "existence_probe"]
+
+#: How many folded words an unapproved name must carry to be recognised inside a longer
+#: question. A reader-affecting threshold, so it is a rule rather than a literal.
+MINIMUM_WORDS_RULE = "R-UNAPPROVED-NAME-IS-RECOGNISED-IN-FULL"
+_MINIMUM_WORDS_KEY = "minimum_words"
 
 
 def _cell(row: Row, column: str) -> str:
@@ -85,3 +99,65 @@ class UnpublishedCatalog:
     def names(self) -> Sequence[UnpublishedName]:
         """Every unapproved entry that carries a name, ordered by its English spelling."""
         return self.entries
+
+
+def _minimum_words(rule_set: RuleSet) -> int:
+    value = rule_set.value(MINIMUM_WORDS_RULE, _MINIMUM_WORDS_KEY)
+    if not isinstance(value, int):
+        raise TypeError(
+            f"{MINIMUM_WORDS_RULE}.{_MINIMUM_WORDS_KEY} is {type(value).__name__}; the "
+            "threshold a name is recognised by is a whole number of words"
+        )
+    return value
+
+
+def _mentions(text: str, entries: Sequence[UnpublishedName], minimum_words: int) -> bool:
+    """Does *text* contain the whole of an unapproved name, under the single fold?
+
+    A reader asks *"what is the rate of volunteer work here?"*, not *"The Rate of
+    Volunteer Work"*, so exact equality would recognise almost none of the 281 named
+    unapproved indicators. Containment is bounded on both sides by a space in the folded
+    form -- ``normalise`` collapses every separator to one -- so a name matches on whole
+    words and never inside one.
+
+    The answer is a boolean over the whole catalogue, so it does not depend on the order
+    the entries are held in and there is no tie to break: two names matching is the same
+    *yes* as one, and which of them matched is exactly the thing that must not leave.
+    Names shorter than *minimum_words* words are skipped, because a single generic word
+    is a coincidence rather than a reader naming an indicator.
+    """
+    folded = f" {normalise(text)} "
+    for entry in entries:
+        for spelling in (entry.name_en, entry.name_ar):
+            name = normalise(spelling)
+            if len(name.split()) < minimum_words:
+                continue
+            if f" {name} " in folded:
+                return True
+    return False
+
+
+def existence_probe(
+    port: UnpublishedCatalogPort, rule_set: RuleSet | None = None
+) -> Callable[[str], bool | None]:
+    """Existence over *port*, as the three-state question a composer may ask.
+
+    ``True`` the catalogue holds what the reader named, ``False`` it does not, ``None``
+    it could not be read. The boolean is the entire crossing: nothing a composer holds
+    afterwards can name, date, define or value an unapproved row.
+
+    The broad handler is the one AD-15 permits and only here, at the boundary: the port
+    is a protocol, an implementation of it may be reading anything, and a composer that
+    has to catch a driver error is a pure layer that has stopped being pure. Every
+    failure becomes ``None``, which the caller renders as the weaker refusal plus a typed
+    degradation -- never as a leak, and never as a crash.
+    """
+    minimum_words = _minimum_words(rules() if rule_set is None else rule_set)
+
+    def probe(named: str) -> bool | None:
+        try:
+            return port.holds(named) or _mentions(named, port.names(), minimum_words)
+        except Exception:
+            return None
+
+    return probe

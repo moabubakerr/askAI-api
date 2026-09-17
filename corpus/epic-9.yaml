@@ -41,3 +41,53 @@
     Epic 9 / Stories 9.3 and 9.4 — structural closed-world enforcement, and the specific case
     where the causal half of the question has no substrate at all. `measure: null` because
     nothing numeric is bound; the question asks for a relationship the data cannot express.
+
+- id: e9-003
+  spec_version: 1
+  question:
+    en: What is the rate of volunteer work in Qatar?
+    ar: ما هو معدل العمل التطوعي في قطر؟
+  source: sceai
+  today: 2026-09-15
+  operation: value
+  measure: actual
+  expected: refusal
+  refusal_reason: >-
+    `The Rate of Volunteer Work` is one of the 342 CMS indicators that were never approved
+    for publication, so it is not in the knowledge base and no figure exists to give. The
+    refusal takes the `not-approved-for-publication` cause, not `no-such-indicator`: the
+    name is reachable through `ports/unpublished_catalogue.py`, whose `UnpublishedName`
+    carries two names and nothing else — no id, period, country, definition or value — so
+    the answer can say the thing exists and cannot say a single word about what it holds.
+  why: >-
+    Epic 9 / Stories 9.2 and 9.4 — say what is missing rather than reaching for something
+    adjacent. This is the worked example of the admission set biting where it should: the
+    question is sensible, the gap is editorial, and "this exists but is not approved for
+    publication" is materially better than "I don't know about that" because it tells the
+    reader that no amount of rephrasing will help. The failure this entry forecloses is the
+    quiet one — refusing here and letting the external agent's answer stand in its place,
+    which is exactly what `observability/outsourcing.py` counts.
+
+- id: e9-004
+  spec_version: 1
+  question:
+    en: What does the classified hotels indicator measure?
+    ar: ماذا يقيس مؤشر الفنادق المصنفة؟
+  source: sceai
+  today: 2026-09-15
+  operation: definition
+  measure: null
+  expected: refusal
+  refusal_reason: >-
+    `Classified Hotels (%)` is likewise unapproved, and a definition is the harder case: the
+    base CMS row does carry definition text, and surfacing it would be the closed world
+    leaking through the one port that was built to stop it. `UnpublishedName` has no
+    definition field, so there is nothing to leak — the refusal is `not-approved-for-
+    publication` again, and it says nothing about the indicator beyond that it exists.
+  why: >-
+    Epic 9 / Stories 9.2 and 9.4, paired with e9-003 to cover both halves of the port's
+    guarantee. e9-003 is the figure a reader asks for; this is the prose a helpful engine
+    would be tempted to give instead, since it is right there in the export. `measure: null`
+    because a definition binds nothing numeric. Neither entry may be answered by falling
+    back to general knowledge: a model that knows what a classified hotel is has no standing
+    to say what the Council publishes about them.

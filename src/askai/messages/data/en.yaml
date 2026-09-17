@@ -92,6 +92,69 @@ messages:
   refusal.not_published: "That is not in the published data, so there is no answer to give."
   refusal.not_supported: "The published data cannot answer that question as asked."
 
+  # The separator between the candidates a closed question names. An id and not a
+  # constant in code, for the same reason `scope.list_separator` is: which mark
+  # separates a list is a per-language editorial decision.
+  clarify.option_separator: ", "
+
+  # A candidate clear enough to answer under a stated assumption (FR-93). The assumption
+  # is stated rather than silent, so the reader can correct it in one word.
+  clarify.assumed: >-
+    Answered for {detail}, which is the closest match to what you asked. Say if you meant
+    a different indicator.
+
+  # ------------------------------------------------------- the six distinct refusals
+  #
+  # Story 2.7 and FR-38. Six causes, six sentences, and no two of them interchangeable:
+  # a reader acts on each differently, and a QC tester has to be able to test each one.
+  # An editorial gap is fixed by an editor, an empty detail by the publisher, an outage
+  # by an operator, and an unsupported question by asking a different one. "I can't
+  # answer that" told to all six is the failure R-REFUSAL-SIX-DISTINCT-CAUSES prevents.
+  #
+  # Two of the six are said with ids this file already carried and that already say
+  # exactly the right thing: `refusal.not_supported` above is cause five, and
+  # `failure.data_unavailable` below is cause six, already worded as a fault rather than
+  # as an absence. A second id meaning the same thing is the drift the single catalogue
+  # exists to prevent, so they are reused rather than duplicated.
+
+  refusal.no_such_indicator: >-
+    I do not hold an indicator matching that, so there is nothing published to answer it
+    from.
+
+  refusal.not_approved_for_publication: >-
+    That indicator exists in the content management system but has not been approved for
+    publication, so no figure for it can be given here.
+
+  refusal.published_but_no_data: >-
+    {detail} is published in the catalogue and carries no data points at all, so there is
+    no figure to give for any period.
+
+  refusal.no_data_for_this_selection: >-
+    {detail} publishes figures, and none for the period, frequency or country you asked
+    about. No neighbouring period or frequency has been substituted.
+
+  # Story 2.9: named as a suggestion, and never as an answer. A separate sentence with
+  # its own id, so a reviewer can read the two side by side and confirm the second
+  # cannot be mistaken for the first.
+  suggestion.not_what_you_asked: >-
+    {suggestion} is published and is the nearest thing to what you named. It is not what
+    you asked for and has not been used to answer.
+
+  # The mark between a refusal and the sentence that follows it. An id because how two
+  # sentences are joined is a per-language typographic decision like every other.
+  refusal.sentence_separator: " "
+
+  # ------------------------------------------------------------- a corrected premise
+  #
+  # Story 2.10, FR-41 and FR-58. The question asserted a figure the bound data
+  # contradicts, so the correction leads and carries the published figure. It reads as a
+  # statement of what was published rather than as an accusation: the reader is being
+  # given the defensible figure, not told off.
+
+  premise.corrected: >-
+    The figure in your question is not what the published data shows: {detail} was {value}
+    {unit} in {period}.
+
   # ------------------------------------------------------ failures, said as failures
   #
   # A component that did not work is never worded as an absence (AD-15, findings 23,
@@ -109,6 +172,18 @@ messages:
   # rather than when someone judges it necessary.
 
   caveat.external: "This did not come from the approved published data."
+
+  # ------------------------------------------------------- the agent declaration (FR-83)
+  #
+  # Every answer says which agent produced it, in the reader's own language and in both
+  # lenses. These two are carried on the package as content rather than as a flag a
+  # client looks up, because a client that has to look it up is a client that can fail
+  # to -- and an answer read without its agent is an answer read at the wrong standard
+  # of evidence. Worded as a statement rather than as a bare label so that it still
+  # says something when it is quoted on its own.
+
+  agent.approved: "Answered from the approved published data."
+  agent.external: "Answered by the external source, not from the approved published data."
 
   # ------------------------------------------ series, change and targets (Epic 3)
   #

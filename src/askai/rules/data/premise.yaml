@@ -1,0 +1,45 @@
+# Correcting a figure the question asserts and the published data contradicts.
+area: PREMISE
+about: >-
+  When a question asserts a figure the bound data contradicts, what the engine does with
+  the assertion: where the correction sits in the answer, which lenses show it, and how
+  exactly "contradicts" is decided.
+
+rules:
+  - id: R-PREMISE-CORRECTION-LEADS
+    statement: >-
+      Where a question asserts a figure the bound data contradicts, the correction is the
+      first element of the answer and carries the published figure with its full
+      provenance. It is shown in both lenses; brevity never removes it.
+    status: agreed
+    kind: principle
+    sources:
+      - "docs/PRD.md FR-41, FR-58, FR-59d"
+      - "_bmad-output/planning-artifacts/epics.md Story 2.10"
+    note: >-
+      First because it is what answers the question that was actually asked: "why did
+      inflation fall to 0.2%" is two statements, and answering the second while leaving the
+      first standing is how a briefing comes to rest on a figure nobody published. Both
+      lenses because an executive summary that drops the correction is precisely the reader
+      who will repeat the wrong number.
+
+      The mechanism is the role rather than a sort the client performs: the correction takes
+      the `headline` role, which R-ROLE-LENS-MAPPING names in both lenses, and it is
+      returned ahead of the ordinary headline by the composer that builds them.
+
+  - id: R-PREMISE-CONTRADICTION-IS-EXACT
+    statement: >-
+      A premise contradicts the data when the asserted figure and the published figure are
+      not numerically equal. Trailing zeros are not a contradiction; no tolerance is
+      applied, and a figure that differs at all is corrected.
+    status: agreed
+    kind: principle
+    sources:
+      - "docs/PRD.md FR-41"
+      - "_bmad-output/planning-artifacts/epics.md Story 2.10"
+    note: >-
+      A tolerance was considered and rejected. Its only effect would be to let a wrong
+      figure through unremarked when it is wrong by less than the tolerance, which is the
+      exact outcome this story exists to prevent, and the reader is shown the published
+      figure in either case -- so the cost of correcting a near-miss is a sentence, while
+      the cost of not correcting one is a briefing built on it.

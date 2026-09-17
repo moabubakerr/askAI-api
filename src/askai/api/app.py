@@ -18,6 +18,10 @@ here that could issue a credential.
 FastAPI publishes therefore has none either, which is how "the lens is a view over one
 answer, never an input to it" reaches the client rather than staying an internal rule.
 
+**Every published prompt is verified before the first route exists** (AD-29). See
+``create_app``: a prompt that is missing or has been edited in place fails the boot, and
+is the one failure on the model rung that does not degrade.
+
 **The app is built around an engine, not around a module global.** ``create_app`` takes
 the engine, so a test drives the real routes over a real provisioned database with no
 environment variable set and no process-wide state to reset between cases.
@@ -39,11 +43,12 @@ from typing import Annotated, Final
 from fastapi import FastAPI, Header
 from pydantic import BaseModel, Field, field_validator
 
+from askai.adapters.model.prompts import verify_prompts
 from askai.api.ask import Ask, answer_question
 from askai.api.engine import Engine
 from askai.api.wire import Json, ask_response, health_response
+from askai.domain.admission import PackageSource, SourceAdmission
 from askai.messages.lang import Lang
-from askai.narrate.package import PackageSource
 
 __all__ = ["ASK_ROUTE", "HEALTH_ROUTE", "IDENTITY_HEADER", "AskRequest", "create_app"]
 
@@ -62,6 +67,15 @@ class AskRequest(BaseModel):
     ``sources`` defaults to the approved layer alone. The default is the published data
     rather than "everything available": external content is always caveated and never
     unasked-for, so selecting it is a thing the caller does deliberately (FR-84, FR-88).
+
+    **The wire shape is a list of source names and stays one**; what changed in Story 9.1
+    is what it is parsed *into*. The list is the client's vocabulary and a closed set is
+    the engine's, so the conversion happens here, once, at the edge -- and a selection
+    that is not one of the three admissions is a **4xx**, never a silent narrowing to the
+    largest admissible subset. An unknown name is refused by ``PackageSource`` itself;
+    an empty or otherwise unadmissible combination is refused by ``SourceAdmission.of``.
+    Both come back as 422 because both are the same thing: a request that did not say
+    which agent it wanted in terms the engine offers.
     """
 
     question: str = Field(min_length=1)
@@ -69,21 +83,44 @@ class AskRequest(BaseModel):
     sources: tuple[PackageSource, ...] = (PackageSource.APPROVED,)
     conversation_id: str | None = None
 
+    @property
+    def admission(self) -> SourceAdmission:
+        """The closed admission this request selects.
+
+        Safe to call because the validator below has already run ``of`` over the same
+        value and refused the request if it raised -- a property that could raise at
+        handler time would turn a malformed request into a 500.
+        """
+        return SourceAdmission.of(self.sources)
+
     @field_validator("sources")
     @classmethod
-    def _at_least_one_source(cls, sources: tuple[PackageSource, ...]) -> tuple[PackageSource, ...]:
-        if not sources:
-            raise ValueError(
-                "select at least one source; selecting none is not a narrower question"
-            )
-        # De-duplicated rather than refused: asking for the approved layer twice is a
-        # client quirk, and answering it twice would return two identical packages and
-        # write their row ids into the record twice.
-        return tuple(dict.fromkeys(sources))
+    def _within_the_closed_set(
+        cls, sources: tuple[PackageSource, ...]
+    ) -> tuple[PackageSource, ...]:
+        # De-duplicated first: asking for the approved layer twice is a client quirk, not
+        # a different request, and `of` reads a set anyway. Then the whole authorisation
+        # the engine performs (AD-24) -- membership, and nothing else.
+        selected = tuple(dict.fromkeys(sources))
+        SourceAdmission.of(selected)
+        return selected
 
 
 def create_app(engine: Engine) -> FastAPI:
-    """The application, wired to *engine*. One engine per process; one app per engine."""
+    """The application, wired to *engine*. One engine per process; one app per engine.
+
+    **Every published prompt is verified before a route exists** (AD-29: *"a missing or
+    altered prompt fails loudly at startup; it never falls back to another"*). It is done
+    here rather than on the rung that sends one, because the two failures are not alike:
+    an outage, a timeout or an answer the validator rejected are facts about a runtime we
+    do not control, and they degrade to asking the reader. A prompt that is missing or
+    has been edited in place is a fact about *this deployment* -- it says the engine is
+    about to instruct a model with text nobody reviewed -- and a deployment that cannot
+    produce the reviewed text does not start and answer. Raising here means the first
+    reader's question is never the thing that discovers it, which on a rung reached only
+    by a genuine tie could otherwise be weeks later.
+    """
+    verify_prompts()
     app = FastAPI(
         title="Ask AI answer engine",
         # The structured answer package is the contract; a version here would be a second
@@ -103,7 +140,7 @@ def create_app(engine: Engine) -> FastAPI:
             Ask(
                 question=request.question,
                 lang=request.lang,
-                sources=request.sources,
+                sources=request.admission,
                 conversation_id=request.conversation_id,
                 asserted_identity=caller,
             ),

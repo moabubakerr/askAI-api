@@ -1,0 +1,86 @@
+# The model rung of AD-25's ladder -- which prompt is active, and what one call may spend.
+#
+# AD-29 wants two things recorded where a reviewer reads them rather than where a diff
+# hides them: **which** prompt version is active, and **what it is**. The first is the
+# `prompt_id`/`version` pair below; the second is the digest, which is what makes
+# "immutable" checkable instead of asserted. A prompt file edited in place no longer
+# matches its digest and the engine refuses to start, which is AD-29's *"a missing or
+# altered prompt fails loudly at startup; it never falls back to another"*.
+#
+# The budget is here for the same reason the ambiguity margin is: it decides whether a
+# reader is answered or asked. A read timeout too short turns every tie into a
+# clarifying question; one too long spends a reader's patience on an endpoint we do not
+# control. Neither is a number to bury in an adapter.
+area: MODEL
+about: >-
+  The versioned prompt the candidate tie-break sends, the digest that proves the file on
+  disk is the reviewed one, and what a single tie-break call may spend.
+
+rules:
+  - id: R-MODEL-TIE-BREAK-PROMPT
+    statement: >-
+      The candidate tie-break sends exactly the named prompt version, whose file is
+      immutable; the engine verifies the file against the digest recorded here and
+      refuses to start when it is missing or altered rather than falling back to another.
+    status: agreed
+    kind: table
+    sources:
+      - "_bmad-output/planning-artifacts/epics.md Story 2.6"
+      - "docs/ARCHITECTURE-SPINE.md AD-29"
+    values:
+      prompt_id: candidate-tie-break
+      version: "1"
+      # sha256 of the file's text, decoded as UTF-8 and read with universal newlines, so
+      # a checkout that rewrites line endings does not read as a tampered prompt while a
+      # single changed word still does.
+      sha256: fae15132fc7638853c85c1122dcc2559870d6c4236e2682e991807f4a273f209
+    note: >-
+      The file is `src/askai/adapters/model/prompts/candidate-tie-break.v1.md`, named for
+      the id and the version so a second version sits beside the first rather than
+      replacing it. A change is a new file, a new version here and a new digest; editing
+      the published file is what the digest exists to catch.
+
+      `version` is quoted. YAML would read a bare `1` as an integer, and a version that
+      is sometimes `1` and sometimes `"1"` is a version that compares unequal to itself
+      in the answer record.
+
+  - id: R-MODEL-TIE-BREAK-BUDGET
+    statement: >-
+      One candidate tie-break spends at most the declared output tokens and wall clock in
+      total, across at most one request and one decoding fallback, and lists at most the
+      declared number of candidates; exceeding any of them asks the reader instead.
+    status: agreed
+    kind: constant
+    sources:
+      - "_bmad-output/planning-artifacts/epics.md Story 2.6"
+      - "docs/ARCHITECTURE-SPINE.md AD-9"
+      - "docs/ARCHITECTURE-SPINE.md AD-22"
+    values:
+      # The answer is one catalogue id. Thirty-two tokens is room for the longest id in
+      # the export wrapped in a small JSON object, and no room for an explanation -- a
+      # model that starts explaining is truncated, the validator rejects it, and the
+      # reader is asked. That is the intended outcome, not a regression.
+      max_output_tokens: 32
+      # Whole seconds: a rule clause carries no fraction. These are the budget for the
+      # *rung*, not for one request -- the adapter is given a share of the read budget so
+      # that a request and its one decoding fallback together stay inside it.
+      connect_timeout_seconds: 2
+      read_timeout_seconds: 10
+      # A tie wider than this is already refused as too wide to name (R-RESOLVE-AMBIGUITY-
+      # MARGIN `maximum_offered`), so this is the second lock on the same door rather than
+      # a new limit: the served runtime's `max_model_len` is 16384 for prompt *plus*
+      # completion, and the candidate listing is the only part of this prompt that grows.
+      maximum_candidates_listed: 5
+    note: >-
+      Ten seconds rather than the adapter's default twenty. This call sits on the answer
+      path of a question the deterministic ladder has *already* answered -- with a
+      clarifying question naming the candidates -- so the cost of abandoning it is a
+      question the reader can answer in one word, and the cost of waiting for it is the
+      whole request. AD-9 calls every model call budgeted and abandonable; this is where
+      the abandon point is chosen.
+
+      There is no `attempts` clause, and its absence is deliberate. The number of requests
+      is structural, not tunable: one call, plus at most one fallback to plain JSON mode
+      for a server that rejects the guided-decoding extension. A retry count in data is
+      the *"retry loop that eventually accepts something"* AD-8 forbids, one increment
+      away from existing.

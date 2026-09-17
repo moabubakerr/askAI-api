@@ -26,22 +26,26 @@ file that actually feeds them rather than of one somebody configured separately.
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
 from pathlib import Path
 
+from askai.adapters.model.chat import ChatModelClient
 from askai.adapters.readmodel.catalogue import (
     ReadModelPresentation,
     ReadModelSources,
     read_model_snapshot,
 )
+from askai.adapters.readmodel.groups import ReadModelGroups
 from askai.adapters.readmodel.reachability import SqliteStoreHealth
 from askai.adapters.store.provision import Databases
 from askai.adapters.store.records import SqliteRecordStore
 from askai.api.engine import READ_MODEL_STORE, RECORD_STORE, Engine
-from askai.config.database import DatabasePaths
+from askai.config.database import ConfigError, DatabasePaths
+from askai.config.model import ChatModelSettings
 from askai.execute.readmodel import ReadModelDatapoints
 from askai.messages import load_catalogue
+from askai.ports.model import ModelPort
 from askai.refresh.freshness import StateFileFreshness
 from askai.refresh.state import state_path_for
 from askai.rules import rules
@@ -51,6 +55,26 @@ __all__ = ["engine_at", "engine_for"]
 
 def _utc_now() -> datetime:
     return datetime.now(UTC)
+
+
+def chat_model(environ: Mapping[str, str] | None = None) -> ModelPort | None:
+    """The chat runtime, or ``None`` when this deployment was not told about one.
+
+    The settings are required with no default, because a process that guessed a model
+    endpoint would start, answer, and be wrong. But the *port* is optional, because
+    NFR-6 makes "no model reachable" the state the whole answer path must work in — so
+    an unconfigured process boots, answers, and simply never reaches the tie-break rung
+    (AD-22) rather than failing to start.
+
+    Those two rules only look contradictory. "No default endpoint" and "no endpoint at
+    all" are different states: the first would answer against a runtime nobody meant,
+    the second answers without one and records that it did.
+    """
+    try:
+        settings = ChatModelSettings.from_env(environ)
+    except ConfigError:
+        return None
+    return ChatModelClient(settings)
 
 
 def engine_for(
@@ -76,6 +100,8 @@ def engine_for(
         datapoints=ReadModelDatapoints(databases.read_model),
         presentation=ReadModelPresentation(connection=databases.read_model),
         sources=ReadModelSources(connection=databases.read_model),
+        groups=ReadModelGroups(connection=databases.read_model),
+        model=chat_model(),
         freshness=StateFileFreshness(path=state_path),
         records=SqliteRecordStore(databases.record_store),
         stores=(

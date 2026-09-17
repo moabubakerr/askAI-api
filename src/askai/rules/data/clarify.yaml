@@ -1,0 +1,91 @@
+# Asking one closed question, and when to answer under a stated assumption instead.
+#
+# 257 of 320 published names are shared, so "which of these did you mean" is the commonest
+# thing this engine has to say. That makes the shape of the question a reviewable decision
+# rather than an implementation detail: a question that names its candidates completes a
+# query, and a question that asks the reader to rephrase restarts one.
+area: CLARIFY
+about: >-
+  The shape of a clarifying question, how many may be asked in a turn, and the share of
+  the candidates' combined score at which one candidate is dominant enough to answer under
+  a stated assumption rather than to ask about.
+
+rules:
+  - id: R-CLARIFY-QUESTION-IS-CLOSED
+    statement: >-
+      A clarifying question names the candidates it is choosing between, or names the
+      dimension the question left out. It never asks the reader to rephrase, and no message
+      in either language file says so.
+    status: agreed
+    kind: wording
+    sources:
+      - "docs/PRD.md FR-42, FR-91, FR-92"
+      - "_bmad-output/planning-artifacts/epics.md Story 2.11"
+    note: >-
+      "Please rephrase" is the engine handing its own problem back, and it is worse than a
+      refusal: a refusal at least tells the reader to stop. The scan that keeps this true
+      reads both catalogue files rather than the code, because the sentence could only ever
+      arrive as data.
+
+  - id: R-CLARIFY-ONE-QUESTION-PER-TURN
+    statement: >-
+      At most one clarifying question is asked in a turn. A turn that could ask about two
+      missing things asks about one of them, because a reader answering two questions at
+      once is restating their query rather than completing it.
+    status: agreed
+    kind: switch
+    sources:
+      - "docs/PRD.md FR-93"
+      - "_bmad-output/planning-artifacts/epics.md Story 2.11"
+    values:
+      one_question_per_turn: true
+    note: >-
+      Held as data although the engine has no second setting for it, so that the constraint
+      is reviewable beside the others rather than implicit in the shape of a package. The
+      structural half is stronger than the switch: a package carries one reason and one
+      reason id, both single values, so there is no list of questions that could grow.
+
+  - id: R-CLARIFY-DOMINANT-SHARE
+    statement: >-
+      Where one candidate carries at least this share of the candidates' combined
+      discrimination score, the engine prefers answering under a stated assumption to
+      asking. Below the share it asks, and a candidate set whose combined score is not
+      positive is always asked about.
+    status: agreed
+    kind: constant
+    sources:
+      - "docs/PRD.md FR-93"
+      - "_bmad-output/planning-artifacts/epics.md Story 2.11"
+    values:
+      dominant_share_percent: 60
+    note: >-
+      A share of the total rather than a gap over the runner-up, for the same reason
+      R-RESOLVE-AMBIGUITY-MARGIN is relative: the scores are sums of whichever signals the
+      question actually supplied, so a fixed gap would be dominant on a rich question and
+      never on a bare name.
+
+      Note where the preference actually bites today. AD-25's resolution stage already
+      binds rather than disambiguates whenever one candidate leads by
+      R-RESOLVE-AMBIGUITY-MARGIN, which is this same preference applied at the only layer
+      allowed to bind a field (AD-1). Every candidate set that reaches composition as a
+      disambiguation has therefore already failed that test, so this share is the wider
+      second guard -- for a candidate set arriving from any other rung, the model tie-break
+      included -- rather than a threshold that fires on the resolution ladder's output.
+
+  - id: R-CLARIFY-REPLY-COMPLETES-THE-QUERY
+    statement: >-
+      A reply to a clarifying question completes the existing query rather than starting a
+      new one: the fields already bound are preserved, and the field the reply binds is
+      recorded as bound by the reader.
+    status: agreed
+    kind: principle
+    sources:
+      - "docs/PRD.md FR-14, FR-94"
+      - "docs/ARCHITECTURE-SPINE.md AD-19"
+      - "_bmad-output/planning-artifacts/epics.md Story 2.11"
+    note: >-
+      Implemented by the binder's history rung rather than by a conversation object: the
+      earlier turns are an input to compiling, a field inherited from them is recorded
+      `inherited-from-history` by precedence and `reader` by authority, and the two axes
+      stay separate. That is why a reply neither loses what was already bound nor claims the
+      engine bound it.

@@ -24,6 +24,15 @@ merely empty today: NFR-8 makes the no-prose answer the state the system falls b
 whenever the model is unavailable, so it is a supported shape rather than a stage. A
 field waiting to be filled would invite a reader of the JSON to treat its absence as a
 fault.
+
+**Every package declares its agent, and the declaration is content** (FR-83, Story 9.5).
+``agent`` holds a rendered, reader-facing sentence in the reader's own language, composed
+from the bilingual catalogue like any other wording. It is carried on the package rather
+than placed as an element for one reason: an element has a role, a role decides which
+lens shows it, and the Executive Lens exists to be short. A declaration a brevity pass
+can drop is a declaration that disappears exactly when the answer is quoted out of
+context. It is checked non-blank at construction, so there is no package anywhere in the
+tree that does not say which agent produced it.
 """
 
 from __future__ import annotations
@@ -33,26 +42,13 @@ from enum import StrEnum
 
 from askai.assemble.roles import Placed
 from askai.compile.binding import Binding
+from askai.domain.admission import PackageSource
 from askai.domain.degradation import Degradation
 from askai.domain.spec import QuerySpec
 from askai.execute.value import PeriodResolution
+from askai.narrate.refusal import RefusalCode
 
 __all__ = ["AnswerPackage", "Chartable", "PackageKind", "PackageSource"]
-
-
-class PackageSource(StrEnum):
-    """Where a package's content came from -- the spine's ``provenance`` field.
-
-    A property of the whole package rather than of its elements, and distinct from an
-    element's ``class``: the two answer different questions, and an approved package can
-    hold a ``derived`` element while an external one never holds a ``measured`` one.
-    """
-
-    APPROVED = "approved"
-    """The published layer the engine holds its own copy of (AD-9a)."""
-
-    EXTERNAL = "external"
-    """A third-party source. Always caveated, unconditionally (FR-84, FR-88)."""
 
 
 class PackageKind(StrEnum):
@@ -104,6 +100,12 @@ class AnswerPackage:
     kind: PackageKind
     spec: QuerySpec
     bindings: tuple[Binding, ...]
+    #: Which agent produced this package, rendered for the reader in their own language
+    #: (FR-83). Content, not a flag: a client shows it as it stands, in either lens, and
+    #: there is no lookup table on the far side that could go missing. The default is
+    #: blank and is rejected below -- it exists only because the field sits among the
+    #: defaulted ones, and a package that reaches ``__post_init__`` blank never leaves it.
+    agent: str = ""
     #: What ``execute/`` resolved a deferred period to, so the answer and the audit
     #: record state the same period rather than each deciding one (FR-8, AD-16).
     resolution: PeriodResolution | None = None
@@ -117,6 +119,16 @@ class AnswerPackage:
     #: cannot exist without a ``source_ref`` (AD-6), and a question that bound no detail
     #: has no row to point at -- a refusal has no provenance, by construction.
     reason: str | None = None
+    #: The catalogue id ``reason`` was worded from. One id, never a list: FR-93's *"at
+    #: most one clarifying question per turn"* is a property of this field being singular
+    #: rather than a count someone has to remember to check. ``None`` on an answer.
+    reason_id: str | None = None
+    #: Which of FR-38's six causes this refusal is, as a stable machine code (Story 2.7).
+    #: Present on every refusal and absent on everything else: a clarification is not a
+    #: refusal, and counting one as a failure would make an engine that asks well look
+    #: like an engine that cannot answer. The code is what refusals are **counted by**, so
+    #: it survives a wording fix in ``messages/data`` that the sentence would not.
+    refusal_code: RefusalCode | None = None
     degradations: tuple[Degradation, ...] = ()
     #: The published rows this package was computed from, for the audit record (AD-16).
     row_ids: tuple[str, ...] = ()
@@ -140,4 +152,26 @@ class AnswerPackage:
             raise ValueError(
                 "a refusal or a clarification states its reason; an unexplained nothing "
                 "is indistinguishable from the failure AD-15 separates it from"
+            )
+        if self.kind is not PackageKind.ANSWER and not self.reason_id:
+            raise ValueError(
+                "a refusal or a clarification names the catalogue id it was worded from; "
+                "a sentence with no id can only be counted by its own text, which is a "
+                "count of typos the first time the wording is fixed"
+            )
+        if (self.kind is PackageKind.REFUSAL) is not (self.refusal_code is not None):
+            raise ValueError(
+                f"a {self.kind.value} carrying refusal_code {self.refusal_code}; every "
+                "refusal names one of FR-38's six causes and nothing else names one -- "
+                "refusals are counted by cause, so a rising rate can be told apart from a "
+                "high but honest one"
+            )
+        # Last of the six deliberately: the others say what is wrong with the
+        # *answer*, and a package that is malformed in one of those ways should say so
+        # rather than complaining first about a label it was never going to reach.
+        if not self.agent.strip():
+            raise ValueError(
+                "every package declares the agent that produced it, visibly and in the "
+                "reader's own language (FR-83); a declaration that can be omitted is one "
+                "that goes missing on the answer that is quoted out of context"
             )

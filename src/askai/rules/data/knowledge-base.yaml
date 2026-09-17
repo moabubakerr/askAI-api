@@ -1,0 +1,161 @@
+# The knowledge base -- what the approved answer is allowed to be made of (FR-77, FR-77a,
+# FR-79, FR-80, NFR-4a, NFR-11).
+#
+# Story 9.2 asks for "closed-world" to be a property a data steward can *inspect* rather
+# than a claim a prompt makes. That only works if the admission set is written down
+# somewhere a reviewer reads, in one place, and if the code that enforces it reads the
+# same place. This file is that place; `rules/knowledge_base.py` is the only parser of it.
+#
+# Adding a source here is the deliberate act. `tests/test_epic9_knowledge_base.py` asserts
+# that every table in the read model is named below, so a table added by a later story
+# fails the gate until someone admits it on purpose -- which is the whole point. The gate
+# is inconvenient in exactly the moment it is supposed to be.
+area: KB
+about: >-
+  What the approved answer may be composed from, and nothing else: published indicators,
+  details and datapoints; published analyst text attached to a datapoint; live published
+  articles; and the reference, group, country and champion/entity tables. Also what
+  "published" means per source (exported is not publishable), where the engine's only
+  outbound call is allowed to live, and the six causes a refusal may carry.
+
+rules:
+  - id: R-KB-ADMITTED-SOURCES
+    statement: >-
+      The approved answer is composed from these sources and from nothing else. Each line
+      is one admitted source: a stable key, then the read model table it materialises as
+      -- or `-` where the story that creates that table has not run yet -- then what the
+      source is. A source not on this list is not a permitted source, whatever else it
+      may be exported in; a read model table not named by a line is a source nobody
+      admitted, and the engine refuses to treat it as one.
+    status: agreed
+    kind: table
+    sources:
+      - "docs/PRD.md FR-77"
+      - "docs/ARCHITECTURE-SPINE.md AD-7, AD-9a"
+      - "src/askai/adapters/readmodel/schema.py (the read model's tables)"
+      - "_bmad-output/planning-artifacts/epics.md Story 9.2"
+    values:
+      sources:
+        # `key | read model table or - | what it is`.
+        #
+        # The lines carrying `-` are admitted and have no table of their own. That is the
+        # honest state: Story 1.6 created no table for analyst prose (1,031 analyses are
+        # counted at ingest and stored nowhere), articles are loose export files that no
+        # story has ingested, groups are read from the published benchmark tables, and the
+        # champion/entity names ride on the indicator row they belong to. Listing them
+        # here says the admission decision was taken; it does not claim a table exists.
+        - "indicator | catalogue | published indicators, minus the confidential ones the CHECK makes unrepresentable"
+        - "detail | detail | published indicator details -- the unit, format and series an answer is actually about"
+        - "datapoint | datapoint | published datapoints: actual, target, baseline and the published changes"
+        - "analysis | - | published analyst text, admitted only where it is attached to a datapoint"
+        - "article | - | live published articles, under the admission predicate of R-KB-ARTICLE-ADMISSION"
+        - "reference | ref_lookup | the published reference lookups -- units, polarities, value types, data sources"
+        - "country | ref_country | the published country reference table"
+        - "group | - | published groups and declared benchmark sets, read from the published benchmark tables"
+        - "entity | - | the champion/entity names, carried as columns on the indicator row rather than as a table of their own"
+
+  - id: R-KB-ARTICLE-ADMISSION
+    statement: >-
+      An article enters the knowledge base only when every flag in `required_true` is
+      true of it and every flag in `required_false` is false of it. Exported is not
+      publishable: the export carries 84 articles and 67 of them satisfy this predicate,
+      so 17 rows that a naive read would have answered from are not sources at all. The
+      same principle governs every other admitted source -- publication state is a
+      property of the row, checked, never assumed from the row's presence in a file.
+    status: agreed
+    kind: table
+    sources:
+      - "docs/PRD.md FR-77a"
+      - "data/Articles.csv (Published, IsActive, IsDeleted, IsDraft), read 2026-09-17"
+      - "_bmad-output/planning-artifacts/epics.md Story 9.2"
+    values:
+      required_true:
+        - "Published"
+        - "IsActive"
+      required_false:
+        - "IsDeleted"
+        - "IsDraft"
+      # Measured against `data/Articles.csv` on 2026-09-17, and asserted in the test
+      # file rather than trusted: 84 exported, 67 admitted, and the 17 excluded split
+      # 12 unpublished-and-inactive, 2 published-but-inactive, 2 deleted-but-published,
+      # 1 deleted-and-unpublished. No row is a draft, which is exactly why the draft
+      # flag is written down -- a predicate that only lists the flags that currently
+      # discriminate stops discriminating the day a draft is exported.
+      counts:
+        exported: 84
+        admitted: 67
+
+  - id: R-KB-OUTBOUND-INVENTORY
+    statement: >-
+      At answer time the engine reaches no open web and no external data service, and
+      makes no synchronous call to indicator-svc (AD-9a). `network_libraries` names the
+      module roots a call out of the process arrives under; no module in
+      `answer_path_packages` may import one, and in the tree as a whole such an import
+      may live only under a path in `estate_holders` -- each of which reaches a runtime
+      inside the estate and nothing beyond it. The inventory is the evidence for NFR-4a,
+      so it is data a reviewer can read rather than a claim a document makes.
+    status: agreed
+    kind: table
+    sources:
+      - "docs/PRD.md FR-79, NFR-4a"
+      - "docs/ARCHITECTURE-SPINE.md AD-9a"
+      - "_bmad-output/planning-artifacts/epics.md Story 9.2"
+    values:
+      network_libraries:
+        - "httpx"
+        - "requests"
+        - "aiohttp"
+        - "urllib"
+        - "urllib3"
+        - "http"
+        - "socket"
+        - "socketserver"
+        - "ftplib"
+        - "smtplib"
+        - "telnetlib"
+        - "websockets"
+        - "xmlrpc"
+        - "grpc"
+      answer_path_packages:
+        - "api"
+        - "compile"
+        - "validate"
+        - "execute"
+        - "assemble"
+        - "narrate"
+        - "respond"
+      estate_holders:
+        # Both reach a runtime on the deployment's own network: the vLLM server the
+        # model adapter talks to, and the external agent platform the Epic 9 adapter
+        # will. Neither is the open web, and neither is indicator-svc.
+        - "adapters/model"
+        - "adapters/external"
+
+  - id: R-KB-REFUSAL-CAUSES
+    statement: >-
+      When the knowledge base does not hold what the question needs, the approved answer
+      refuses with one of these six causes and never with a seventh, never with general
+      knowledge, and never by handing the question to the external agent unannounced.
+      Each line is a stable machine code and the resolution outcome that discovers it, or
+      `-` where no stage discovers it yet. Every member of `compile.resolve.RefusalCause`
+      appears exactly once as a discoverer, so a fourth member added later fails the gate
+      until a reviewer says which of the six it is -- a cause discovered in one place and
+      re-invented in another is two statements free to drift.
+    status: agreed
+    kind: table
+    sources:
+      - "docs/PRD.md FR-38, FR-38a, FR-80"
+      - "_bmad-output/planning-artifacts/epics.md Story 2.7, Story 9.4"
+      - "src/askai/compile/resolve/decide.py (RefusalCause)"
+    values:
+      causes:
+        # `machine code | the RefusalCause member that discovers it, or -`.
+        - "no-such-indicator | nothing-matched"
+        - "not-approved-for-publication | -"
+        - "published-but-no-data | -"
+        - "not-for-this-period-grain-or-country | all-candidates-ruled-out"
+        # A tie too wide to name is the question being unsupported *as asked*: the engine
+        # holds the indicators and cannot tell which one is meant, so the reader is told
+        # the question is not answerable in that form rather than handed eight offers.
+        - "question-unsupported | too-many-to-name"
+        - "could-not-reach-the-data | -"
