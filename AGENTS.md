@@ -197,17 +197,70 @@ recent row — and `stale: false` after a refresh of 8,985 rows in 0.65s.
 unblocked by a writer, an index file retired while its generation was still served, and a
 row surviving a full close and reopen. The atomic-refresh design holds where it will run.
 
-The sequence, which is also the deployment order:
-
-```
-export RUNTIME_NETWORK=kap_shared_network      # where vllm lives
-export ASKAI_EXPORT_DIR=~/askAI-api/data       # the export ROOT, not data/cms
-docker compose run --rm askai-api python -m askai.adapters.store provision
-docker compose run --rm askai-api python -m askai.refresh /data
-docker compose up -d askai-api                 # localhost:17900
-```
-
 Three bugs surfaced in the first hour there, none of them visible from a developer
 machine: no operator-facing way to create the estate, a compose mount that would have
 silently dropped the loose export files, and a serving entry point that did not exist.
 Deploy early on anything else built here.
+
+### The deployment order — corrected 2026-09-17
+
+**The 2026-09-16 sequence above no longer works.** Three things changed and one was always
+wrong. Use this:
+
+```bash
+cd ~/askAI-api && git pull
+docker compose build askai-api
+
+# Schema went 1 -> 2 (the analyst table, 464a6ca). Every existing estate fails at
+# startup with a version mismatch until this runs. That is Story 1.6 as designed.
+docker compose run --rm askai-api python -m askai.adapters.store provision
+
+# Loads the read model AND publishes the index generation. Since b33a831 the engine
+# refuses to serve without a generation, so this is no longer optional.
+docker compose run --rm askai-api python -m askai.refresh /data
+
+docker compose up -d --force-recreate askai-api      # localhost:17900
+```
+
+**`.env` carries the settings** (it is gitignored, `e1047fe`), so they survive a new shell:
+
+```
+RUNTIME_NETWORK=askai-net
+ASKAI_EXPORT_DIR=/home/ubuntu/askAI-api/data
+```
+
+**`RUNTIME_NETWORK=kap_shared_network` was wrong.** Neither runtime is on it. Both `vllm`
+and `tei` run on Docker's **default `bridge`**, which provides **no DNS resolution by
+container name** — so `http://tei:80/v1` and `http://vllm:8000/v1` cannot resolve from
+there, and compose refuses to attach to it at all ("network-scoped aliases are only
+supported for user-defined networks"). The fix is a user-defined network that all three
+join; containers can be on several at once, so this needs no restart of the runtimes:
+
+```bash
+docker network create askai-net
+docker network connect askai-net tei
+docker network connect askai-net vllm
+docker network connect askai-net askai-web     # the frontend, if deployed
+```
+
+**This lives on the containers, not in a file.** If `tei` or `vllm` is ever recreated it
+drops off `askai-net` and the next refresh fails with `Temporary failure in name
+resolution`. The durable fix is for whoever owns those services to declare the network in
+their own compose.
+
+**`tei` already runs on this machine and is NOT managed here** — the same as `vllm`. It
+has been up since 2026-09-16 on `0.0.0.0:17800->80`, started outside this project. The
+`tei` service block in `docker-compose.yml` will collide with it on port 17800. **Never
+run a bare `docker compose up -d`** in this repo; always name the service.
+
+Verify in this order — each one fails differently:
+
+```bash
+docker compose run --rm askai-api python -c "import urllib.request; print(urllib.request.urlopen('http://tei:80/health', timeout=5).status)"
+docker compose ps                    # want Up (healthy), not Restarting
+curl -s localhost:17900/api/health
+```
+
+A refresh that finishes in under a second and prints `index NOT rebuilt` means TEI was
+unreachable; the read model is current and the index is not. `python -m askai.refresh
+<export> --index-only` rebuilds the index alone, safe against a live estate.
