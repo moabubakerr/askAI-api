@@ -32,7 +32,8 @@ Roughly 1,780 tests, five gates green. Epics 1–5 substantially built.
 | **C** | `session-c-epic-4-countries.md` | 4 — comparison, ranks | **Done.** |
 | **D** | `session-d-epic-5-groups-and-metadata.md` | 5 — groups, metadata | **Done.** |
 | **E** | `session-e-review-and-epic-1.md` | 1 — finish and review | **Run this.** 20+ stories shipped without review. |
-| **F** | `session-f-epic-6-analyst-and-articles.md` | 6 — analyst, articles | **Blocked** on the analyst table decision. |
+| **F** | `session-f-epic-6-analyst-and-articles.md` | 6 — analyst, articles | **Blocked**, and mostly deferred — run **K** instead. |
+| **K** | `session-k-analyst-table.md` | 6 — the table only | **Run this.** Stops 1,031 analyses being discarded, in ~30 minutes, without Epic 6's 14 stories. |
 | **G** | `session-g-epic-8-prose-and-guards.md` | 8 — prose, guards | Ready. The four guards need no model. |
 | **H** | `session-h-epic-9-closed-world.md` | 9 — closed world, external | Ready. 9.1/9.3/9.5 are pure type work. |
 | **I** | `session-i-epic-10-governance.md` | 10 — governance | Ready, and newly unblocked: the rules are agreed. |
