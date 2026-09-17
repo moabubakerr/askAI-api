@@ -15,13 +15,24 @@ Then: **"Read `AGENTS.md` and `sessions/<your-brief>.md`, then begin."**
 `AGENTS.md` carries the house rules, the VM facts, the deployment order and the build state. Each
 brief carries only what is specific to that session. Read both.
 
-## State — 2026-09-16
+## State — 2026-09-17
 
 **Deployed and answering on the target VM.** `POST /api/ask` returns a real figure with a resolving
 `source_ref`, freshness not stale, one audit record per request. The preflight passes on that
 filesystem, so WAL works and the atomic-refresh design holds where it will actually run.
 
-Roughly 1,780 tests, five gates green. Epics 1–5 substantially built.
+2,304 tests passing, 4 failing, 1 skipped. Epics 1–5, 9 and 10 substantially built.
+
+**The four failures are all Epic 9's `external`/Combined path** and are blocked on one decision, not
+four bugs: `EXTERNAL_ONLY` composes no approved package, and `respond/response.py` requires at least
+one. Both invariants are deliberate and they collide. Either relax the `Response` invariant when the
+admission excluded `APPROVED`, or compose an approved-side refusal saying the layer was not
+consulted — the second needs a new id in both message files. **Nobody should pick this up without
+making that call first.**
+
+**Read the reachability note below before starting anything.** Three defects found on 2026-09-17
+were all the same shape — finished code that no composition root calls — and all three passed the
+suite for days.
 
 ## The briefs
 
@@ -37,7 +48,11 @@ Roughly 1,780 tests, five gates green. Epics 1–5 substantially built.
 | **G** | `session-g-epic-8-prose-and-guards.md` | 8 — prose, guards | Ready. The four guards need no model. |
 | **H** | `session-h-epic-9-closed-world.md` | 9 — closed world, external | Ready. 9.1/9.3/9.5 are pure type work. |
 | **I** | `session-i-epic-10-governance.md` | 10 — governance | Ready, and newly unblocked: the rules are agreed. |
-| **J** | `session-j-epic-2-refusals.md` | 2 — refusals, tie-break | Ready. With 257/320 names ambiguous, this is the primary path. |
+| **J** | `session-j-epic-2-refusals.md` | 2 — refusals, tie-break | **Done.** Landed in `9cd8a3d`. |
+| **L** | `session-l-execute-beyond-value.md` | 3/4/5 — reachability | **Run this.** `execute/` produces one shape, so every composer in `assemble/compare/` is still unreachable. |
+| **M** | `session-m-wire-the-ladder.md` | 2 — reachability | **Run this.** The ladder is built and never executes: `engine_for` passes no `CandidatePort`. |
+| **N** | `session-n-deploy-and-verify.md` | — | After L and M. First session to judge the engine by what a reader gets on the VM. |
+| **O** | `session-o-answer-from-articles.md` | 6 — articles only | After M. Answers from the 67 articles. **No relevance floor — decided deliberately**, see the brief. |
 
 Epic 7 (conversation, 8 stories) has no brief **on purpose**. It multiplies the test surface of
 every other path for little standalone value, and it is the epic most likely to destabilise what
@@ -51,8 +66,17 @@ constructed `QuerySpec`s. Nothing classified the operation from the question, so
 compiled to `operation: value` and fell through to the figure. No story owned operation
 classification; AD-22 names it as a model call-site and the story was never written.
 
-That is being fixed. If you are picking up a brief and a composer seems unreachable, check `git log`
-before concluding it is broken.
+**Half of that is fixed.** `0255de5` binds the operation from the question and dispatches on it. The
+other half is not: `api/ask.py` calls `execute_value` and nothing else, and `execute/` holds one
+shape. So the operation now binds correctly and the composers are still unreachable. **Session L.**
+
+**The same pattern, twice more.** `engine_for` never passes a `CandidatePort`, so AD-25's ladder and
+the Story 2.6 tie-break rung never execute anywhere (**Session M**); and until `7ef6973` the
+snapshot offered the home country as a filterable name, so naming your own country refused the
+question. None of the three were visible from a developer machine and all three passed the suite.
+
+If you are picking up a brief and a composer seems unreachable, check `git log` first — and then
+check whether anything in a composition root actually calls it.
 
 ## The fences
 
@@ -92,8 +116,12 @@ Then hand that file to every agent instead of the raw planning documents.
 
 ## Decisions waiting on a human — escalate, never guess
 
-- **The analyst table.** Blocks all 14 stories of Epic 6. Stories 1.6 and 1.8 contradict each other;
-  1,031 analyses are ingested and stored nowhere. A DDL change and a schema bump.
+- **The analyst table.** ~~Blocks all 14 stories of Epic 6.~~ **Decided:** resolved in favour of the
+  read model — see Session K, which is a ~30-minute change. Stories 1.6 and 1.8 contradict each
+  other; 1,031 analyses are ingested and stored nowhere; a test pins both the count and the absence
+  (`tests/test_ingest.py:165`). Still a DDL change and a `SCHEMA_VERSION` bump, so **every existing
+  estate — including the VM — fails at startup until re-provisioned.** That is Story 1.6 working as
+  designed. Articles no longer wait on this: Session O is independent of it.
 - **`agreed_by`.** All 187 non-rejected rules are agreed as of 2026-09-16; nobody is named. Blocks
   Story 10.2.
 - **Story 2.12.** Decision-gated on FR-51 — three options, 65 of 189 indicators, no option-specific
