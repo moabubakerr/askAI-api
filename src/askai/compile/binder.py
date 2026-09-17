@@ -424,6 +424,7 @@ def _bind_operation(
     period: _Resolved[PeriodSpec],
     *,
     excluding: Span | None,
+    a_subject_bound: bool,
 ) -> _Resolved[Operation]:
     """The operation, read from the question's verb and then down AD-19's ladder.
 
@@ -443,6 +444,13 @@ def _bind_operation(
 
     The model rung AD-22 names would sit below these words and above the history: nothing
     here calls one, and NFR-1's twice-compiled corpus is why.
+
+    *a_subject_bound* is the other fact the classifier cannot get for itself: whether a
+    detail bound at all. Together with the span it separates the three states
+    ``R-OP-A-BARE-SUBJECT-IS-THE-WHOLE-QUESTION`` distinguishes -- the reader named the
+    subject, the ladder resolved it from words that mark nothing, and nothing bound --
+    and it is taken off the detail binding, which has already decided it, rather than
+    asked of the catalogue a second time.
     """
     named = operation_named(
         question,
@@ -450,6 +458,7 @@ def _bind_operation(
         excluding=excluding,
         period_is_the_readers=period.precedence
         in {Precedence.NAMED_IN_QUESTION, Precedence.UNBOUND},
+        a_subject_bound=a_subject_bound,
     )
     if named is not None:
         return _from_reader(Bound(named))
@@ -511,7 +520,9 @@ def compile_question(
     period = _bind_period(question, earlier, catalogue, detail_id, request.today, excluding=span)
     scope = _bind_country_scope(question, earlier, catalogue)
     measure = _bind_measure(question, earlier, excluding=span)
-    operation = _bind_operation(question, earlier, period, excluding=span)
+    operation = _bind_operation(
+        question, earlier, period, excluding=span, a_subject_bound=detail_id is not None
+    )
 
     spec = QuerySpec(
         detail=detail.state,

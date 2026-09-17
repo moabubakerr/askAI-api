@@ -37,6 +37,7 @@ __all__ = [
     "OperationClause",
     "OperationRule",
     "bare_subject_frames",
+    "bare_subject_is_the_whole_question",
     "benchmark_words",
     "comparison_words",
     "count_words",
@@ -98,6 +99,7 @@ class OperationRule(StrEnum):
     WORDS = "R-OP-WORDS"
     PRECEDENCE = "R-OP-PRECEDENCE"
     BARE_SUBJECT = "R-OP-BARE-SUBJECT-IS-A-DEFINITION"
+    BARE_SUBJECT_IS_THE_WHOLE_QUESTION = "R-OP-A-BARE-SUBJECT-IS-THE-WHOLE-QUESTION"
     MULTI_READING_IS_A_SERIES = "R-OP-SERIES-FROM-A-MULTI-READING-REQUEST"
 
 
@@ -401,6 +403,18 @@ def bare_subject_frames() -> frozenset[str]:
     DEFINITION`` says so and ``compile.operations`` is where the period is consulted.
     """
     return _phrases(OperationRule.BARE_SUBJECT, OperationClause.FRAMES)
+
+
+@cache
+def bare_subject_is_the_whole_question() -> bool:
+    """Must a bare-subject frame lead straight into the subject, and the subject end it?
+
+    ``R-OP-A-BARE-SUBJECT-IS-THE-WHOLE-QUESTION``. The frames rule says *which* frames
+    ask what a subject is; this says what makes the subject **bare**, which until it
+    existed was asserted by nothing and let *"what is the target for inflation"* compile
+    to a definition.
+    """
+    return _flag(OperationRule.BARE_SUBJECT_IS_THE_WHOLE_QUESTION, OperationClause.ENABLED)
 
 
 @cache

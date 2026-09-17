@@ -1,0 +1,101 @@
+# The bare subject -- what makes "what is X" a question about a word rather than a figure.
+#
+# `R-OP-BARE-SUBJECT-IS-A-DEFINITION`, in operation-words.yaml, reads the frame ("what
+# is", "ما هو") and one fact from the period binder: did the reader name a period? If they
+# did not, the question is a definition. That is the whole test, and it is the frame alone
+# -- the word "bare" in the rule's own name is asserted by nothing.
+#
+# So every question carrying the frame and no period compiled to `definition`, whatever
+# else it said. Measured on the ingested export on 2026-09-17, that is how three of the six
+# false answers in session Q are produced:
+#
+#   "What is the target for Qatar's inflation rate?"   -> inflation's definition
+#   "What is the baseline for Qatar's inflation rate?" -> inflation's definition
+#   "What is Qatar's diabetes rate?"                   -> "no definition is published for .."
+#
+# All three name a subject and then ask something *about* it -- its published target, its
+# published baseline, its rate. The corpus expects `operation: value` on all three
+# (e3-009, e3-015, e1-006), and the two target questions already bind `measure: target`
+# and `measure: baseline` correctly; only the operation is wrong. The same shape was seen
+# on the VM with the resolution ladder on, for "What is the unemployment rate?".
+#
+# This file adds the missing half of the test. It is a separate file from the frames it
+# qualifies because the frames are agreed and unchanged -- what was missing was never a
+# frame, it was the reading of the word "bare".
+area: OP
+about: >-
+  When a question carrying a bare-subject frame is actually asking for the subject's
+  published definition: the frame must lead straight into the subject the question bound,
+  and the subject must end the question. Anything between the two, or after the subject,
+  is the reader asking something *about* the subject rather than what it is.
+
+rules:
+  - id: R-OP-A-BARE-SUBJECT-IS-THE-WHOLE-QUESTION
+    statement: >-
+      A bare-subject frame reads as a request for a definition only when the question is
+      the frame and the subject and nothing else: the subject's name begins where the
+      frame ends, and the question ends where the subject's name ends. A question that
+      puts words between the frame and the subject, or carries words after it, has asked
+      something about the subject and binds the operation its own words name -- the rule
+      default, `value`, when they name none. A subject that was not named in the question
+      at all, and was resolved from the reader's words by the resolution ladder, is never
+      a bare subject: nothing marks where it begins or ends, so the test cannot be run
+      and a definition cannot be asserted. Where no subject bound at all, there is nothing
+      for the clause to be about and the frames rule decides alone, as it did before this
+      one existed.
+    status: agreed
+    kind: switch
+    sources:
+      - "docs/PRD.md FR-33"
+      - "docs/PRD.md FR-39"
+      - "docs/ARCHITECTURE-SPINE.md AD-22"
+    values:
+      enabled: true
+    note: >-
+      Measured over all 86 corpus entries, in both languages, against the published
+      catalogue: four entries declare `operation: definition`, and the frame test alone
+      bound `definition` on more than those four. Of the four, exactly one -- e5-006,
+      "What is real GDP?" -- reaches `definition` through this frame at all; the other
+      three name a definition word ("mean", "measure") and are bound by R-OP-WORDS,
+      which this rule does not touch. e5-006 satisfies both clauses: the frame ends at
+      word 2 and the subject `real gdp` runs from word 2 to the end. So the entry this
+      rule has to preserve is preserved, and the three it has to stop are stopped.
+
+      The terse questions that work today -- "Inflation", "Inflation monthly" -- carry no
+      frame at all and are not read by this rule in either direction.
+
+      **Both clauses are needed and neither is a length test.** "What is the target for
+      inflation" fails the first (words sit between the frame and the subject) and
+      "What is inflation in 2019" would fail the second -- though the period binder
+      catches that one first, which is why the frames rule was written around the period
+      and why this one is written around the words instead. A rule that merely counted
+      words would bind `definition` for a short question naming a target and refuse it
+      for a long question naming none, and neither has anything to do with what was
+      asked.
+
+      **It fails towards the figure, which is the safe direction.** Where this rule
+      withholds `definition`, the operation falls to the rule default and the reader gets
+      the published value or a refusal naming its cause -- both of which are answers to
+      what they asked. The failure it replaces is the opposite: a definition composed in
+      place of a figure the reader asked for, which FR-39 forbids by name, and which is
+      indistinguishable to a reader from an answer.
+
+      **Three states, not two, and the third one is inert.** The clause is evaluated
+      against the span the detail bound from, so it has to say what happens when there is
+      no span. There are two such cases and they are different facts. The ladder resolved
+      a detail from words that mark no subject -- the clause withholds `definition`, which
+      is the cost recorded below. *Nothing bound at all* -- the clause withholds nothing,
+      because an unbound detail makes the question unanswerable, `narrate.structured`
+      routes no operation for one, and the reader is asked which indicator they meant
+      whatever the operation says. Collapsing the two would have changed no answer and
+      would have lost the only reading the words support, which is why the compiler is
+      told which of the two it is rather than inferring it from the absent span.
+
+      **The cost, recorded rather than discovered.** A reader who paraphrases the
+      indicator -- "what is the joblessness rate", resolved by AD-25's ladder rather than
+      by an exact name -- can no longer reach a definition through this frame, because
+      the ladder binds a detail id and no span. They reach the value instead. That is the
+      conservative half of the trade and it is the half FR-39 asks for; the alternative
+      is asserting a definition over words nothing in the question marks as the subject.
+      A definition word ("define", "what does X mean") still binds `definition` for them,
+      through R-OP-WORDS, with no span needed.

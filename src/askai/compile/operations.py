@@ -34,6 +34,7 @@ from __future__ import annotations
 
 from askai.compile.lexicon import (
     bare_subject_frames,
+    bare_subject_is_the_whole_question,
     multi_reading_is_a_series,
     operation_words,
     readings_for_latest,
@@ -50,6 +51,7 @@ def operation_named(
     *,
     excluding: Span | None,
     period_is_the_readers: bool,
+    a_subject_bound: bool,
 ) -> Operation | None:
     """The operation the question named, or ``None`` when it named none.
 
@@ -61,10 +63,12 @@ def operation_named(
     2025"* is a comparison that happens to name periods rather than a value question that
     happens to say compare.
 
-    **The bare-subject frame**, only when the reader named no period. This is the rung
-    ``R-OP-BARE-SUBJECT-IS-A-DEFINITION`` exists for, and *period_is_the_readers* is how it
-    is told -- a fact the period binder already established, passed in rather than
-    re-derived.
+    **The bare-subject frame**, only when the reader named no period *and* the subject is
+    bare. This is the rung ``R-OP-BARE-SUBJECT-IS-A-DEFINITION`` exists for, and
+    *period_is_the_readers* is how it is told about the period -- a fact the period binder
+    already established, passed in rather than re-derived. What makes the subject bare is
+    ``R-OP-A-BARE-SUBJECT-IS-THE-WHOLE-QUESTION``, read from *excluding* and
+    *a_subject_bound*; see :func:`_asks_what_the_subject_is`.
 
     **A multi-reading request**, when ``R-OP-SERIES-FROM-A-MULTI-READING-REQUEST`` is on.
     It is off today, because ``execute/`` produces no series and binding one would turn a
@@ -76,11 +80,55 @@ def operation_named(
     found = question.names_one_of(operation_words(), excluding=excluding)
     if found is not None:
         return found[0]
-    if not period_is_the_readers and question.names(
-        bare_subject_frames(), excluding=excluding
-    ) is not None:
+    if not period_is_the_readers and _asks_what_the_subject_is(
+        question, subject=excluding, a_subject_bound=a_subject_bound
+    ):
         return Operation.DEFINITION
     return _series_from(request)
+
+
+def _asks_what_the_subject_is(
+    question: Question, *, subject: Span | None, a_subject_bound: bool
+) -> bool:
+    """Is this the frame, the subject, and nothing else?
+
+    ``R-OP-BARE-SUBJECT-IS-A-DEFINITION`` names the frames and
+    ``R-OP-A-BARE-SUBJECT-IS-THE-WHOLE-QUESTION`` says what makes the subject *bare* --
+    which, until the second rule existed, was asserted by nothing. The frame alone bound
+    ``definition`` for *"what is the target for inflation"* and for *"what is the diabetes
+    rate"*: both name a subject and then ask something **about** it, and both were
+    answered with the subject's published meaning instead. FR-39 is the rule in play, and
+    a definition offered in place of the figure that was asked for is a substitution.
+
+    *subject* is the span the detail bound from -- the same one every other binder
+    excludes, so this reads the reader's own words rather than a second opinion about
+    which of them named the indicator. It is ``None`` in two different situations, and
+    they are told apart by *a_subject_bound* because they are not the same fact:
+
+    **A detail bound and the reader did not name it.** AD-25's ladder resolved it from
+    their words and binds an id with no span, so nothing marks where the subject begins
+    or ends, the clause cannot be evaluated, and a definition is not asserted over words
+    the question does not delimit. This is the conservative half of the trade and the
+    half FR-39 asks for -- the reader reaches the published figure instead, and a
+    definition *word* ("define", "what does X mean") still binds ``definition`` for them
+    through ``R-OP-WORDS``, which needs no span.
+
+    **No detail bound at all.** The question named nothing the catalogue publishes, so
+    there is no subject to be bare and no second reading to prefer: the frame decides, as
+    it did before this clause existed. Nothing downstream turns on it -- an unbound detail
+    makes the question unanswerable, ``narrate.structured`` routes no operation for one,
+    and the reader is asked which indicator they meant whatever this returns. Withholding
+    ``definition`` here would change no answer and would lose the only reading the words
+    support.
+    """
+    frame = question.names(bare_subject_frames(), excluding=subject)
+    if frame is None:
+        return False
+    if not bare_subject_is_the_whole_question():  # pragma: no cover -- one value today
+        return True
+    if subject is None:
+        return not a_subject_bound
+    return frame.stop == subject.start and subject.stop == len(question.words)
 
 
 def _series_from(request: PeriodSpec | None) -> Operation | None:
