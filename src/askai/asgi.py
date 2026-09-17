@@ -21,13 +21,21 @@ could reach it is a route that could change the data under another reader's ques
 A composition root inside ``api/`` puts that machinery one import away from a handler.
 Here, the wiring is above the edge and the edge stays unable to reach it.
 
-**The databases must already exist.** ``open_databases`` opens and refuses to create, so a
-process pointed at an unprovisioned directory fails here, at startup, naming the file —
-rather than serving a 500 on the first question. Provision first::
+**The databases must already exist, and so must an index generation.**
+``open_databases`` opens and refuses to create, so a process pointed at an unprovisioned
+directory fails here, at startup, naming the file — rather than serving a 500 on the
+first question. ``engine_at`` requires AD-25's generation for the same reason and by
+default (``IndexPolicy.REQUIRED``): without one, only an exactly typed published name
+binds and every paraphrase is refused as *no such indicator* — which is a deployment
+that looks healthy to a smoke test and is broken for most readers. The refresh below
+publishes the generation as its second half, so the order is unchanged::
 
     python -m askai.adapters.store provision
-    python -m askai.refresh /data
+    python -m askai.refresh /data          # read model, then the index generation
     uvicorn askai.asgi:build --factory --host 0.0.0.0 --port 8000
+
+An index-less deployment stays legal, but only where a composition root says
+``engine_at(..., index=IndexPolicy.ABSENT)`` out loud. Nothing reaches it by omission.
 
 **The connections live as long as the process.** They are opened here and never closed,
 because the process holding them *is* the server: a shutdown hook that closed them would

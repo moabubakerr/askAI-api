@@ -28,8 +28,16 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
+from enum import StrEnum
 from pathlib import Path
 
+from askai.adapters.index.generation import load_generation
+from askai.adapters.index.location import (
+    configured_source,
+    generations_dir,
+    latest_generation,
+)
+from askai.adapters.index.resolution import IndexCandidates
 from askai.adapters.model.chat import ChatModelClient
 from askai.adapters.readmodel.catalogue import (
     ReadModelPresentation,
@@ -46,11 +54,82 @@ from askai.config.model import ChatModelSettings
 from askai.execute.readmodel import ReadModelDatapoints
 from askai.messages import load_catalogue
 from askai.ports.model import ModelPort
+from askai.ports.resolution import CandidatePort
 from askai.refresh.freshness import StateFileFreshness
 from askai.refresh.state import state_path_for
 from askai.rules import rules
 
-__all__ = ["engine_at", "engine_for"]
+__all__ = ["IndexMissing", "IndexPolicy", "candidates_for", "engine_at", "engine_for"]
+
+
+class IndexPolicy(StrEnum):
+    """Whether this deployment must have an index generation to serve at all.
+
+    The *named setting* that replaces a ``None`` nobody chose. Serving with
+    ``candidates=None`` was the silent state that let AD-25's whole ladder reach a VM
+    unreached: exact published names bound, which is what a smoke test types, and every
+    paraphrase — most readers — got ``no-such-indicator``. So the absence of an index is
+    now a thing a composition root has to say out loud.
+
+    ``REQUIRED`` is the default and what ``askai.asgi`` passes. It follows the argument
+    at ``api/app.py``'s prompt verification: a deployment that cannot produce the
+    reviewed prompt does not start and answer, and a deployment that cannot resolve a
+    paraphrase should not quietly answer "no such indicator" to most of its readers.
+    The failure is at startup, naming the directory, rather than weeks later in a
+    question nobody ran.
+
+    ``ABSENT`` keeps an index-less deployment legal, and it is a real decision rather
+    than a hedge: Epic 1's path — exact normalised-name lookup alone — is a correct,
+    tested answer path, it is what every test that scripts no index exercises, and a
+    deployment that has deliberately not built a generation yet (a fresh estate between
+    ``provision`` and the first ``refresh``) is a state an operator can be in. What is
+    no longer legal is reaching it by accident.
+    """
+
+    REQUIRED = "required"
+    ABSENT = "absent"
+
+
+class IndexMissing(ConfigError):
+    """This deployment was told to require an index generation and has none.
+
+    A ``ConfigError`` rather than a new kind of failure: from the operator's side it is
+    the same class of thing as an unset ``ASKAI_DATABASE_DIR`` — a deployment step that
+    has not been run — and it is fixed the same way, by running one command.
+    """
+
+
+def candidates_for(
+    paths: DatabasePaths,
+    policy: IndexPolicy = IndexPolicy.REQUIRED,
+    environ: Mapping[str, str] | None = None,
+) -> CandidatePort | None:
+    """AD-25's candidate port over this estate's published generation.
+
+    Loaded once, here, at startup: a generation read per request would put a file open
+    on the answer path and would let the same question resolve differently depending on
+    what a concurrent refresh had published, which is AD-13's "a request can never
+    observe a mixture" given away for nothing.
+
+    Every way this can fail, fails here. A generation built by another vector source, a
+    truncated embedding, a file of another schema version — ``load_generation`` refuses
+    all of them, and it refuses them at startup rather than at the first question.
+    """
+    if policy is IndexPolicy.ABSENT:
+        return None
+    directory = generations_dir(paths)
+    path = latest_generation(directory)
+    if path is None:
+        raise IndexMissing(
+            f"no index generation in {directory}, and this deployment requires one. "
+            "Without it only an exactly typed published name can bind, and every "
+            "paraphrase is refused as no such indicator. Build one with "
+            "`python -m askai.refresh <export> --index-only`, which a plain "
+            "`python -m askai.refresh <export>` also does; an index-less deployment is "
+            "legal only where a "
+            f"composition root names {IndexPolicy.ABSENT.value!r}."
+        )
+    return IndexCandidates.over(load_generation(path, configured_source(environ)))
 
 
 def _utc_now() -> datetime:
@@ -81,6 +160,7 @@ def engine_for(
     databases: Databases,
     state_path: Path,
     now: Callable[[], datetime] = _utc_now,
+    candidates: CandidatePort | None = None,
 ) -> Engine:
     """The engine over already-provisioned databases and the refresh state at *state_path*.
 
@@ -92,6 +172,12 @@ def engine_for(
     ``now`` is threaded through rather than read inside the engine so that a test states
     the moment it means; ``today`` is an input to compiling (AD-17), and a clock read
     deeper down would make every staleness assertion a race.
+
+    *candidates* is AD-25's ladder, and it is an argument rather than something built
+    here because this constructor takes already-opened databases and knows nothing about
+    where generations live. ``engine_at`` is the form that knows, and it is the form a
+    deployment uses; ``None`` here is Epic 1's exact-name path, which is what the tests
+    that pass no index mean and get.
     """
     return Engine(
         messages=load_catalogue(),
@@ -101,6 +187,7 @@ def engine_for(
         presentation=ReadModelPresentation(connection=databases.read_model),
         sources=ReadModelSources(connection=databases.read_model),
         groups=ReadModelGroups(connection=databases.read_model),
+        candidates=candidates,
         model=chat_model(),
         freshness=StateFileFreshness(path=state_path),
         records=SqliteRecordStore(databases.record_store),
@@ -113,12 +200,26 @@ def engine_for(
 
 
 def engine_at(
-    databases: Databases, paths: DatabasePaths, now: Callable[[], datetime] = _utc_now
+    databases: Databases,
+    paths: DatabasePaths,
+    now: Callable[[], datetime] = _utc_now,
+    index: IndexPolicy = IndexPolicy.REQUIRED,
 ) -> Engine:
-    """The engine for an estate, with the state file located from the estate's own paths.
+    """The engine for an estate: state file and index generation located from *paths*.
 
-    The two-argument form exists so nobody has to remember where the state file goes: it
-    is beside the read model it describes, and ``state_path_for`` is the one place that
-    says so.
+    The short form exists so nobody has to remember where the estate's other two things
+    live. The state file is beside the read model it describes and ``state_path_for`` is
+    the one place that says so; the index generation is in a directory beside them and
+    ``generations_dir`` is the one place that says that. A deployment wiring either of
+    them separately would be describing some other deployment's data.
+
+    *index* defaults to ``REQUIRED``, so the failure this session was called in to fix —
+    a server that starts, answers exact names, and refuses every paraphrase — is not
+    reachable by omission any more.
     """
-    return engine_for(databases, state_path_for(paths), now)
+    return engine_for(
+        databases,
+        state_path_for(paths),
+        now,
+        candidates=candidates_for(paths, index),
+    )

@@ -25,6 +25,7 @@ from pathlib import Path
 from askai.adapters.readmodel.export import CmsExport
 from askai.adapters.store.provision import open_databases
 from askai.config.database import ConfigError, DatabasePaths
+from askai.refresh.indexing import rebuild_index
 from askai.refresh.rejections import counts_by_class
 from askai.refresh.report import RefreshReport
 from askai.refresh.run import RefreshFailed, run_refresh
@@ -52,6 +53,15 @@ def _parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--index-only",
+        action="store_true",
+        help=(
+            "rebuild and publish the semantic index generation alone, leaving the read "
+            "model and the recorded state untouched. The operator entry point for the "
+            "half of a refresh AD-25's ladder resolves against."
+        ),
+    )
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         help=(
@@ -76,6 +86,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 1
 
     export = CmsExport.rooted(arguments.export)
+    if arguments.index_only:
+        # No ingest, no state file: the read model is left exactly as it is, which is
+        # what makes this safe to run against a live estate after a build that failed.
+        rebuilt = rebuild_index(paths, export)
+        print(rebuilt.summary())
+        return 0 if rebuilt.succeeded else 1
+
     state_path = None if arguments.dry_run else state_path_for(paths)
     try:
         with open_databases(paths) as databases:
@@ -88,7 +105,16 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 1
 
     _print(report)
-    return 0 if report.succeeded else 1
+    if not report.succeeded:
+        return 1
+    if arguments.dry_run:
+        # A dry run touches nothing, and publishing a generation is touching something.
+        return 0
+    # The second half of the refresh (AD-25): the ladder resolves against the export the
+    # read model was just loaded from, or against one it no longer holds.
+    rebuilt = rebuild_index(paths, export)
+    print(rebuilt.summary())
+    return 0 if rebuilt.succeeded else 1
 
 
 def _print(report: RefreshReport) -> None:

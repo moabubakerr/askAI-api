@@ -55,13 +55,22 @@ from askai.adapters.index.vectors import unit_vector_for
 from askai.ports.index import Collection, IndexRow
 from askai.ports.vectors import VectorSourcePort
 
-__all__ = ["GENERATION_SUFFIX", "IndexBuildError", "build_generation", "pack_vector"]
+__all__ = [
+    "GENERATION_PREFIX",
+    "GENERATION_SUFFIX",
+    "IndexBuildError",
+    "build_generation",
+    "pack_vector",
+]
 
 #: Every generation file ends with this. The loader identifies generations by it, which
 #: is why the working file must not carry it until the build has finished.
 GENERATION_SUFFIX: Final = ".sqlite3"
 
-_GENERATION_PREFIX: Final = "index-"
+#: Every published generation's name begins with this. Public because the directory
+#: a generation is published into is walked by :mod:`askai.adapters.index.location`, and
+#: two spellings of "what a published generation is called" is one of them going stale.
+GENERATION_PREFIX: Final = "index-"
 _WORKING_PREFIX: Final = ".building-"
 
 
@@ -115,7 +124,7 @@ def build_generation(
     directory.mkdir(parents=True, exist_ok=True)
     token = uuid.uuid4().hex
     working = directory / f"{_WORKING_PREFIX}{token}"
-    published = directory / f"{_GENERATION_PREFIX}{token}{GENERATION_SUFFIX}"
+    published = directory / f"{GENERATION_PREFIX}{token}{GENERATION_SUFFIX}"
     stamp = built_at if built_at is not None else datetime.now(UTC).isoformat()
 
     try:
